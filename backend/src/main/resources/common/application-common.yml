@@ -1,0 +1,21 @@
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [requestId=%X{requestId}] - %msg%n"
+
+spring:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/h2/schema.sql
+      data-locations: classpath:db/data.sql
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.chordsked.backend.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+chordsked:
+  student:
+    max-page-size: 100
+    default-page-size: 20

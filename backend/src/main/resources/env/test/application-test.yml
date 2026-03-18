@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+spring:
+  sql:
+    init:
+      mode: ${CHORDSKED_TEST_SQL_INIT_MODE:never}
+      schema-locations: ${CHORDSKED_TEST_SQL_SCHEMA:classpath:db/mysql/schema.sql}
+      data-locations: ${CHORDSKED_TEST_SQL_DATA:classpath:db/data.sql}
+  datasource:
+    url: ${CHORDSKED_TEST_DB_URL:${CHORDSKED_DB_URL:jdbc:mysql://120.27.159.171:33603/chordsked_test?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}}
+    driver-class-name: ${CHORDSKED_TEST_DB_DRIVER:${CHORDSKED_DB_DRIVER:com.mysql.cj.jdbc.Driver}}
+    username: ${CHORDSKED_TEST_DB_USERNAME:${CHORDSKED_DB_USERNAME:szh}}
+    password: ${CHORDSKED_TEST_DB_PASSWORD:${CHORDSKED_DB_PASSWORD:cbs86891163}}

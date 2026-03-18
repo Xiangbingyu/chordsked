@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: chordsked-backend
+  profiles:
+    active: dev
+  config:
+    import:
+      - optional:classpath:/common/application-common.yml
+      - optional:classpath:/env/${spring.profiles.active}/application-${spring.profiles.active}.yml

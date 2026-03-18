@@ -1,0 +1,12 @@
+server:
+  port: 8082
+
+spring:
+  sql:
+    init:
+      schema-locations: classpath:db/h2/schema.sql
+  datasource:
+    url: jdbc:h2:mem:chordsked_prerelease;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:

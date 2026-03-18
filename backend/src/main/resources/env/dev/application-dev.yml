@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  sql:
+    init:
+      schema-locations: ${CHORDSKED_SQL_SCHEMA:classpath:db/h2/schema.sql}
+  datasource:
+    url: ${CHORDSKED_DB_URL:jdbc:h2:mem:chordsked;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false}
+    driver-class-name: ${CHORDSKED_DB_DRIVER:org.h2.Driver}
+    username: ${CHORDSKED_DB_USERNAME:sa}
+    password: ${CHORDSKED_DB_PASSWORD:}
