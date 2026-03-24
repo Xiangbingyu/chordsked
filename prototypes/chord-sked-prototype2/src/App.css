@@ -1,0 +1,11 @@
+.demo-bg {
+  background:
+    radial-gradient(circle at 5% 10%, rgba(255, 193, 137, 0.25), transparent 35%),
+    radial-gradient(circle at 90% 5%, rgba(255, 221, 182, 0.35), transparent 40%),
+    #f7f2ea;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #b2a89a;
+}
