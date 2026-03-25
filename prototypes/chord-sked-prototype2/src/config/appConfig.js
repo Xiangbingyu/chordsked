@@ -18,12 +18,13 @@ import {
 export const roleMeta = {
   admin: { title: '教务端', subtitle: '排课 / 转化 / 审批 / 权限', icon: School },
   teacher: { title: '教师端', subtitle: '签到 / 反馈 / 作业 / 课表', icon: GraduationCap },
-  student: { title: '学员端', subtitle: '课表 / 学习 / 我的', icon: UserSquare2 }
+  student: { title: '学员端', subtitle: '首页 / 约课 / 学习 / 我的', icon: UserSquare2 }
 }
 
 export const navMap = {
   student: [
-    { key: 'schedule', label: '课表', icon: CalendarDays },
+    { key: 'home', label: '首页', icon: Home },
+    { key: 'booking', label: '约课', icon: CalendarDays },
     { key: 'learning', label: '学习', icon: BookOpen },
     { key: 'profile', label: '我的', icon: UserSquare2 }
   ]

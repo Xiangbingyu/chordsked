@@ -183,17 +183,28 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
     { id: 'SCH-001', date: '2026-03-24', timeSlot: '14:00-15:00', templateName: '团购体验课模板', templateType: '团购体验课', teacherId: 'T-01', teacher: '刘老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '未成年', reservedCount: 4, capacityMax: 5, studentName: '' },
     { id: 'SCH-002', date: '2026-03-24', timeSlot: '15:00-16:00', templateName: '标准课模板', templateType: '标准课', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-003', room: 'B203', campus: '西大剧院校区', ageGroup: '成人', reservedCount: 3, capacityMax: 5, studentName: '' },
     { id: 'SCH-003', date: '2026-03-25', timeSlot: '18:00-19:00', templateName: '一对一模板', templateType: '一对一', teacherId: 'T-05', teacher: '赵老师', roomId: 'ROOM-002', room: 'A203', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 1, capacityMax: 1, studentName: '王星河' }
+    ,
+    { id: 'SCH-004', date: '2026-03-26', timeSlot: '10:00-11:00', templateName: '标准课模板', templateType: '标准课', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 1, capacityMax: 5, studentName: '', bookedStudents: ['李予安'] },
+    { id: 'SCH-005', date: '2026-03-26', timeSlot: '19:00-20:00', templateName: '团购体验课模板', templateType: '团购体验课', teacherId: 'T-01', teacher: '刘老师', roomId: 'ROOM-003', room: 'B203', campus: '西大剧院校区', ageGroup: '未成年', reservedCount: 0, capacityMax: 5, studentName: '', bookedStudents: [] },
+    { id: 'SCH-006', date: '2026-03-27', timeSlot: '14:00-15:00', templateName: '标准课模板', templateType: '标准课', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 4, capacityMax: 5, studentName: '', bookedStudents: ['张小满', '王星河', '陈可心', '林知夏'] }
   ])
   const [scheduleCourseRows, setScheduleCourseRows] = useState([
     { id: 'SCH-001', date: '2026-03-24', timeSlot: '14:00-15:00', templateType: '团购体验课', teacher: '刘老师', student: '李予安', teacherSigned: false, studentSigned: false, cancelled: false },
     { id: 'SCH-002', date: '2026-03-24', timeSlot: '15:00-16:00', templateType: '标准课', teacher: '陈老师', student: '张小满', teacherSigned: true, studentSigned: true, cancelled: false },
     { id: 'SCH-003', date: '2026-03-25', timeSlot: '18:00-19:00', templateType: '一对一', teacher: '赵老师', student: '王星河', teacherSigned: true, studentSigned: false, cancelled: true }
   ])
+  const [scheduleListTab, setScheduleListTab] = useState('scheduled')
   const [scheduleActionModalOpen, setScheduleActionModalOpen] = useState(false)
   const [scheduleActionType, setScheduleActionType] = useState('teacher-sign')
   const [activeScheduleCourseId, setActiveScheduleCourseId] = useState('')
   const [scheduleAssistStudentName, setScheduleAssistStudentName] = useState('')
   const [scheduleAssistDeductHours, setScheduleAssistDeductHours] = useState('1')
+  const [bookingModalOpen, setBookingModalOpen] = useState(false)
+  const [bookingStep, setBookingStep] = useState(1)
+  const [bookingStudentKeyword, setBookingStudentKeyword] = useState('')
+  const [bookingSelectedStudentId, setBookingSelectedStudentId] = useState('')
+  const [bookingSelectedSlotId, setBookingSelectedSlotId] = useState('')
+  const [bookingDeductHours, setBookingDeductHours] = useState('1')
   const [packageTemplateKeyword, setPackageTemplateKeyword] = useState('')
   const [noticeRuleRows, setNoticeRuleRows] = useState([
     { id: 'R-001', category: '上课提醒', remindAhead: '提前1天、提前6小时', effectiveTime: '2026-03-24 00:00', channels: ['站内消息', '小程序订阅消息', '微信模板消息', '短信'], enabled: true },
@@ -344,6 +355,8 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   const activeMessage = notifications.find((item) => item.id === activeMessageId) || notifications[0]
   const activeScheduleCourse = scheduleCourseRows.find((item) => item.id === activeScheduleCourseId) || scheduleCourseRows[0]
   const scheduleAssistStudent = studentRows.find((item) => item.name === scheduleAssistStudentName)
+  const bookingSelectedStudent = studentRows.find((item) => item.id === bookingSelectedStudentId)
+  const bookingSelectedSlot = schedulePlanRows.find((item) => item.id === bookingSelectedSlotId)
   const resolveTemplateNames = (templateIds = []) => {
     if (!templateIds || templateIds.length === 0) return []
     return templateIds.map((id) => scheduleTemplateRows.find((item) => item.id === id)?.name || id)
@@ -351,6 +364,12 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   const packageTemplateCandidates = scheduleTemplateRows.filter((item) =>
     item.status === '启用' && item.name.includes(packageTemplateKeyword.trim())
   )
+  const scheduleBookableRows = (campus ? schedulePlanRows.filter((item) => item.campus === campus) : schedulePlanRows).filter((item) => item.reservedCount < item.capacityMax)
+  const filteredBookingStudents = studentRows.filter((item) => (
+    bookingStudentKeyword.trim()
+      ? `${item.name}${item.phone}${item.packageName || ''}`.includes(bookingStudentKeyword.trim())
+      : true
+  ))
   const filteredAdminHomeworkRows = campus
     ? homeworkRows.filter((item) => item.campus === campus)
     : homeworkRows
@@ -1489,6 +1508,97 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
     setScheduleActionModalOpen(false)
   }
 
+  const openBookingModal = (slotId = '') => {
+    setBookingSelectedSlotId(slotId)
+    setBookingSelectedStudentId('')
+    setBookingStudentKeyword('')
+    setBookingDeductHours('1')
+    setBookingStep(1)
+    setBookingModalOpen(true)
+  }
+
+  const chooseBookingStudent = (studentId) => {
+    setBookingSelectedStudentId(studentId)
+    setBookingStep(2)
+  }
+
+  const chooseBookingSlot = (slotId) => {
+    setBookingSelectedSlotId(slotId)
+    setBookingStep(3)
+  }
+
+  const submitBooking = () => {
+    if (!bookingSelectedStudentId) {
+      setFlowTip('请先选择学员')
+      return
+    }
+    if (!bookingSelectedSlotId) {
+      setFlowTip('请先选择课程')
+      return
+    }
+    const deductHours = Number(bookingDeductHours || 0)
+    if (Number.isNaN(deductHours) || deductHours <= 0) {
+      setFlowTip('请填写有效扣减课时')
+      return
+    }
+    const student = studentRows.find((item) => item.id === bookingSelectedStudentId)
+    const slot = schedulePlanRows.find((item) => item.id === bookingSelectedSlotId)
+    if (!student || !slot) return
+    if (slot.reservedCount >= slot.capacityMax) {
+      setFlowTip('该课程已满员，无法预约')
+      return
+    }
+    const existedBookedStudents = Array.isArray(slot.bookedStudents) ? slot.bookedStudents : slot.studentName ? [slot.studentName] : []
+    const isNewReservation = !existedBookedStudents.includes(student.name)
+    setSchedulePlanRows((prev) =>
+      prev.map((item) => {
+        if (item.id !== bookingSelectedSlotId) return item
+        const bookedStudents = Array.isArray(item.bookedStudents) ? item.bookedStudents : item.studentName ? [item.studentName] : []
+        const nextBooked = bookedStudents.includes(student.name) ? bookedStudents : [...bookedStudents, student.name]
+        return {
+          ...item,
+          bookedStudents: nextBooked,
+          reservedCount: bookedStudents.includes(student.name) ? item.reservedCount : Math.min(item.capacityMax, item.reservedCount + 1),
+          studentName: item.capacityMax === 1 ? student.name : item.studentName
+        }
+      })
+    )
+    setScheduleCourseRows((prev) => {
+      const existing = prev.find((item) => item.id === bookingSelectedSlotId)
+      const targetPlan = schedulePlanRows.find((item) => item.id === bookingSelectedSlotId) || slot
+      const fallbackStudent = targetPlan.studentName || student.name
+      const bookedStudents = Array.isArray(targetPlan.bookedStudents) ? targetPlan.bookedStudents : targetPlan.studentName ? [targetPlan.studentName] : []
+      const nextBooked = bookedStudents.includes(student.name) ? bookedStudents : [...bookedStudents, student.name]
+      const nextStudentText = nextBooked.length > 0 ? nextBooked.join('、') : fallbackStudent
+      if (existing) {
+        return prev.map((item) => (item.id === bookingSelectedSlotId ? { ...item, student: nextStudentText } : item))
+      }
+      return [
+        {
+          id: targetPlan.id,
+          date: targetPlan.date,
+          timeSlot: targetPlan.timeSlot,
+          templateType: targetPlan.templateType,
+          teacher: targetPlan.teacher,
+          student: nextStudentText,
+          teacherSigned: false,
+          studentSigned: false,
+          cancelled: false
+        },
+        ...prev
+      ]
+    })
+    setStudentRows((prev) =>
+      prev.map((item) =>
+        item.id === bookingSelectedStudentId
+          ? { ...item, remaining: isNewReservation ? Math.max(0, (item.remaining ?? 0) - deductHours) : (item.remaining ?? 0) }
+          : item
+      )
+    )
+    setBookingModalOpen(false)
+    setFlowTip(`已为学员完成代预约：${student.name}（扣减${deductHours}课时）`)
+  }
+
   if (page === 'workbench-overview') {
     const todayCourses = scheduleCards.slice(0, 4).map((item, index) => ({
       id: item.id,
@@ -1942,32 +2052,73 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   }
 
   if (page === 'schedule-list') {
+    const scheduleListTabs = [
+      { key: 'scheduled', label: '已排课' },
+      { key: 'bookable', label: '可预约课程池' }
+    ]
     return (
       <section className="space-y-4">
         <h2 className="text-sm font-semibold">教学管理 / 课程列表（排课）</h2>
-        <PaginatedTable
-          columns={[
-            { key: 'date', title: '日期' },
-            { key: 'timeSlot', title: '时间段' },
-            { key: 'templateType', title: '课程类型' },
-            { key: 'teacherSigned', title: '教师签到', render: (row) => (row.teacherSigned ? '已签到' : '未签到') },
-            { key: 'studentSigned', title: '学员签到', render: (row) => (row.studentSigned ? '已签到' : '未签到') },
-            { key: 'cancelled', title: '是否取消', render: (row) => (row.cancelled ? '是' : '否') },
-            {
-              key: 'action',
-              title: '操作',
-              render: (row) => (
-                <div className="flex gap-2">
-                  <button onClick={() => openScheduleActionModal(row.id, 'teacher-sign')} className="text-[#bc7844] text-xs">帮助老师签到</button>
-                  <button onClick={() => openScheduleActionModal(row.id, 'student-sign')} className="text-[#bc7844] text-xs">帮助学生签到</button>
-                  <button onClick={() => openScheduleActionModal(row.id, 'cancel-sign')} className="text-[#bc7844] text-xs">取消签到状态</button>
-                </div>
-              )
-            }
-          ]}
-          rows={scheduleCourseRows}
-          pageSize={8}
-        />
+        <div className="rounded-2xl border border-[#f0ebe3] bg-[#fffaf2] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {scheduleListTabs.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setScheduleListTab(item.key)}
+                className={`rounded-full px-3 py-1 text-xs ${
+                  scheduleListTab === item.key ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'bg-white text-[#8f8376]'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+            <span className="ml-auto text-xs text-[#8f8376]">校区：{campus || '全部'}</span>
+          </div>
+        </div>
+        {scheduleListTab === 'scheduled' && (
+          <PaginatedTable
+            columns={[
+              { key: 'date', title: '日期' },
+              { key: 'timeSlot', title: '时间段' },
+              { key: 'templateType', title: '课程类型' },
+              { key: 'student', title: '预约学员' },
+              { key: 'teacherSigned', title: '教师签到', render: (row) => (row.teacherSigned ? '已签到' : '未签到') },
+              { key: 'studentSigned', title: '学员签到', render: (row) => (row.studentSigned ? '已签到' : '未签到') },
+              { key: 'cancelled', title: '是否取消', render: (row) => (row.cancelled ? '是' : '否') },
+              {
+                key: 'action',
+                title: '操作',
+                render: (row) => (
+                  <div className="flex gap-2">
+                    <button onClick={() => openBookingModal(row.id)} className="text-[#bc7844] text-xs">代预约</button>
+                    <button onClick={() => openScheduleActionModal(row.id, 'teacher-sign')} className="text-[#bc7844] text-xs">帮助老师签到</button>
+                    <button onClick={() => openScheduleActionModal(row.id, 'student-sign')} className="text-[#bc7844] text-xs">帮助学生签到</button>
+                    <button onClick={() => openScheduleActionModal(row.id, 'cancel-sign')} className="text-[#bc7844] text-xs">取消签到状态</button>
+                  </div>
+                )
+              }
+            ]}
+            rows={campus ? scheduleCourseRows.filter((item) => schedulePlanRows.find((p) => p.id === item.id)?.campus === campus) : scheduleCourseRows}
+            pageSize={8}
+          />
+        )}
+        {scheduleListTab === 'bookable' && (
+          <PaginatedTable
+            columns={[
+              { key: 'date', title: '日期' },
+              { key: 'timeSlot', title: '时间段' },
+              { key: 'templateName', title: '课程模板' },
+              { key: 'teacher', title: '教师' },
+              { key: 'room', title: '教室' },
+              { key: 'capacity', title: '承载量', render: (row) => `${row.reservedCount}/${row.capacityMax}` },
+              { key: 'bookedStudents', title: '已预约学员', render: (row) => (Array.isArray(row.bookedStudents) ? row.bookedStudents.join('、') : row.studentName || '—') },
+              { key: 'action', title: '操作', render: (row) => <button onClick={() => openBookingModal(row.id)} className="text-[#bc7844]">代预约</button> }
+            ]}
+            rows={scheduleBookableRows}
+            pageSize={8}
+            emptyText="当前校区暂无可预约课程"
+          />
+        )}
         {scheduleActionModalOpen && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4">
             <button className="absolute inset-0" onClick={() => setScheduleActionModalOpen(false)} />
@@ -2009,6 +2160,85 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 </div>
               )}
               <button onClick={confirmScheduleAction} className="mt-3 w-full rounded-lg bg-[#ff9b54] px-3 py-2 text-sm font-medium text-[#1f1f1f]">确认提交</button>
+            </div>
+          </div>
+        )}
+        {bookingModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+            <button className="absolute inset-0" onClick={() => setBookingModalOpen(false)} />
+            <div className="relative w-full max-w-[980px] rounded-2xl bg-white p-5 shadow-2xl">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-semibold">教务代预约课程</h3>
+                <button className="text-sm text-[#8f8376]" onClick={() => setBookingModalOpen(false)}>关闭</button>
+              </div>
+              <div className="mb-3 rounded-xl border border-[#f0ebe3] bg-[#fffaf2] p-3 text-xs text-[#6f665d]">
+                步骤 {bookingStep}/3：{bookingStep === 1 ? '选学员' : bookingStep === 2 ? '选课程' : '确认预约'}
+              </div>
+              {bookingStep === 1 && (
+                <div className="space-y-3">
+                  <input value={bookingStudentKeyword} onChange={(e) => setBookingStudentKeyword(e.target.value)} className="w-full rounded-lg border border-[#e9e2d8] px-3 py-2 text-sm outline-none" placeholder="搜索学员姓名/手机号/课包" />
+                  <PaginatedTable
+                    columns={[
+                      { key: 'name', title: '学员' },
+                      { key: 'phone', title: '手机号' },
+                      { key: 'packageName', title: '课包' },
+                      { key: 'remaining', title: '剩余课时' },
+                      { key: 'action', title: '操作', render: (row) => <button onClick={() => chooseBookingStudent(row.id)} className="text-[#bc7844]">选择</button> }
+                    ]}
+                    rows={filteredBookingStudents}
+                    pageSize={6}
+                  />
+                </div>
+              )}
+              {bookingStep === 2 && (
+                <div className="space-y-3">
+                  <div className="rounded-xl bg-[#faf8f4] p-3 text-sm">
+                    已选学员：{bookingSelectedStudent?.name || '—'} / 课包：{bookingSelectedStudent?.packageName || '待分配'} / 剩余课时：{bookingSelectedStudent?.remaining ?? 0}
+                  </div>
+                  <PaginatedTable
+                    columns={[
+                      { key: 'date', title: '日期' },
+                      { key: 'timeSlot', title: '时间段' },
+                      { key: 'templateName', title: '课程模板' },
+                      { key: 'teacher', title: '教师' },
+                      { key: 'room', title: '教室' },
+                      { key: 'capacity', title: '承载量', render: (row) => `${row.reservedCount}/${row.capacityMax}` },
+                      { key: 'action', title: '操作', render: (row) => <button onClick={() => chooseBookingSlot(row.id)} className="text-[#bc7844]">选择</button> }
+                    ]}
+                    rows={scheduleBookableRows}
+                    pageSize={6}
+                    emptyText="当前校区暂无可预约课程"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setBookingStep(1)} className="rounded-lg border border-[#e8dfd3] px-3 py-2 text-sm">上一步</button>
+                  </div>
+                </div>
+              )}
+              {bookingStep === 3 && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="rounded-xl bg-[#faf8f4] p-3">学员：{bookingSelectedStudent?.name || '—'}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3">剩余课时：{bookingSelectedStudent?.remaining ?? 0}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3">课程日期：{bookingSelectedSlot?.date || '—'}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3">时间段：{bookingSelectedSlot?.timeSlot || '—'}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">课程：{bookingSelectedSlot?.templateName || '—'} / {bookingSelectedSlot?.teacher || '—'} / {bookingSelectedSlot?.room || '—'}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-[#7b7064]">扣减课时</div>
+                      <input value={bookingDeductHours} onChange={(e) => setBookingDeductHours(e.target.value)} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-[#7b7064]">占位规则</div>
+                      <div className="rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs text-[#6f665d]">确认后占用该课程名额，并同步到课程预约名单</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setBookingStep(2)} className="rounded-lg border border-[#e8dfd3] px-3 py-2 text-sm">上一步</button>
+                    <button onClick={submitBooking} className="rounded-lg bg-[#ff9b54] px-3 py-2 text-sm font-medium text-[#1f1f1f]">确认代预约</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
