@@ -6,8 +6,8 @@ import com.chordsked.backend.service.StudentService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
@@ -21,15 +21,14 @@ class StudentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean(name = "studentService")
     private StudentService studentService;
 
     @Test
     void shouldListStudents() throws Exception {
         when(studentService.listStudents("张", "初级", 1, 2))
-                .thenReturn(PageResult.of(4, List.of(
-                        new StudentVO(1L, "张小明", 8, "初级"),
-                        new StudentVO(3L, "王浩宇", 7, "初级")
+                .thenReturn(PageResult.of(1, List.of(
+                        new StudentVO(1L, "张小明", 8, "初级")
                 )));
 
         mockMvc.perform(get("/api/v1/students")
@@ -39,7 +38,8 @@ class StudentControllerTest {
                         .param("level", "初级"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data.total").value(4))
-                .andExpect(jsonPath("$.data.items.length()").value(2));
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].name").value("张小明"));
     }
 }

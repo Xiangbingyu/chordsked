@@ -6,6 +6,7 @@ spring:
   sql:
     init:
       mode: always
+      encoding: UTF-8
       schema-locations: classpath:db/h2/schema.sql
       data-locations: classpath:db/h2/data.sql
 
@@ -19,3 +20,9 @@ chordsked:
   student:
     max-page-size: 100
     default-page-size: 20
+  security:
+    jwt:
+      secret: ${CHORDSKED_JWT_SECRET:chordsked-jwt-secret-2026-001-dev-secure-key}
+      issuer: ${CHORDSKED_JWT_ISSUER:chordsked-backend}
+      access-expiration-seconds: ${CHORDSKED_JWT_ACCESS_EXPIRATION_SECONDS:7200}
+      refresh-expiration-seconds: ${CHORDSKED_JWT_REFRESH_EXPIRATION_SECONDS:1209600}

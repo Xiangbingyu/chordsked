@@ -1,0 +1,34 @@
+# IDE
+.trae/
+.idea/
+.vscode/
+*.iml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+frontend/.eslintcache
+frontend/.vite/
+frontend/coverage/
+frontend/*.log
+frontend/.env.local
+frontend/.env.*.local
+
+# Backend
+backend/target/
+backend/logs/
+backend/*.log
+backend/.flattened-pom.xml
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Prototypes
+prototypes/**/node_modules/
+prototypes/**/dist/
+prototypes/**/.vite/
+prototypes/**/coverage/
+prototypes/**/*.log
+prototypes/**/.env.local
+prototypes/**/.env.*.local

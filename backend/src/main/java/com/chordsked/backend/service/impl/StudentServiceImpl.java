@@ -1,7 +1,7 @@
 package com.chordsked.backend.service.impl;
 
 import com.chordsked.backend.common.PageResult;
-import com.chordsked.backend.config.AppProperties;
+import com.chordsked.backend.config.properties.AppProperties;
 import com.chordsked.backend.dao.StudentDao;
 import com.chordsked.backend.model.entity.StudentEntity;
 import com.chordsked.backend.model.vo.StudentVO;
