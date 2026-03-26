@@ -538,7 +538,7 @@ export default function StudentView({ page }) {
       <div className="bg-white px-4 pt-10 pb-0 border-b border-[#f0ebe3]">
         <h2 className="text-lg font-bold text-[#2b2b2b] text-center mb-4">学习</h2>
         <div className="flex justify-around">
-          {['作业', '成长记录', '阶段报告'].map(tab => (
+          {['作业', '成长记录', '阶段报告(二期)'].map(tab => (
             <button key={tab} className={`pb-3 px-2 text-sm font-bold border-b-2 transition ${learningSubTab === tab ? 'border-[#ff9b54] text-[#ff9b54]' : 'border-transparent text-[#7f7f88]'}`} onClick={() => setLearningSubTab(tab)}>
               {tab}
             </button>
@@ -719,7 +719,7 @@ export default function StudentView({ page }) {
                 <div className="text-4xl font-black mt-2">{remainingHours} <span className="text-sm font-medium text-white/70">课时</span></div>
               </div>
               <button className="bg-gradient-to-r from-[#ff9b54] to-[#ffb37a] text-[#1f1f1f] px-4 py-2 rounded-xl text-sm font-bold shadow-sm" onClick={() => setProfilePage('packages')}>
-                购买课包
+                购买课包(二期)
               </button>
             </div>
             <div className="mt-5 text-xs text-white/50 relative z-10 flex justify-between font-medium">
