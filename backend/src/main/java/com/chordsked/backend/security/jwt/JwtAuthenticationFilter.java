@@ -3,10 +3,15 @@ package com.chordsked.backend.security.jwt;
 import com.chordsked.backend.security.account.service.MultiAccountUserDetailsService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,10 +24,10 @@ import java.io.IOException;
 
 @Component("jwtAuthenticationFilter")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     // Authorization: Bearer <token>
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final String ACCESS_TOKEN_TYPE = "access";
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_USER_TYPE = "userType";
 
@@ -44,27 +49,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 && authorization.startsWith(BEARER_PREFIX)) {
             String token = authorization.substring(BEARER_PREFIX.length());
             try {
-                // 第一阶段：校验签名、issuer、tokenType、userType 等基础约束
-                if (jwtTokenUtils.isTokenValid(token, ACCESS_TOKEN_TYPE)) {
-                    Claims claims = jwtTokenUtils.parseClaims(token);
+                // 先解析 claims，再做 claims 校验，避免 isTokenValid 与 parseClaims 的重复解析
+                Claims claims = jwtTokenUtils.parseClaims(token);
+                // 业务 API 统一要求 access token；refresh token 仅用于续签接口
+                if (jwtTokenUtils.isClaimsValid(claims, JwtTokenUtils.TOKEN_TYPE_ACCESS)) {
                     Long userId = claims.get(CLAIM_USER_ID, Long.class);
                     String userType = claims.get(CLAIM_USER_TYPE, String.class);
                     if (userId != null && userType != null && !userType.isBlank()) {
-                        // 第二阶段：按 userType 路由到对应 Provider 装载权限
+                        // 根据 userType 路由到对应账号体系，加载权限集合
                         UserDetails userDetails = multiAccountUserDetailsService.loadUserByTokenContext(
                                 userType,
-                                String.valueOf(userId)
+                                userId
                         );
-                        // 第三阶段：写入 SecurityContext，供 @PreAuthorize 等后续判权使用
+                        // 认证成功后写入上下文，供后续 requestMatchers/@PreAuthorize 判权
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities()
                         );
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
+                } else {
+                    logger.warn("JWT claims validation failed for request: {}", request.getRequestURI());
                 }
-            } catch (RuntimeException ignored) {
-                // 鉴权失败时不抛出，让请求继续进入后续链路并由统一异常处理返回 401/403
+            } catch (ExpiredJwtException exception) {
+                logger.debug("JWT token expired for request: {}", request.getRequestURI(), exception);
+            } catch (MalformedJwtException exception) {
+                logger.warn("Malformed JWT token in request: {}", request.getRequestURI(), exception);
+            } catch (SignatureException exception) {
+                logger.warn("JWT signature validation failed for request: {}", request.getRequestURI(), exception);
+            } catch (RuntimeException exception) {
+                logger.error("JWT authentication failed for request: {}", request.getRequestURI(), exception);
             }
         }
         filterChain.doFilter(request, response);

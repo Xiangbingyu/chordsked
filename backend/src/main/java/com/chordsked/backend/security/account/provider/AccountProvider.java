@@ -11,6 +11,8 @@ public interface AccountProvider {
     /**
      * 基于 userId 装载 UserDetails。
      * 当前可以是静态权限实现，后续可替换为数据库/缓存查询实现。
+     * 注意：权限码建议统一为“端前缀:资源:动作”风格（如 admin:user:view），
+     * 用于与三端 API 前缀隔离策略保持一致。
      */
-    UserDetails getUserDetails(String userId);
+    UserDetails getUserDetails(Long userId);
 }

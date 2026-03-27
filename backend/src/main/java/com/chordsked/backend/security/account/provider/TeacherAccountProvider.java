@@ -12,8 +12,7 @@ public class TeacherAccountProvider implements AccountProvider {
     private static final String USER_TYPE = "TEACHER";
     // 当前教师端为内置角色权限，后续如需细粒度控制可改为数据库加载权限点。
     private static final List<SimpleGrantedAuthority> AUTHORITIES = List.of(
-            new SimpleGrantedAuthority("ROLE_TEACHER"),
-            new SimpleGrantedAuthority("TEACHER")
+            new SimpleGrantedAuthority("teacher:role")
     );
 
     @Override
@@ -22,7 +21,7 @@ public class TeacherAccountProvider implements AccountProvider {
     }
 
     @Override
-    public UserDetails getUserDetails(String userId) {
+    public UserDetails getUserDetails(Long userId) {
         // 后续数据库化可在此校验教师账号状态并动态装载权限。
         return new ChordSkedUserDetails(userId, USER_TYPE, null, AUTHORITIES);
     }

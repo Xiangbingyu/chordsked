@@ -16,7 +16,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
 
 @RestController
-@RequestMapping("/api/v1/students")
+@RequestMapping("/api/v1/admin/students")
 @Validated
 @Tag(name = "学员管理", description = "学员相关接口")
 public class StudentController {

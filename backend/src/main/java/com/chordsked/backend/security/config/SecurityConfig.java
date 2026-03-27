@@ -29,7 +29,10 @@ public class SecurityConfig {
                         // 预留认证端点，后续接入登录/续签实现时无需再改安全主干。
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("admin:role")
+                        .requestMatchers("/api/v1/teacher/**").hasAuthority("teacher:role")
+                        .requestMatchers("/api/v1/student/**").hasAuthority("student:role")
+                        .requestMatchers("/api/v1/common/**").authenticated()
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

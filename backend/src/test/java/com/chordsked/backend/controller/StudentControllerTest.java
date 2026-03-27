@@ -31,7 +31,7 @@ class StudentControllerTest {
                         new StudentVO(1L, "张小明", 8, "初级")
                 )));
 
-        mockMvc.perform(get("/api/v1/students")
+        mockMvc.perform(get("/api/v1/admin/students")
                         .param("page", "1")
                         .param("pageSize", "2")
                         .param("keyword", "张")

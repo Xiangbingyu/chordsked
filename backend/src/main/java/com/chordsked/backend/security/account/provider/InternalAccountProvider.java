@@ -13,16 +13,15 @@ public class InternalAccountProvider implements AccountProvider {
     // 当前为静态权限占位实现，便于安全链路先跑通。
     // 后续接入数据库时，建议改为：根据 userId 查询用户 -> 查询角色 -> 查询权限点 -> 转换为 GrantedAuthority。
     private static final List<SimpleGrantedAuthority> AUTHORITIES = List.of(
-            new SimpleGrantedAuthority("ROLE_ADMIN"),
-            new SimpleGrantedAuthority("ADMIN"),
-            new SimpleGrantedAuthority("user:view"),
-            new SimpleGrantedAuthority("user:create"),
-            new SimpleGrantedAuthority("user:update"),
-            new SimpleGrantedAuthority("user:delete"),
-            new SimpleGrantedAuthority("role:view"),
-            new SimpleGrantedAuthority("role:create"),
-            new SimpleGrantedAuthority("role:update"),
-            new SimpleGrantedAuthority("role:delete")
+            new SimpleGrantedAuthority("admin:role"),
+            new SimpleGrantedAuthority("admin:user:view"),
+            new SimpleGrantedAuthority("admin:user:create"),
+            new SimpleGrantedAuthority("admin:user:update"),
+            new SimpleGrantedAuthority("admin:user:delete"),
+            new SimpleGrantedAuthority("admin:role:view"),
+            new SimpleGrantedAuthority("admin:role:create"),
+            new SimpleGrantedAuthority("admin:role:update"),
+            new SimpleGrantedAuthority("admin:role:delete")
     );
 
     @Override
@@ -31,7 +30,7 @@ public class InternalAccountProvider implements AccountProvider {
     }
 
     @Override
-    public UserDetails getUserDetails(String userId) {
+    public UserDetails getUserDetails(Long userId) {
         // 数据库化改造示例：
         // 1) internalUserMapper.findById(userId)
         // 2) roleMapper.findByUserId(userId)

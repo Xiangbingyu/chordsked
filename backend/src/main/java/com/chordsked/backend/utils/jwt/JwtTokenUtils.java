@@ -5,6 +5,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -17,6 +19,10 @@ import java.util.stream.Collectors;
 
 @Component("jwtTokenUtils")
 public class JwtTokenUtils {
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenUtils.class);
+    // tokenType 的标准值，供鉴权链路和续签链路复用，避免硬编码字符串分散
+    public static final String TOKEN_TYPE_ACCESS = "access";
+    public static final String TOKEN_TYPE_REFRESH = "refresh";
     // 与文档约定一致的 JWT claim 键名
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_USER_TYPE = "userType";
@@ -50,22 +56,45 @@ public class JwtTokenUtils {
     public boolean isTokenValid(String token, String expectedTokenType) {
         try {
             Claims claims = parseClaims(token);
-            Long userId = claims.get(CLAIM_USER_ID, Long.class);
-            String userType = normalizeUserType(claims.get(CLAIM_USER_TYPE, String.class));
-            String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
-            String issuer = claims.getIssuer();
-            return userId != null
-                    && userId > 0
-                    && SUPPORTED_USER_TYPES.contains(userType)
-                    && expectedTokenType.equals(tokenType)
-                    && jwtProperties.getIssuer().equals(issuer);
+            return isClaimsValid(claims, expectedTokenType);
         } catch (RuntimeException exception) {
+            logger.warn("JWT token validation failed", exception);
             return false;
         }
     }
 
+    public boolean isAccessTokenValid(String token) {
+        // 业务接口鉴权只接受 access token
+        return isTokenValid(token, TOKEN_TYPE_ACCESS);
+    }
+
+    public boolean isRefreshTokenValid(String token) {
+        // 续签接口校验 refresh token，避免 refresh/access 混用
+        return isTokenValid(token, TOKEN_TYPE_REFRESH);
+    }
+
+    /**
+     * claims 级别的校验方法。
+     * 适用于调用方已解析 claims 的场景（例如过滤器中避免重复 parse）。
+     */
+    public boolean isClaimsValid(Claims claims, String expectedTokenType) {
+        Long userId = claims.get(CLAIM_USER_ID, Long.class);
+        String userType = normalizeUserType(claims.get(CLAIM_USER_TYPE, String.class));
+        String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
+        String issuer = claims.getIssuer();
+        Date expiration = claims.getExpiration();
+        return userId != null
+                && userId > 0
+                && SUPPORTED_USER_TYPES.contains(userType)
+                && expectedTokenType.equals(tokenType)
+                && jwtProperties.getIssuer().equals(issuer)
+                && expiration != null
+                && expiration.after(new Date());
+    }
+
     /**
      * 生成 JWT。调用方负责传入过期时间与 tokenType。
+     * 如非特殊场景，优先使用 generateAccessToken/generateRefreshToken 以减少误用。
      */
     public String generateToken(Long userId, String userType, long expirationSeconds, String tokenType) {
         Instant now = Instant.now();
@@ -80,6 +109,16 @@ public class JwtTokenUtils {
                 .expiration(Date.from(now.plusSeconds(expirationSeconds)))
                 .signWith(signingKey())
                 .compact();
+    }
+
+    public String generateAccessToken(Long userId, String userType) {
+        // access token 过期时间来自配置：chordsked.security.jwt.access-expiration-seconds
+        return generateToken(userId, userType, jwtProperties.getAccessExpirationSeconds(), TOKEN_TYPE_ACCESS);
+    }
+
+    public String generateRefreshToken(Long userId, String userType) {
+        // refresh token 过期时间来自配置：chordsked.security.jwt.refresh-expiration-seconds
+        return generateToken(userId, userType, jwtProperties.getRefreshExpirationSeconds(), TOKEN_TYPE_REFRESH);
     }
 
     private SecretKey signingKey() {

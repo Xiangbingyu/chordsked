@@ -19,6 +19,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
     public MultiAccountUserDetailsService(List<AccountProvider> accountProviders) {
         Map<String, AccountProvider> providerMap = new ConcurrentHashMap<>();
         // 启动时将全部 Provider 注册到内存路由表，避免每次请求遍历查找
+        // 如后续新增账号体系，仅需新增一个 AccountProvider 实现即可自动接入
         for (AccountProvider accountProvider : accountProviders) {
             providerMap.put(normalizeUserType(accountProvider.getUserType()), accountProvider);
         }
@@ -29,8 +30,8 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
      * 基于 JWT 中的 userType + userId 进行账号体系路由并装载 UserDetails。
      * 后续接入数据库/缓存时，仅需改造具体 Provider 实现。
      */
-    public UserDetails loadUserByTokenContext(String userType, String userId) {
-        if (userId == null || userId.isBlank()) {
+    public UserDetails loadUserByTokenContext(String userType, Long userId) {
+        if (userId == null || userId <= 0) {
             throw new UsernameNotFoundException("Invalid user id");
         }
         AccountProvider accountProvider = providers.get(normalizeUserType(userType));
