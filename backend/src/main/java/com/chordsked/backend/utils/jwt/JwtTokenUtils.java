@@ -10,17 +10,28 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component("jwtTokenUtils")
 public class JwtTokenUtils {
+    // 与文档约定一致的 JWT claim 键名
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_USER_TYPE = "userType";
     private static final String CLAIM_TOKEN_TYPE = "tokenType";
+    // 允许的账号类型白名单，防止非法 userType 混入鉴权链路
+    private static final Set<String> SUPPORTED_USER_TYPES = Arrays.stream(new String[]{"ADMIN", "TEACHER", "STUDENT"})
+            .collect(Collectors.toUnmodifiableSet());
 
     @Resource(name = "jwtProperties")
     private JwtProperties jwtProperties;
 
+    /**
+     * 解析 JWT 并返回 Claims。
+     * 解析失败会抛出 RuntimeException，由调用方决定降级/拦截策略。
+     */
     public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey())
@@ -29,26 +40,40 @@ public class JwtTokenUtils {
                 .getPayload();
     }
 
+    /**
+     * 统一 token 有效性校验入口：
+     * - userId 必须存在且大于 0
+     * - userType 必须在白名单中
+     * - tokenType 必须与调用方预期一致（access/refresh）
+     * - issuer 必须匹配配置值
+     */
     public boolean isTokenValid(String token, String expectedTokenType) {
         try {
             Claims claims = parseClaims(token);
             Long userId = claims.get(CLAIM_USER_ID, Long.class);
-            String userType = claims.get(CLAIM_USER_TYPE, String.class);
+            String userType = normalizeUserType(claims.get(CLAIM_USER_TYPE, String.class));
             String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
-            // 基础框架阶段仅校验通用 claim，后续可在这里扩展 jti、设备指纹、黑名单等安全策略。
-            return userId != null && userType != null && !userType.isBlank() && expectedTokenType.equals(tokenType);
+            String issuer = claims.getIssuer();
+            return userId != null
+                    && userId > 0
+                    && SUPPORTED_USER_TYPES.contains(userType)
+                    && expectedTokenType.equals(tokenType)
+                    && jwtProperties.getIssuer().equals(issuer);
         } catch (RuntimeException exception) {
             return false;
         }
     }
 
+    /**
+     * 生成 JWT。调用方负责传入过期时间与 tokenType。
+     */
     public String generateToken(Long userId, String userType, long expirationSeconds, String tokenType) {
         Instant now = Instant.now();
+        String normalizedUserType = normalizeUserType(userType);
         return Jwts.builder()
-                // subject 与 userId 对齐，便于后续统一用户服务按 userId 路由。
                 .subject(String.valueOf(userId))
                 .claim(CLAIM_USER_ID, userId)
-                .claim(CLAIM_USER_TYPE, userType)
+                .claim(CLAIM_USER_TYPE, normalizedUserType)
                 .claim(CLAIM_TOKEN_TYPE, tokenType)
                 .issuer(jwtProperties.getIssuer())
                 .issuedAt(Date.from(now))
@@ -58,7 +83,13 @@ public class JwtTokenUtils {
     }
 
     private SecretKey signingKey() {
+        // 基于配置密钥生成 HMAC key，密钥长度由 JwtProperties 在启动时校验
         byte[] secretBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(secretBytes);
+    }
+
+    private String normalizeUserType(String userType) {
+        // 统一 userType 规范，避免大小写差异导致鉴权与路由不一致
+        return userType == null ? "" : userType.trim().toUpperCase();
     }
 }
