@@ -1,8 +1,8 @@
 export const adminKpis = [
-  { label: '本周核销数', value: 128, trend: '较上周 +18%' },
-  { label: '待审核申请', value: 5, trend: '需今日处理 3 单' },
-  { label: '未预约提醒', value: 8, trend: '核销后3天未预约' },
-  { label: '本周上课节数', value: 246, trend: '排课完成率 96%' }
+  { label: '本周上课节数', value: 246, trend: '排课完成率 96%' },
+  { label: '即将到期人数', value: 8, trend: '课时不足需跟进' },
+  { label: '总上课人数', value: 128, trend: '本月新增 +12' },
+  { label: '待批改学员作业', value: 5, trend: '需及时反馈' }
 ]
 
 export const conversionLeads = [
@@ -242,12 +242,12 @@ export const students = [
     isReferral: '否',
     registrationFormSummary: '团购体验预约已登记，偏好周末白天课程',
     progressTags: ['低活跃提醒', '正式课'],
-    packageName: '标准课24节包',
+    packageName: '小班课24节包',
     remaining: 18,
     tags: ['低活跃提醒', '正式课', '北环校区'],
     goal: '两个月内完成《晴天》弹唱',
     lastFeedback: '节奏稳定，和弦转换仍需提速',
-    classRecords: ['2026-03-10 标准课：扫弦练习', '2026-03-17 标准课：节拍器训练'],
+    classRecords: ['2026-03-10 小班课：扫弦练习', '2026-03-17 小班课：节拍器训练'],
     homeworkRecords: ['2026-03-18 作业：主歌弹唱视频 已点评'],
     signupTime: '2026-01-15',
     paymentAmount: 3280,
@@ -308,7 +308,7 @@ export const students = [
     isReferral: '否',
     registrationFormSummary: '正式课转化学员，已登记高阶课程目标',
     progressTags: ['课时不足', '一对一'],
-    packageName: '标准课24节包',
+    packageName: '小班课24节包',
     remaining: 2,
     tags: ['课时不足', '一对一', '北环校区'],
     goal: '备赛曲目《Canon Rock》',
@@ -323,7 +323,7 @@ export const students = [
 
 export const scheduleCards = [
   { id: 'C-101', title: '体验课：新学员合班', teacher: '刘老师', room: 'A101', time: '周二 14:00-15:00', conflict: false },
-  { id: 'C-102', title: '标准课：扫弦进阶', teacher: '陈老师', room: 'B203', time: '周二 15:00-16:30', conflict: false },
+  { id: 'C-102', title: '小班课：扫弦进阶', teacher: '陈老师', room: 'B203', time: '周二 15:00-16:30', conflict: false },
   { id: 'C-103', title: '一对一：王星河', teacher: '赵老师', room: 'A203', time: '周二 16:00-17:00', conflict: true },
   { id: 'C-104', title: '团课：贝斯合奏', teacher: '王老师', room: 'B205', time: '周二 18:00-19:00', conflict: false }
 ]
@@ -333,7 +333,7 @@ export const adjustmentRequests = [
     id: 'A-203',
     student: '李予安',
     type: '调课',
-    originTime: '3/25 19:00 标准课',
+    originTime: '3/25 19:00 小班课',
     expectTime: '3/27 18:00 后',
     impact: '改期不退课时'
   },
@@ -360,7 +360,7 @@ export const teacherTodo = ['待签到课程 2 节', '待填写课后反馈 3 �
 export const teacherTodayCourses = [
   {
     id: 'TC-1',
-    title: '标准课：节奏训练营',
+    title: '小班课：节奏训练营',
     time: '今日 15:00-16:00',
     room: '北环校区 A101',
     studentCount: 4,
@@ -404,7 +404,7 @@ export const homeworkPool = [
 export const studentRemaining = {
   remainingHours: 6,
   todayClass: {
-    title: '标准课：扫弦进阶',
+    title: '小班课：扫弦进阶',
     time: '今日 19:00-20:00',
     teacher: '陈老师'
   }
@@ -439,7 +439,7 @@ export const coursePackages = [
   {
     id: 'P-2',
     type: '正式课程',
-    name: '标准课24节包',
+    name: '小班课24节包',
     displayPrice: 3680,
     salePrice: 3280,
     stock: 86,

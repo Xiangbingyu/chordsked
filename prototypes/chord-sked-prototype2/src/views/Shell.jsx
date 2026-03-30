@@ -29,6 +29,10 @@ export default function Shell() {
   const unreadCount = notifications.filter((item) => !item.read).length
   const RoleIcon = roleMeta[currentRole].icon
   const messageFilter = useMemo(() => new URLSearchParams(location.search).get('filter') || '全部', [location.search])
+  const pageFilter = useMemo(() => new URLSearchParams(location.search).get('filter') || '', [location.search])
+  const pageTab = useMemo(() => new URLSearchParams(location.search).get('tab') || '', [location.search])
+  const pageRange = useMemo(() => new URLSearchParams(location.search).get('range') || '', [location.search])
+  const pageScope = useMemo(() => new URLSearchParams(location.search).get('scope') || '', [location.search])
 
   const roleSwitcher = useMemo(() => Object.keys(roleMeta), [])
 
@@ -286,11 +290,15 @@ export default function Shell() {
               <AdminView
                 page={currentPage}
                 messageFilter={messageFilter}
+                pageFilter={pageFilter}
+                pageTab={pageTab}
+                pageRange={pageRange}
+                pageScope={pageScope}
                 onNavigate={navigate}
                 campus={campus}
               />
             )}
-            {currentRole === 'teacher' && <TeacherView page={currentPage} />}
+            {currentRole === 'teacher' && <TeacherView page={currentPage} onNavigate={navigate} />}
             {currentRole === 'student' && <StudentView page={currentPage} />}
           </main>
         </div>

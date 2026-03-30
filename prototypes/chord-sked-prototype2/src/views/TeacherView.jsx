@@ -9,7 +9,7 @@ import {
 } from '../lib/mockData'
 import { PaginatedTable } from '../components/shared/uiBlocks'
 
-export default function TeacherView({ page }) {
+export default function TeacherView({ page, onNavigate }) {
   const [teacherTip, setTeacherTip] = useState('')
   const [teacherMessageFilter, setTeacherMessageFilter] = useState('未读')
   const [teacherMessageDrawerOpen, setTeacherMessageDrawerOpen] = useState(false)
@@ -83,14 +83,14 @@ export default function TeacherView({ page }) {
   const [homeworkRows, setHomeworkRows] = useState(
     homeworkPool.map((item, idx) => ({
       ...item,
-      className: idx % 2 === 0 ? '标准课A班' : '体验班',
-      course: idx % 2 === 0 ? '标准课' : '体验课',
+      className: idx % 2 === 0 ? '小班课A班' : '体验班',
+      course: idx % 2 === 0 ? '小班课' : '体验课',
       reminderSent: false
     }))
   )
   const [activeHomeworkId, setActiveHomeworkId] = useState(homeworkPool[0].id)
   const [homeworkDrawerOpen, setHomeworkDrawerOpen] = useState(false)
-  const [homeworkCourseKeyword, setHomeworkCourseKeyword] = useState('')
+  const [homeworkStudentKeyword, setHomeworkStudentKeyword] = useState('')
   const [homeworkAssetView, setHomeworkAssetView] = useState('')
   const [homeworkComment, setHomeworkComment] = useState('')
   const [teacherStudentDrawerOpen, setTeacherStudentDrawerOpen] = useState(false)
@@ -115,15 +115,17 @@ export default function TeacherView({ page }) {
   })
 
   const teacherKpiRows = [
-    { id: 'TK-1', label: '今日新增学员', value: 2, trend: '较昨日 +1' },
-    { id: 'TK-2', label: '本周核销数', value: 17, trend: '较上周 +3' },
-    { id: 'TK-3', label: '本周上课节数', value: 26, trend: '完成率 93%' },
-    { id: 'TK-4', label: '本周营收', value: '¥12,800', trend: '数据演示占位' }
+    { id: 'TK-1', label: '本周新增学员', value: 6, trend: '较上周 +2' },
+    { id: 'TK-2', label: '本周上课节数', value: 26, trend: '完成率 93%' },
+    { id: 'TK-3', label: '本周已上课时', value: '38课时', trend: '已获课时费' },
+    { id: 'TK-4', label: '待批改作业', value: 5, trend: '待处理' }
   ]
-  const teacherRemindRows = [
-    { id: 'TR-1', type: '到期学员', count: '3人', next: '跟进续费' },
-    { id: 'TR-2', type: '作业未提交', count: '5人', next: '批量提醒' }
-  ]
+  const teacherKpiNavigationMap = {
+    本周新增学员: '/teacher/teacher-students',
+    本周上课节数: '/teacher/teacher-timetable',
+    本周已上课时: '/teacher/teacher-attendance-signed',
+    待批改作业: '/teacher/teacher-homework'
+  }
   const teacherMessageFilterOptions = ['未读', '全部', '课程提醒', '作业提醒', '系统公告', '审批结果']
   const teacherMessages = notifications.filter((item) => {
     if (teacherMessageFilter === '全部') return true
@@ -137,7 +139,7 @@ export default function TeacherView({ page }) {
       date: idx === 0 ? '2026-03-24' : '2026-03-26',
       time: course.time,
       title: course.title,
-      type: idx === 0 ? '标准课' : '一对一',
+      type: idx === 0 ? '小班课' : '一对一',
       campus: course.room.includes('北环') ? '北环国基路校区' : '西大剧院校区',
       room: course.room
     }))
@@ -158,9 +160,16 @@ export default function TeacherView({ page }) {
     }
     return [...acc, { id: `HG-${acc.length + 1}`, course: item.course, submissions: [item] }]
   }, [])
-  const filteredHomeworkCourseGroups = homeworkCourseGroups.filter((group) =>
-    group.course.includes(homeworkCourseKeyword.trim())
-  )
+  const filteredHomeworkCourseGroups = (() => {
+    const keyword = homeworkStudentKeyword.trim()
+    if (!keyword) return homeworkCourseGroups
+    return homeworkCourseGroups
+      .map((group) => ({
+        ...group,
+        submissions: group.submissions.filter((item) => item.student.includes(keyword))
+      }))
+      .filter((group) => group.submissions.length > 0)
+  })()
   const getHomeworkAssetType = (row) => {
     if ((row.media || '').includes('音频')) return 'audio'
     if ((row.media || '').includes('视频')) return 'video'
@@ -173,7 +182,14 @@ export default function TeacherView({ page }) {
     stageReport: idx % 2 === 0 ? '已完成阶段测评' : '待完成阶段测评',
     transferNode: idx % 2 === 0 ? '团购已转正课' : '团购核销后跟进中'
   }))
+  const resolveStudentHours = (student) => {
+    const total = Number(student?.signupHours ?? 0)
+    const remaining = Number(student?.remaining ?? 0)
+    const attended = Math.max(total - remaining, 0)
+    return { total, attended, remaining }
+  }
   const activeTeacherStudent = assignedStudents.find((item) => item.id === activeTeacherStudentId) || assignedStudents[0]
+  const activeTeacherStudentHours = resolveStudentHours(activeTeacherStudent)
 
   const toggleAttendanceStudent = (name) => {
     setAttendanceRows((prev) =>
@@ -356,11 +372,15 @@ export default function TeacherView({ page }) {
         <h2 className="text-sm font-semibold">工作台</h2>
         <div className="grid grid-cols-4 gap-4">
           {teacherKpiRows.map((item) => (
-            <article key={item.id} className="rounded-2xl border border-[#f0ebe3] bg-[#fffcf8] p-4">
+            <button
+              key={item.id}
+              onClick={() => onNavigate?.(teacherKpiNavigationMap[item.label] || '/teacher/teacher-workbench-overview')}
+              className="rounded-2xl border border-[#f0ebe3] bg-[#fffcf8] p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
+            >
               <div className="text-xs text-[#8b8177]">{item.label}</div>
               <div className="mt-2 text-2xl font-semibold text-[#2e2a25]">{item.value}</div>
               <div className="mt-2 text-xs text-[#bc7844]">{item.trend}</div>
-            </article>
+            </button>
           ))}
         </div>
         <div className="grid grid-cols-[1.3fr_1fr] gap-4">
@@ -390,24 +410,12 @@ export default function TeacherView({ page }) {
                 { id: 'TT-1', todo: '待签到课程', count: '2节', next: '进入上课签到' },
                 { id: 'TT-2', todo: '待写课后反馈', count: '1节', next: '进入课后反馈' },
                 { id: 'TT-3', todo: '待批改作业', count: '3份', next: '进入作业管理' },
-                { id: 'TT-4', todo: '未提交提醒', count: '5人', next: '批量提醒' }
+                { id: 'TT-4', todo: '未提交作业跟进', count: '5人', next: '批量跟进' }
               ]}
               pageSize={4}
             />
           </article>
         </div>
-        <article className="rounded-2xl border border-[#f0ebe3] p-4">
-          <div className="mb-2 text-sm font-semibold">提醒</div>
-          <PaginatedTable
-            columns={[
-              { key: 'type', title: '提醒类型' },
-              { key: 'count', title: '数量' },
-              { key: 'next', title: '建议操作' }
-            ]}
-            rows={teacherRemindRows}
-            pageSize={6}
-          />
-        </article>
         {teacherCourseDrawerOpen && (
           <div className="fixed inset-0 z-30 flex justify-end bg-black/20">
             <button className="flex-1" onClick={() => setTeacherCourseDrawerOpen(false)} />
@@ -490,7 +498,7 @@ export default function TeacherView({ page }) {
             <button onClick={() => setTeacherTimetableView('周视图')} className={`rounded-lg px-2.5 py-1.5 text-xs ${teacherTimetableView === '周视图' ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'border border-[#e8dfd3]'}`}>周视图</button>
             <button onClick={() => setTeacherTimetableView('月视图')} className={`rounded-lg px-2.5 py-1.5 text-xs ${teacherTimetableView === '月视图' ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'border border-[#e8dfd3]'}`}>月视图</button>
             <select value={teacherTimetableCampus} onChange={(e) => setTeacherTimetableCampus(e.target.value)} className="rounded-lg border border-[#e8dfd3] px-2 py-1.5 text-xs outline-none"><option>全部校区</option><option>北环国基路校区</option><option>西大剧院校区</option></select>
-            <select value={teacherTimetableType} onChange={(e) => setTeacherTimetableType(e.target.value)} className="rounded-lg border border-[#e8dfd3] px-2 py-1.5 text-xs outline-none"><option>全部类型</option><option>标准课</option><option>一对一</option></select>
+            <select value={teacherTimetableType} onChange={(e) => setTeacherTimetableType(e.target.value)} className="rounded-lg border border-[#e8dfd3] px-2 py-1.5 text-xs outline-none"><option>全部类型</option><option>小班课</option><option>一对一</option></select>
           </div>
         </div>
         <div className="grid grid-cols-7 gap-3">
@@ -761,10 +769,10 @@ export default function TeacherView({ page }) {
     const currentAssetType = homeworkAssetView || getHomeworkAssetType(activeHomework)
     return (
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold">作业管理 / 作业列表（课程总-学员分）</h2>
+        <h2 className="text-sm font-semibold">作业管理 / 作业列表（课程组-学员筛选）</h2>
         <div className="rounded-2xl border border-[#f0ebe3] p-3">
-          <div className="text-xs text-[#7b7064]">按课程搜索</div>
-          <input value={homeworkCourseKeyword} onChange={(e) => setHomeworkCourseKeyword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#e9e2d8] px-3 py-2 text-sm outline-none" placeholder="请输入课程名称，例如：标准课 / 体验课" />
+          <div className="text-xs text-[#7b7064]">按学员姓名搜索</div>
+          <input value={homeworkStudentKeyword} onChange={(e) => setHomeworkStudentKeyword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#e9e2d8] px-3 py-2 text-sm outline-none" placeholder="请输入学员姓名，例如：张小满" />
         </div>
         <div className="space-y-3">
           {filteredHomeworkCourseGroups.map((group) => (
@@ -780,7 +788,15 @@ export default function TeacherView({ page }) {
               </div>
               <PaginatedTable
                 columns={[
-                  { key: 'student', title: '学员提交' },
+                  {
+                    key: 'student',
+                    title: '学员提交',
+                    render: (row) => {
+                      const target = students.find((item) => item.name === row.student)
+                      const hours = resolveStudentHours(target)
+                      return `${row.student}（总${hours.total}/已上${hours.attended}/剩余${hours.remaining}）`
+                    }
+                  },
                   { key: 'title', title: '作业标题' },
                   { key: 'className', title: '班级' },
                   { key: 'deadline', title: '截止时间' },
@@ -862,7 +878,9 @@ export default function TeacherView({ page }) {
         <PaginatedTable
           columns={[
             { key: 'name', title: '学员' },
-            { key: 'remaining', title: '剩余课时' },
+            { key: 'totalHours', title: '总课时', render: (row) => resolveStudentHours(row).total },
+            { key: 'attendedHours', title: '已上课时', render: (row) => resolveStudentHours(row).attended },
+            { key: 'remainingHours', title: '剩余课时', render: (row) => resolveStudentHours(row).remaining },
             { key: 'level', title: '等级标注' },
             { key: 'stageReport', title: '阶段测评' },
             { key: 'transferNode', title: '团购转化节点' },
@@ -881,7 +899,9 @@ export default function TeacherView({ page }) {
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="rounded-xl bg-[#faf8f4] p-3">学员：{activeTeacherStudent.name}</div>
-                <div className="rounded-xl bg-[#faf8f4] p-3">剩余课时：{activeTeacherStudent.remaining}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">总课时：{activeTeacherStudentHours.total}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">已上课时：{activeTeacherStudentHours.attended}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">剩余课时：{activeTeacherStudentHours.remaining}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">等级：{activeTeacherStudent.level}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">阶段测评：{activeTeacherStudent.stageReport}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">作业详情：{(activeTeacherStudent.homeworkRecords || ['暂无']).join('；')}</div>

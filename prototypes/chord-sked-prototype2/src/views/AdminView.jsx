@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BookOpen, CalendarDays, Search, ShoppingBag, Users } from 'lucide-react'
 import {
   adminKpis,
@@ -14,19 +14,38 @@ import {
 } from '../lib/mockData'
 import { PaginatedTable, QrPreview } from '../components/shared/uiBlocks'
 
-export default function AdminView({ page, messageFilter, onNavigate, campus }) {
+export default function AdminView({ page, messageFilter, pageFilter, pageTab, pageRange, pageScope, onNavigate, campus }) {
   const [leadRows, setLeadRows] = useState(conversionLeads)
   const [orderRows, setOrderRows] = useState(conversionOrders)
   const [adjustmentRows, setAdjustmentRows] = useState(adjustmentRequests)
   const [studentRows, setStudentRows] = useState(students)
-  const [teacherRows, setTeacherRows] = useState(teachers)
+  const [teacherRows, setTeacherRows] = useState([
+    ...teachers,
+    {
+      id: 'T-06',
+      name: '宫老师',
+      employeeNo: 'EMP-1006',
+      phone: '13888886666',
+      entryDate: '2024-05-18',
+      teachingType: '团课',
+      teachingQualification: '5年教学经验，擅长体验课转化',
+      expertiseTracks: ['木吉他'],
+      level: 'B',
+      campus: '北环国基路校区',
+      status: '在职',
+      subject: '木吉他',
+      capacity: '团课 5 人',
+      available: '周一至周五 10:00-19:00',
+      boundStudents: []
+    }
+  ])
   const [packageRows, setPackageRows] = useState(coursePackages)
   const [homeworkRows, setHomeworkRows] = useState([
     ...homeworkPool.map((item, idx) => ({
       id: `AH-${item.id}`,
       campus: idx % 2 === 0 ? '北环国基路校区' : '西大剧院校区',
       student: item.student,
-      course: idx % 2 === 0 ? '标准课：节奏训练营' : '团购体验课：基础和弦',
+      course: idx % 2 === 0 ? '小班课：节奏训练营' : '团购体验课：基础和弦',
       title: item.title,
       deadline: item.deadline?.replace('截止 ', '') || '2026-03-26 21:00',
       status: item.status,
@@ -34,9 +53,11 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
       teacher: idx % 2 === 0 ? '陈老师' : '刘老师'
     })),
     { id: 'AH-004', campus: '北环国基路校区', student: '王星河', course: '一对一：周末冲刺', title: '速度练习打卡', deadline: '2026-03-26 22:00', status: '未提交', submittedAt: '—', teacher: '赵老师' },
-    { id: 'AH-005', campus: '西大剧院校区', student: '陈可心', course: '标准课：扫弦进阶', title: '扫弦节奏视频', deadline: '2026-03-25 21:00', status: '待提交', submittedAt: '—', teacher: '陈老师' }
+    { id: 'AH-005', campus: '西大剧院校区', student: '陈可心', course: '小班课：扫弦进阶', title: '扫弦节奏视频', deadline: '2026-03-25 21:00', status: '待提交', submittedAt: '—', teacher: '陈老师' }
   ])
   const [homeworkStatusFilter, setHomeworkStatusFilter] = useState('全部')
+  const [studentProgressFilter, setStudentProgressFilter] = useState('全部')
+  const [studentRecordScope, setStudentRecordScope] = useState('全部')
   const [homeworkDrawerOpen, setHomeworkDrawerOpen] = useState(false)
   const [activeHomeworkId, setActiveHomeworkId] = useState('')
   const [activeLeadId, setActiveLeadId] = useState(conversionLeads[0].id)
@@ -66,32 +87,32 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   const [packageDrawerOpen, setPackageDrawerOpen] = useState(false)
   const [newPackageDrawerOpen, setNewPackageDrawerOpen] = useState(false)
   const [studentHourConsumeRows] = useState([
-    { id: 'HC-001', studentId: 'S-001', date: '2026-03-10 15:10', action: '上课扣减', hours: 1, course: '标准课：扫弦练习', operator: '系统' },
-    { id: 'HC-002', studentId: 'S-001', date: '2026-03-17 15:12', action: '上课扣减', hours: 1, course: '标准课：节拍器训练', operator: '系统' },
+    { id: 'HC-001', studentId: 'S-001', date: '2026-03-10 15:10', action: '上课扣减', hours: 1, course: '小班课：扫弦练习', operator: '系统' },
+    { id: 'HC-002', studentId: 'S-001', date: '2026-03-17 15:12', action: '上课扣减', hours: 1, course: '小班课：节拍器训练', operator: '系统' },
     { id: 'HC-003', studentId: 'S-001', date: '2026-03-20 20:30', action: '补扣', hours: 1, course: '补扣：补签消耗', operator: '教务' },
     { id: 'HC-004', studentId: 'S-002', date: '2026-03-08 19:05', action: '上课扣减', hours: 1, course: '团购体验课：基础和弦', operator: '系统' },
     { id: 'HC-005', studentId: 'S-002', date: '2026-03-15 19:06', action: '退回', hours: 1, course: '撤销签到退回', operator: '教师' },
     { id: 'HC-006', studentId: 'S-003', date: '2026-03-25 18:55', action: '上课扣减', hours: 1, course: '一对一：周末冲刺', operator: '系统' }
   ])
   const [studentPackagePurchaseRows] = useState([
-    { id: 'PB-001', studentId: 'S-001', date: '2026-01-15 12:10', packageName: '标准课24节包', hours: 24, amount: 3280, channel: '门店', status: '已支付' },
+    { id: 'PB-001', studentId: 'S-001', date: '2026-01-15 12:10', packageName: '小班课24节包', hours: 24, amount: 3280, channel: '门店', status: '已支付' },
     { id: 'PB-002', studentId: 'S-002', date: '2026-03-22 14:30', packageName: '体验课2节包', hours: 2, amount: 49, channel: '抖音团购', status: '已支付' },
     { id: 'PB-003', studentId: 'S-003', date: '2026-02-03 20:40', packageName: '冲刺课12节包', hours: 12, amount: 4980, channel: '门店', status: '已支付' }
   ])
   const [studentClassRecordRows] = useState([
-    { id: 'CR-001', studentId: 'S-001', date: '2026-03-10', course: '标准课：扫弦练习', teacher: '陈老师', room: '北环校区 A101', sign: '已签到', deductHours: 1 },
-    { id: 'CR-002', studentId: 'S-001', date: '2026-03-17', course: '标准课：节拍器训练', teacher: '陈老师', room: '北环校区 A101', sign: '已签到', deductHours: 1 },
+    { id: 'CR-001', studentId: 'S-001', date: '2026-03-10', course: '小班课：扫弦练习', teacher: '陈老师', room: '北环校区 A101', sign: '已签到', deductHours: 1 },
+    { id: 'CR-002', studentId: 'S-001', date: '2026-03-17', course: '小班课：节拍器训练', teacher: '陈老师', room: '北环校区 A101', sign: '已签到', deductHours: 1 },
     { id: 'CR-003', studentId: 'S-002', date: '2026-03-08', course: '团购体验课：基础和弦', teacher: '刘老师', room: '西大剧院校区 B203', sign: '已签到', deductHours: 1 },
     { id: 'CR-004', studentId: 'S-003', date: '2026-03-25', course: '一对一：周末冲刺', teacher: '赵老师', room: '北环校区 B103', sign: '未签到', deductHours: 0 }
   ])
   const [studentFeedbackRows] = useState([
-    { id: 'FB-001', studentId: 'S-001', date: '2026-03-10 16:20', course: '标准课：扫弦练习', teacher: '陈老师', summary: '扫弦节奏稳定，需提升换和弦速度', rating: 'B' },
-    { id: 'FB-002', studentId: 'S-001', date: '2026-03-17 16:10', course: '标准课：节拍器训练', teacher: '陈老师', summary: '拍点更准，建议增加慢速练习', rating: 'A-' },
+    { id: 'FB-001', studentId: 'S-001', date: '2026-03-10 16:20', course: '小班课：扫弦练习', teacher: '陈老师', summary: '扫弦节奏稳定，需提升换和弦速度', rating: 'B' },
+    { id: 'FB-002', studentId: 'S-001', date: '2026-03-17 16:10', course: '小班课：节拍器训练', teacher: '陈老师', summary: '拍点更准，建议增加慢速练习', rating: 'A-' },
     { id: 'FB-003', studentId: 'S-002', date: '2026-03-08 20:10', course: '团购体验课：基础和弦', teacher: '刘老师', summary: '基础和弦能按稳，建议购买正课包继续学习', rating: 'B+' }
   ])
   const [studentHomeworkRecordRows] = useState([
-    { id: 'HW-001', studentId: 'S-001', date: '2026-03-18', course: '标准课：扫弦练习', title: '主歌弹唱视频', status: '已提交', submittedAt: '2026-03-18 21:10', teacher: '陈老师' },
-    { id: 'HW-002', studentId: 'S-001', date: '2026-03-24', course: '标准课：节拍器训练', title: '节拍器练习音频', status: '待提交', submittedAt: '—', teacher: '陈老师' },
+    { id: 'HW-001', studentId: 'S-001', date: '2026-03-18', course: '小班课：扫弦练习', title: '主歌弹唱视频', status: '已提交', submittedAt: '2026-03-18 21:10', teacher: '陈老师' },
+    { id: 'HW-002', studentId: 'S-001', date: '2026-03-24', course: '小班课：节拍器训练', title: '节拍器练习音频', status: '待提交', submittedAt: '—', teacher: '陈老师' },
     { id: 'HW-003', studentId: 'S-002', date: '2026-03-08', course: '团购体验课：基础和弦', title: '和弦转换练习视频', status: '未提交', submittedAt: '—', teacher: '刘老师' },
     { id: 'HW-004', studentId: 'S-003', date: '2026-03-25', course: '一对一：周末冲刺', title: '速度练习打卡', status: '已提交', submittedAt: '2026-03-25 22:05', teacher: '赵老师' }
   ])
@@ -149,14 +170,14 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   })
   const [scheduleTemplateRows, setScheduleTemplateRows] = useState([
     { id: 'TM-001', name: '团购体验课模板', courseType: '团购体验课', subject: '木吉他', consumeHours: 1, capacityMin: 3, capacityMax: 5, teachingType: '团课', ageGroup: '未成年', needStudentBinding: false, status: '启用' },
-    { id: 'TM-002', name: '标准课模板', courseType: '标准课', subject: '木吉他', consumeHours: 1, capacityMin: 3, capacityMax: 5, teachingType: '团课', ageGroup: '成人', needStudentBinding: false, status: '启用' },
+    { id: 'TM-002', name: '小班课模板', courseType: '小班课', subject: '木吉他', consumeHours: 1, capacityMin: 3, capacityMax: 5, teachingType: '团课', ageGroup: '成人', needStudentBinding: false, status: '启用' },
     { id: 'TM-003', name: '一对一模板', courseType: '一对一', subject: '贝斯', consumeHours: 1, capacityMin: 1, capacityMax: 1, teachingType: '一对一', ageGroup: '不限', needStudentBinding: true, status: '启用' }
   ])
   const [scheduleTemplateModalOpen, setScheduleTemplateModalOpen] = useState(false)
   const [scheduleTemplateEditingId, setScheduleTemplateEditingId] = useState('')
   const [scheduleTemplateForm, setScheduleTemplateForm] = useState({
     name: '',
-    courseType: '标准课',
+    courseType: '小班课',
     subject: '木吉他',
     consumeHours: '1',
     capacityMin: '3',
@@ -169,6 +190,9 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   const [scheduleCalendarView, setScheduleCalendarView] = useState('week')
   const [scheduleSelectedDate, setScheduleSelectedDate] = useState('2026-03-24')
   const [scheduleArrangeModalOpen, setScheduleArrangeModalOpen] = useState(false)
+  const [scheduleDetailModalOpen, setScheduleDetailModalOpen] = useState(false)
+  const [scheduleDetailRows, setScheduleDetailRows] = useState([])
+  const [scheduleDetailTitle, setScheduleDetailTitle] = useState('')
   const [schedulePlanForm, setSchedulePlanForm] = useState({
     campus: '北环国基路校区',
     ageGroup: '成人',
@@ -180,23 +204,32 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   })
   const [scheduleCandidateRows, setScheduleCandidateRows] = useState([])
   const [schedulePlanRows, setSchedulePlanRows] = useState([
-    { id: 'SCH-001', date: '2026-03-24', timeSlot: '14:00-15:00', templateName: '团购体验课模板', templateType: '团购体验课', teacherId: 'T-01', teacher: '刘老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '未成年', reservedCount: 4, capacityMax: 5, studentName: '' },
-    { id: 'SCH-002', date: '2026-03-24', timeSlot: '15:00-16:00', templateName: '标准课模板', templateType: '标准课', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-003', room: 'B203', campus: '西大剧院校区', ageGroup: '成人', reservedCount: 3, capacityMax: 5, studentName: '' },
-    { id: 'SCH-003', date: '2026-03-25', timeSlot: '18:00-19:00', templateName: '一对一模板', templateType: '一对一', teacherId: 'T-05', teacher: '赵老师', roomId: 'ROOM-002', room: 'A203', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 1, capacityMax: 1, studentName: '王星河' }
+    { id: 'SCH-001', date: '2026-03-24', timeSlot: '14:00-15:00', templateName: '团购体验课模板', templateType: '团购体验课', instrumentType: '木吉他', teacherId: 'T-01', teacher: '刘老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '未成年', reservedCount: 4, capacityMax: 5, studentName: '' },
+    { id: 'SCH-002', date: '2026-03-24', timeSlot: '15:00-16:00', templateName: '小班课模板', templateType: '小班课', instrumentType: '木吉他', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-003', room: 'B203', campus: '西大剧院校区', ageGroup: '成人', reservedCount: 3, capacityMax: 5, studentName: '' },
+    { id: 'SCH-003', date: '2026-03-25', timeSlot: '18:00-19:00', templateName: '一对一模板', templateType: '一对一', instrumentType: '贝斯', teacherId: 'T-05', teacher: '赵老师', roomId: 'ROOM-002', room: 'A203', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 1, capacityMax: 1, studentName: '王星河' }
     ,
-    { id: 'SCH-004', date: '2026-03-26', timeSlot: '10:00-11:00', templateName: '标准课模板', templateType: '标准课', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 1, capacityMax: 5, studentName: '', bookedStudents: ['李予安'] },
-    { id: 'SCH-005', date: '2026-03-26', timeSlot: '19:00-20:00', templateName: '团购体验课模板', templateType: '团购体验课', teacherId: 'T-01', teacher: '刘老师', roomId: 'ROOM-003', room: 'B203', campus: '西大剧院校区', ageGroup: '未成年', reservedCount: 0, capacityMax: 5, studentName: '', bookedStudents: [] },
-    { id: 'SCH-006', date: '2026-03-27', timeSlot: '14:00-15:00', templateName: '标准课模板', templateType: '标准课', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 4, capacityMax: 5, studentName: '', bookedStudents: ['张小满', '王星河', '陈可心', '林知夏'] }
+    { id: 'SCH-004', date: '2026-03-26', timeSlot: '10:00-11:00', templateName: '小班课模板', templateType: '小班课', instrumentType: '木吉他', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 1, capacityMax: 5, studentName: '', bookedStudents: ['李予安'] },
+    { id: 'SCH-007', date: '2026-03-26', timeSlot: '10:00-11:00', templateName: '团购体验课模板', templateType: '团购体验课', instrumentType: '木吉他', teacherId: 'T-06', teacher: '宫老师', roomId: 'ROOM-002', room: 'A203', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 0, capacityMax: 5, studentName: '', bookedStudents: [] },
+    { id: 'SCH-005', date: '2026-03-26', timeSlot: '19:00-20:00', templateName: '团购体验课模板', templateType: '团购体验课', instrumentType: '木吉他', teacherId: 'T-01', teacher: '刘老师', roomId: 'ROOM-003', room: 'B203', campus: '西大剧院校区', ageGroup: '未成年', reservedCount: 0, capacityMax: 5, studentName: '', bookedStudents: [] },
+    { id: 'SCH-006', date: '2026-03-27', timeSlot: '14:00-15:00', templateName: '小班课模板', templateType: '小班课', instrumentType: '木吉他', teacherId: 'T-02', teacher: '陈老师', roomId: 'ROOM-001', room: 'A101', campus: '北环国基路校区', ageGroup: '成人', reservedCount: 4, capacityMax: 5, studentName: '', bookedStudents: ['张小满', '王星河', '陈可心', '林知夏'] }
   ])
   const [scheduleCourseRows, setScheduleCourseRows] = useState([
     { id: 'SCH-001', date: '2026-03-24', timeSlot: '14:00-15:00', templateType: '团购体验课', teacher: '刘老师', student: '李予安', teacherSigned: false, studentSigned: false, cancelled: false },
-    { id: 'SCH-002', date: '2026-03-24', timeSlot: '15:00-16:00', templateType: '标准课', teacher: '陈老师', student: '张小满', teacherSigned: true, studentSigned: true, cancelled: false },
-    { id: 'SCH-003', date: '2026-03-25', timeSlot: '18:00-19:00', templateType: '一对一', teacher: '赵老师', student: '王星河', teacherSigned: true, studentSigned: false, cancelled: true }
+    { id: 'SCH-002', date: '2026-03-24', timeSlot: '15:00-16:00', templateType: '小班课', teacher: '陈老师', student: '张小满', teacherSigned: true, studentSigned: true, cancelled: false },
+    { id: 'SCH-003', date: '2026-03-25', timeSlot: '18:00-19:00', templateType: '一对一', teacher: '赵老师', student: '王星河', teacherSigned: true, studentSigned: false, cancelled: true },
+    { id: 'SCH-007', date: '2026-03-26', timeSlot: '10:00-11:00', templateType: '团购体验课', teacher: '宫老师', student: '', teacherSigned: false, studentSigned: false, cancelled: false }
   ])
   const [scheduleListTab, setScheduleListTab] = useState('scheduled')
+  const [scheduleDateRange, setScheduleDateRange] = useState('全部')
   const [scheduleActionModalOpen, setScheduleActionModalOpen] = useState(false)
   const [scheduleActionType, setScheduleActionType] = useState('teacher-sign')
   const [activeScheduleCourseId, setActiveScheduleCourseId] = useState('')
+  const [scheduleTeacherDetailOpen, setScheduleTeacherDetailOpen] = useState(false)
+  const [activeScheduleTeacherId, setActiveScheduleTeacherId] = useState('')
+  const [scheduleStudentModalOpen, setScheduleStudentModalOpen] = useState(false)
+  const [scheduleStudentModalRows, setScheduleStudentModalRows] = useState([])
+  const [workbenchWidgetOrder, setWorkbenchWidgetOrder] = useState(['kpis', 'courses', 'shortcuts', 'todo'])
+  const [draggingWorkbenchWidget, setDraggingWorkbenchWidget] = useState('')
   const [scheduleAssistStudentName, setScheduleAssistStudentName] = useState('')
   const [scheduleAssistDeductHours, setScheduleAssistDeductHours] = useState('1')
   const [bookingModalOpen, setBookingModalOpen] = useState(false)
@@ -350,6 +383,13 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   const activeStudentClassRows = studentClassRecordRows.filter((item) => item.studentId === activeStudentId)
   const activeStudentFeedbackRows = studentFeedbackRows.filter((item) => item.studentId === activeStudentId)
   const activeStudentHomeworkRows = studentHomeworkRecordRows.filter((item) => item.studentId === activeStudentId)
+  const resolveStudentHours = (student) => {
+    const total = Number(student?.signupHours ?? 0)
+    const remaining = Number(student?.remaining ?? 0)
+    const attended = Math.max(total - remaining, 0)
+    return { total, attended, remaining }
+  }
+  const activeStudentHours = resolveStudentHours(activeStudent)
   const [activePackageId, setActivePackageId] = useState(coursePackages[0].id)
   const activePackage = packageRows.find((item) => item.id === activePackageId) || packageRows[0]
   const activeMessage = notifications.find((item) => item.id === activeMessageId) || notifications[0]
@@ -453,11 +493,120 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   ]
 
   const messageFilterOptions = ['全部', '未读', '待办提醒', '审批结果', '系统公告', '触达结果']
+  const scheduleRangeOptions = ['全部', '本周', '本月']
+  const studentFilterOptions = ['全部', '即将到期', '课时不足', '有上课记录']
+  const studentScopeOptions = ['全部', '本月']
+  const parseDateOnly = (value) => {
+    if (!value) return null
+    const [dateText] = String(value).split(' ')
+    const [year, month, day] = dateText.split('-').map((item) => Number(item))
+    if (!year || !month || !day) return null
+    return new Date(year, month - 1, day)
+  }
+  const getLatestDate = (rows, key) => rows.reduce((latest, item) => {
+    const current = parseDateOnly(item[key])
+    if (!current) return latest
+    return !latest || current > latest ? current : latest
+  }, null)
+  const toMonthKey = (date) => {
+    if (!date) return ''
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  }
+  const isSameMonth = (target, reference) => (
+    !!target
+    && !!reference
+    && target.getFullYear() === reference.getFullYear()
+    && target.getMonth() === reference.getMonth()
+  )
+  const isSameWeek = (target, reference) => {
+    if (!target || !reference) return false
+    const ref = new Date(reference)
+    const weekOffset = (ref.getDay() + 6) % 7
+    ref.setDate(ref.getDate() - weekOffset)
+    ref.setHours(0, 0, 0, 0)
+    const weekEnd = new Date(ref)
+    weekEnd.setDate(ref.getDate() + 6)
+    weekEnd.setHours(23, 59, 59, 999)
+    return target >= ref && target <= weekEnd
+  }
   const filteredNotifications = notifications.filter((item) => {
     if (messageFilter === '全部') return true
     if (messageFilter === '未读') return !item.read
     return item.category === messageFilter
   })
+  const scheduleListBaseRows = campus ? scheduleCourseRows.filter((item) => schedulePlanRows.find((plan) => plan.id === item.id)?.campus === campus) : scheduleCourseRows
+  const scheduleReferenceDate = getLatestDate(scheduleListBaseRows, 'date') || getLatestDate(scheduleCourseRows, 'date')
+  const filteredScheduleRows = scheduleListBaseRows.filter((item) => {
+    if (scheduleDateRange === '全部') return true
+    const targetDate = parseDateOnly(item.date)
+    if (scheduleDateRange === '本周') return isSameWeek(targetDate, scheduleReferenceDate)
+    if (scheduleDateRange === '本月') return isSameMonth(targetDate, scheduleReferenceDate)
+    return true
+  })
+  const classRecordReferenceDate = getLatestDate(studentClassRecordRows, 'date')
+  const classRecordMonthKey = toMonthKey(classRecordReferenceDate)
+  const classRecordRowsByScope = studentClassRecordRows.filter((item) => {
+    if (studentRecordScope === '全部') return true
+    if (studentRecordScope === '本月') {
+      return toMonthKey(parseDateOnly(item.date)) === classRecordMonthKey
+    }
+    return true
+  })
+  const classRecordStudentIds = new Set(classRecordRowsByScope.map((item) => item.studentId))
+  const filteredStudentRows = studentRows.filter((item) => {
+    if (studentProgressFilter === '有上课记录') return classRecordStudentIds.has(item.id)
+    if (studentProgressFilter === '全部') return true
+    const tags = item.progressTags || item.tags || []
+    return tags.includes(studentProgressFilter)
+  })
+  const kpiNavigationMap = {
+    本周上课节数: '/admin/schedule-list?tab=scheduled&range=week',
+    即将到期人数: '/admin/students-list?filter=即将到期',
+    总上课人数: '/admin/students-list?filter=有上课记录&scope=month',
+    待批改学员作业: '/admin/homework-list?filter=待批改'
+  }
+
+  useEffect(() => {
+    const nextTab = pageTab || ''
+    if (page === 'schedule-list' && ['scheduled', 'bookable'].includes(nextTab)) {
+      setScheduleListTab(nextTab)
+    }
+  }, [page, pageTab])
+
+  useEffect(() => {
+    const nextRange = pageRange || ''
+    if (page === 'schedule-list') {
+      if (nextRange === 'week' || nextRange === '本周') setScheduleDateRange('本周')
+      else if (nextRange === 'month' || nextRange === '本月') setScheduleDateRange('本月')
+      else if (nextRange === 'all' || nextRange === '全部' || !nextRange) setScheduleDateRange('全部')
+    }
+  }, [page, pageRange])
+
+  useEffect(() => {
+    const nextFilter = pageFilter || ''
+    if (page === 'homework-list' && ['全部', '待提交', '未提交', '已提交', '待批改'].includes(nextFilter)) {
+      setHomeworkStatusFilter(nextFilter)
+    }
+  }, [page, pageFilter])
+
+  useEffect(() => {
+    const nextFilter = pageFilter || ''
+    if (page === 'students-list') {
+      if (['全部', '即将到期', '课时不足', '有上课记录'].includes(nextFilter)) {
+        setStudentProgressFilter(nextFilter)
+      } else if (!nextFilter) {
+        setStudentProgressFilter('全部')
+      }
+    }
+  }, [page, pageFilter])
+
+  useEffect(() => {
+    const nextScope = pageScope || ''
+    if (page === 'students-list') {
+      if (nextScope === 'month' || nextScope === '本月') setStudentRecordScope('本月')
+      else if (nextScope === 'all' || nextScope === '全部' || !nextScope) setStudentRecordScope('全部')
+    }
+  }, [page, pageScope])
 
   const importSummary = {
     total: orderRows.length,
@@ -1096,7 +1245,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
 
   const [selectedRebindCourseId, setSelectedRebindCourseId] = useState('')
   const [adjustmentAuditLogRows, setAdjustmentAuditLogRows] = useState([
-    { id: 'AL-001', time: '2026-03-24 09:20', student: '李予安', type: '调课', action: '确认重绑', result: '通过', detail: '3/25 19:00 标准课 → 周二 15:00-16:30 / 标准课：扫弦进阶' },
+    { id: 'AL-001', time: '2026-03-24 09:20', student: '李予安', type: '调课', action: '确认重绑', result: '通过', detail: '3/25 19:00 小班课 → 周二 15:00-16:30 / 小班课：扫弦进阶' },
     { id: 'AL-002', time: '2026-03-24 10:05', student: '张小满', type: '取消', action: '申请审批', result: '通过', detail: '按规则退 1 课时' },
     { id: 'AL-003', time: '2026-03-24 11:30', student: '王星河', type: '调课', action: '申请审批', result: '驳回', detail: '时间冲突，建议改约周末' }
   ])
@@ -1206,8 +1355,20 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   const scheduleCampusOptions = orgCampusRows.map((item) => item.name)
   const scheduleWeekDays = ['2026-03-23', '2026-03-24', '2026-03-25', '2026-03-26', '2026-03-27', '2026-03-28', '2026-03-29']
   const scheduleMonthDays = Array.from({ length: 31 }, (_, idx) => `2026-03-${String(idx + 1).padStart(2, '0')}`)
-  const scheduleCalendarDays = scheduleCalendarView === 'week' ? scheduleWeekDays : scheduleMonthDays
+  const scheduleCalendarDays = scheduleCalendarView === 'day' ? [scheduleSelectedDate] : scheduleCalendarView === 'week' ? scheduleWeekDays : scheduleMonthDays
   const scheduleTimeSlots = ['10:00-11:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '18:00-19:00', '19:00-20:00']
+  const teacherTagStyles = [
+    'bg-[#fff1e8] text-[#b45309]',
+    'bg-[#ecfdf3] text-[#166534]',
+    'bg-[#eff6ff] text-[#1d4ed8]',
+    'bg-[#f5f3ff] text-[#6d28d9]',
+    'bg-[#fef3c7] text-[#92400e]',
+    'bg-[#ffe4e6] text-[#be123c]'
+  ]
+  const teacherTagStyleMap = teacherRows.reduce((acc, teacher, index) => {
+    acc[teacher.id] = teacherTagStyles[index % teacherTagStyles.length]
+    return acc
+  }, {})
   const teacherAvailabilityMap = {
     'T-01': ['14:00-15:00', '15:00-16:00', '18:00-19:00', '19:00-20:00'],
     'T-02': ['10:00-11:00', '14:00-15:00', '15:00-16:00', '16:00-17:00'],
@@ -1274,7 +1435,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
       setScheduleTemplateEditingId('')
       setScheduleTemplateForm({
         name: '',
-        courseType: '标准课',
+        courseType: '小班课',
         subject: '木吉他',
         consumeHours: '1',
         capacityMin: '3',
@@ -1330,18 +1491,47 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
     setScheduleTemplateModalOpen(false)
   }
 
-  const openScheduleArrangeModal = (date) => {
+  const openScheduleArrangeModal = (date, preferredSlot = '') => {
     setScheduleSelectedDate(date)
     setScheduleCandidateRows([])
     setSchedulePlanForm((prev) => ({
       ...prev,
       campus: scheduleCampusOptions[0] || prev.campus,
-      timeSlot: '',
+      timeSlot: preferredSlot,
       teacherId: '',
       roomId: '',
       studentName: ''
     }))
     setScheduleArrangeModalOpen(true)
+  }
+
+  const cancelScheduledPlan = (planId) => {
+    const targetPlan = schedulePlanRows.find((item) => item.id === planId)
+    if (!targetPlan) return
+    setSchedulePlanRows((prev) => prev.filter((item) => item.id !== planId))
+    setScheduleCourseRows((prev) => prev.filter((item) => item.id !== planId))
+    setScheduleDetailRows((prev) => {
+      const next = prev.filter((item) => item.id !== planId)
+      if (next.length === 0) {
+        setScheduleDetailModalOpen(false)
+      }
+      return next
+    })
+    setFlowTip(`已取消排课：${targetPlan.date} ${targetPlan.timeSlot} ${targetPlan.teacher}`)
+  }
+
+  const openScheduleNode = (date, slot, row) => {
+    setScheduleSelectedDate(date)
+    if (row) {
+      setScheduleDetailTitle(`${date} ${slot} · ${row.teacher}`)
+      setScheduleDetailRows([row])
+      setScheduleArrangeModalOpen(false)
+      setScheduleDetailModalOpen(true)
+      return
+    }
+    setScheduleDetailModalOpen(false)
+    setScheduleDetailRows([])
+    openScheduleArrangeModal(date, slot)
   }
 
   const searchScheduleCandidates = () => {
@@ -1600,64 +1790,61 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   }
 
   if (page === 'workbench-overview') {
-    const todayCourses = scheduleCards.slice(0, 4).map((item, index) => ({
-      id: item.id,
-      no: index + 1,
-      time: item.time,
-      title: item.title,
-      teacher: item.teacher,
-      room: item.room,
-      status: index < 2 ? '待上课' : '准备中'
-    }))
-    return (
-      <section className="space-y-5">
-        <h2 className="text-sm font-semibold">工作台</h2>
-        <div className="grid grid-cols-4 gap-4">
-          {adminKpis.map((item) => (
-            <article key={item.label} className="rounded-2xl border border-[#f0ebe3] bg-[#fffcf8] p-4">
-              <div className="text-xs text-[#8b8177]">{item.label}</div>
-              <div className="mt-2 text-3xl font-semibold text-[#2e2a25]">{item.value}</div>
-              <div className="mt-2 text-xs text-[#bc7844]">{item.trend}</div>
-            </article>
-          ))}
-        </div>
-        <div className="grid grid-cols-[1.5fr_1fr] gap-4">
-          <div>
-            <div className="mb-2 text-sm font-semibold">待办</div>
-            <PaginatedTable
-              columns={[
-                { key: 'content', title: '事项' },
-                { key: 'value', title: '数量/状态' },
-                { key: 'action', title: '下一步' }
-              ]}
-              rows={todoItems}
-              pageSize={4}
-            />
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    const weeklyCourseRows = (campus ? schedulePlanRows.filter((item) => item.campus === campus) : schedulePlanRows)
+      .slice()
+      .sort((a, b) => `${a.date} ${a.timeSlot}`.localeCompare(`${b.date} ${b.timeSlot}`))
+    const weekCourseTableRows = weeklyCourseRows.map((item) => {
+      const date = item.date
+      const dateObj = parseDateOnly(date)
+      return {
+        id: item.id,
+        dateLabel: `${date} ${weekDays[dateObj?.getDay?.() ?? 0]}`,
+        time: item.timeSlot,
+        title: item.templateName,
+        teacher: item.teacher,
+        room: item.room,
+        status: item.reservedCount > 0 ? '待上课' : '准备中'
+      }
+    })
+    const handleWorkbenchDrop = (targetKey) => {
+      if (!draggingWorkbenchWidget || draggingWorkbenchWidget === targetKey) return
+      setWorkbenchWidgetOrder((prev) => {
+        const rest = prev.filter((key) => key !== draggingWorkbenchWidget)
+        const targetIndex = rest.indexOf(targetKey)
+        rest.splice(targetIndex, 0, draggingWorkbenchWidget)
+        return rest
+      })
+      setDraggingWorkbenchWidget('')
+    }
+    const widgetMap = {
+      kpis: {
+        title: '4个看板',
+        span: 'col-span-12',
+        body: (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {adminKpis.map((item) => (
+              <article
+                key={item.label}
+                onClick={() => onNavigate(kpiNavigationMap[item.label] || '/admin/workbench-overview')}
+                className="cursor-pointer rounded-2xl border border-[#f0ebe3] bg-[#fffcf8] p-4 transition hover:shadow-sm"
+              >
+                <div className="text-xs text-[#8b8177]">{item.label}</div>
+                <div className="mt-2 text-3xl font-semibold text-[#2e2a25]">{item.value}</div>
+                <div className="mt-2 text-xs text-[#bc7844]">{item.trend}</div>
+              </article>
+            ))}
           </div>
-          <div>
-            <div className="mb-2 text-sm font-semibold">快捷入口</div>
-            <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[#f0ebe3] p-3">
-              {shortcuts.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => onNavigate(item.to)}
-                  className={`rounded-2xl border border-white/60 p-3 text-left transition ${item.card}`}
-                >
-                  <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white">
-                    <item.icon size={18} />
-                  </div>
-                  <div className="text-sm font-semibold">{item.label}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div>
-          <div className="mb-2 text-sm font-semibold">今日待上课程</div>
+        )
+      },
+      courses: {
+        title: '今日待上课程（周视图）',
+        span: 'col-span-12 xl:col-span-8',
+        body: (
           <PaginatedTable
             columns={[
-              { key: 'no', title: '序号' },
-              { key: 'time', title: '上课时间' },
+              { key: 'dateLabel', title: '日期' },
+              { key: 'time', title: '时间段' },
               { key: 'title', title: '课程名称' },
               { key: 'teacher', title: '授课老师' },
               { key: 'room', title: '教室' },
@@ -1671,9 +1858,73 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 )
               }
             ]}
-            rows={todayCourses}
-            pageSize={5}
+            rows={weekCourseTableRows}
+            pageSize={6}
+            emptyText="当前校区暂无排课"
           />
+        )
+      },
+      shortcuts: {
+        title: '快捷入口',
+        span: 'col-span-12 xl:col-span-4',
+        body: (
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[#f0ebe3] p-3">
+            {shortcuts.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => onNavigate(item.to)}
+                className={`rounded-2xl border border-white/60 p-3 text-left transition ${item.card}`}
+              >
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white">
+                  <item.icon size={18} />
+                </div>
+                <div className="text-sm font-semibold">{item.label}</div>
+              </button>
+            ))}
+          </div>
+        )
+      },
+      todo: {
+        title: '今日待办',
+        span: 'col-span-12',
+        body: (
+          <PaginatedTable
+            columns={[
+              { key: 'content', title: '事项' },
+              { key: 'value', title: '数量/状态' },
+              { key: 'action', title: '下一步' }
+            ]}
+            rows={todoItems}
+            pageSize={4}
+          />
+        )
+      }
+    }
+    const orderedWidgets = workbenchWidgetOrder.filter((key) => widgetMap[key])
+    return (
+      <section className="space-y-5">
+        <h2 className="text-sm font-semibold">工作台</h2>
+        <div className="grid grid-cols-12 gap-4">
+          {orderedWidgets.map((widgetKey) => {
+            const widget = widgetMap[widgetKey]
+            return (
+              <section
+                key={widgetKey}
+                draggable
+                onDragStart={() => setDraggingWorkbenchWidget(widgetKey)}
+                onDragEnd={() => setDraggingWorkbenchWidget('')}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => handleWorkbenchDrop(widgetKey)}
+                className={`${widget.span} rounded-2xl border border-[#f0ebe3] bg-white p-4 shadow-sm transition ${draggingWorkbenchWidget === widgetKey ? 'opacity-70 ring-2 ring-[#ffd6b3]' : ''}`}
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">{widget.title}</h3>
+                  <span className="rounded-full bg-[#fff5eb] px-2.5 py-1 text-[11px] text-[#9a5b25]">拖动调整</span>
+                </div>
+                {widget.body}
+              </section>
+            )
+          })}
         </div>
       </section>
     )
@@ -1934,50 +2185,139 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
   }
 
   if (page === 'schedule-calendar') {
-    const scheduleRowsOfDate = schedulePlanRows.filter((item) => item.date === scheduleSelectedDate)
+    const scheduleRowsOfDate = schedulePlanRows
+      .filter((item) => item.date === scheduleSelectedDate)
+      .slice()
+      .sort((a, b) => `${a.timeSlot}${a.teacher}`.localeCompare(`${b.timeSlot}${b.teacher}`))
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    const resolveCourseAlias = (row) => {
+      const courseType = row.templateType || row.templateName?.replace('模板', '') || '课程'
+      const templateMatch = scheduleTemplateRows.find((item) => item.name === row.templateName || item.courseType === row.templateType)
+      const instrumentType = row.instrumentType || templateMatch?.subject || '木吉他'
+      return `${courseType}：${instrumentType}`
+    }
     return (
       <section className="space-y-4">
         <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">教学管理 / 排课日历</h2>
           <div className="flex gap-2 text-xs">
+            <button onClick={() => setScheduleCalendarView('day')} className={`rounded-lg px-3 py-1.5 ${scheduleCalendarView === 'day' ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'border border-[#e8dfd3]'}`}>日视图</button>
             <button onClick={() => setScheduleCalendarView('week')} className={`rounded-lg px-3 py-1.5 ${scheduleCalendarView === 'week' ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'border border-[#e8dfd3]'}`}>周视图</button>
             <button onClick={() => setScheduleCalendarView('month')} className={`rounded-lg px-3 py-1.5 ${scheduleCalendarView === 'month' ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'border border-[#e8dfd3]'}`}>月视图</button>
           </div>
         </div>
-        <div className={`grid gap-3 ${scheduleCalendarView === 'week' ? 'grid-cols-7' : 'grid-cols-7'}`}>
+        {scheduleCalendarView === 'day' && (
+          <div className="rounded-2xl border border-[#f0ebe3] bg-[#fffaf2] p-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {scheduleMonthDays.map((date) => (
+                <button
+                  key={date}
+                  onClick={() => setScheduleSelectedDate(date)}
+                  className={`rounded-full px-3 py-1 ${scheduleSelectedDate === date ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'bg-white text-[#8f8376]'}`}
+                >
+                  {date.slice(8)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className={`grid gap-3 ${scheduleCalendarView === 'day' ? 'grid-cols-1' : 'grid-cols-7'}`}>
           {scheduleCalendarDays.map((date) => {
             const dayRows = schedulePlanRows.filter((item) => item.date === date)
+            const dateObj = parseDateOnly(date)
+            const dateLabel = `${date} ${weekDays[dateObj?.getDay?.() ?? 0]}`
+            const slotGroups = scheduleTimeSlots
+              .map((slot) => ({
+                slot,
+                rows: dayRows
+                  .filter((item) => item.timeSlot === slot)
+                  .slice()
+                  .sort((a, b) => `${a.teacher}${a.templateType}`.localeCompare(`${b.teacher}${b.templateType}`))
+              }))
+              .filter((item) => (scheduleCalendarView === 'month' ? item.rows.length > 0 : true))
+            const visibleSlotGroups = scheduleCalendarView === 'month' ? slotGroups.slice(0, 3) : slotGroups
             return (
-              <button key={date} onClick={() => openScheduleArrangeModal(date)} className={`rounded-2xl border p-3 text-left ${scheduleSelectedDate === date ? 'border-[#ff9b54] bg-[#fff8f1]' : 'border-[#f0ebe3] hover:bg-[#faf8f4]'}`}>
-                <div className="text-xs text-[#8f8376]">{date}</div>
+              <div key={date} className={`rounded-2xl border p-3 text-left ${scheduleSelectedDate === date ? 'border-[#ff9b54] bg-[#fff8f1]' : 'border-[#f0ebe3] hover:bg-[#faf8f4]'}`}>
+                <div className="text-xs text-[#8f8376]">{dateLabel}</div>
                 <div className="mt-1 text-xs text-[#6f665d]">已排 {dayRows.length} 节</div>
                 <div className="mt-2 space-y-1">
-                  {dayRows.slice(0, 2).map((row) => (
-                    <div key={row.id} className="rounded bg-white px-2 py-1 text-[11px] text-[#6a6259]">
-                      {row.timeSlot} {row.templateType}
+                  {visibleSlotGroups.map((slotGroup) => (
+                    <div
+                      key={slotGroup.slot}
+                      onClick={() => {
+                        if (slotGroup.rows.length === 0) {
+                          openScheduleNode(date, slotGroup.slot)
+                        }
+                      }}
+                      className={`rounded bg-white px-2 py-1 text-[11px] text-[#6a6259] ${slotGroup.rows.length === 0 ? 'cursor-pointer hover:bg-[#faf8f4]' : ''}`}
+                    >
+                      <div className="font-medium text-[#5a5148]">{slotGroup.slot}</div>
+                      <div className="mt-1 space-y-1">
+                        {slotGroup.rows.length > 0
+                          ? slotGroup.rows.map((row) => (
+                            <button
+                              key={row.id}
+                              onClick={() => openScheduleNode(date, slotGroup.slot, row)}
+                              className="block w-full rounded-md border border-[#f2ece3] bg-white px-1.5 py-1 text-left hover:border-[#ffd2b0]"
+                            >
+                              <div className={`inline-flex items-center rounded-full px-1.5 py-0.5 ${teacherTagStyleMap[row.teacherId] || 'bg-[#f3f3f3] text-[#6b7280]'}`}>
+                                {row.teacher}
+                              </div>
+                              <div className="mt-1 truncate text-[10px] text-[#6a6259]">{resolveCourseAlias(row)}</div>
+                            </button>
+                          ))
+                          : <span className="text-[#a69b8f]">—</span>}
+                      </div>
                     </div>
                   ))}
-                  {dayRows.length > 2 && <div className="text-[11px] text-[#8f8376]">+{dayRows.length - 2} 节</div>}
+                  {scheduleCalendarView === 'month' && slotGroups.length > 3 && <div className="text-[11px] text-[#8f8376]">+{slotGroups.length - 3} 个时间段</div>}
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>
         <article className="rounded-2xl border border-[#f0ebe3] p-4">
-          <div className="mb-2 text-sm font-semibold">当日排课明细（{scheduleSelectedDate}）</div>
+          <div className="mb-2 text-sm font-semibold">当日排课明细（教师视角，{scheduleSelectedDate}）</div>
           <PaginatedTable
             columns={[
+              { key: 'teacher', title: '教师' },
               { key: 'timeSlot', title: '时间段' },
               { key: 'templateType', title: '课程模板' },
-              { key: 'teacher', title: '教师' },
               { key: 'room', title: '教室' },
               { key: 'ageGroup', title: '人群' },
-              { key: 'capacity', title: '承载量', render: (row) => `${row.reservedCount}/${row.capacityMax}` }
+              { key: 'capacity', title: '承载量', render: (row) => `${row.reservedCount}/${row.capacityMax}` },
+              { key: 'action', title: '操作', render: (row) => <button onClick={() => cancelScheduledPlan(row.id)} className="text-[#a64545]">取消排课</button> }
             ]}
             rows={scheduleRowsOfDate}
             pageSize={6}
           />
         </article>
+        {scheduleDetailModalOpen && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4">
+            <button className="absolute inset-0" onClick={() => setScheduleDetailModalOpen(false)} />
+            <div className="relative w-full max-w-[920px] rounded-2xl bg-white p-5 shadow-2xl">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-semibold">课程详情（{scheduleSelectedDate}）</h3>
+                <button className="text-sm text-[#8f8376]" onClick={() => setScheduleDetailModalOpen(false)}>关闭</button>
+              </div>
+              <div className="mb-3 rounded-xl bg-[#faf8f4] px-3 py-2 text-xs text-[#6f665d]">{scheduleDetailTitle || `课程详情（${scheduleSelectedDate}）`}</div>
+              <PaginatedTable
+                columns={[
+                  { key: 'timeSlot', title: '时间段' },
+                  { key: 'teacher', title: '教师' },
+                  { key: 'templateType', title: '课程类型' },
+                  { key: 'room', title: '教室' },
+                  { key: 'ageGroup', title: '人群' },
+                  { key: 'capacity', title: '承载量', render: (row) => `${row.reservedCount}/${row.capacityMax}` },
+                  { key: 'action', title: '操作', render: (row) => <button onClick={() => cancelScheduledPlan(row.id)} className="text-[#a64545]">取消排课</button> }
+                ]}
+                rows={scheduleDetailRows}
+                pageSize={6}
+                emptyText="该日期暂无排课"
+              />
+            </div>
+          </div>
+        )}
         {scheduleArrangeModalOpen && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4">
             <button className="absolute inset-0" onClick={() => setScheduleArrangeModalOpen(false)} />
@@ -2056,6 +2396,29 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
       { key: 'scheduled', label: '已排课' },
       { key: 'bookable', label: '可预约课程池' }
     ]
+    const activeScheduleTeacherProfile = teacherRows.find((item) => item.id === activeScheduleTeacherId)
+    const resolveScheduleStudentNames = (row) => {
+      const plan = schedulePlanRows.find((item) => item.id === row.id)
+      if (Array.isArray(plan?.bookedStudents) && plan.bookedStudents.length > 0) return plan.bookedStudents
+      if (plan?.studentName) return String(plan.studentName).split('、').map((item) => item.trim()).filter(Boolean)
+      if (row?.student) return String(row.student).split('、').map((item) => item.trim()).filter(Boolean)
+      return []
+    }
+    const openScheduleTeacherDetail = (row) => {
+      const plan = schedulePlanRows.find((item) => item.id === row.id)
+      const teacher = teacherRows.find((item) => item.id === plan?.teacherId) || teacherRows.find((item) => item.name === row.teacher)
+      if (!teacher) {
+        setFlowTip('未找到教师档案')
+        return
+      }
+      setActiveScheduleTeacherId(teacher.id)
+      setScheduleTeacherDetailOpen(true)
+    }
+    const openScheduleStudentsModal = (row) => {
+      const names = resolveScheduleStudentNames(row)
+      setScheduleStudentModalRows(names.map((name, index) => ({ id: `${row.id}-${index}`, no: index + 1, name })))
+      setScheduleStudentModalOpen(true)
+    }
     return (
       <section className="space-y-4">
         <h2 className="text-sm font-semibold">教学管理 / 课程列表（排课）</h2>
@@ -2072,6 +2435,17 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 {item.label}
               </button>
             ))}
+            {scheduleRangeOptions.map((item) => (
+              <button
+                key={item}
+                onClick={() => setScheduleDateRange(item)}
+                className={`rounded-full px-3 py-1 text-xs ${
+                  scheduleDateRange === item ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'bg-white text-[#8f8376]'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
             <span className="ml-auto text-xs text-[#8f8376]">校区：{campus || '全部'}</span>
           </div>
         </div>
@@ -2080,8 +2454,30 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
             columns={[
               { key: 'date', title: '日期' },
               { key: 'timeSlot', title: '时间段' },
+              {
+                key: 'teacher',
+                title: '教师',
+                render: (row) => (
+                  <button onClick={() => openScheduleTeacherDetail(row)} className="text-[#bc7844] hover:underline">
+                    {row.teacher || '—'}
+                  </button>
+                )
+              },
               { key: 'templateType', title: '课程类型' },
-              { key: 'student', title: '预约学员' },
+              {
+                key: 'student',
+                title: '预约学员',
+                render: (row) => {
+                  const names = resolveScheduleStudentNames(row)
+                  const preview = names.slice(0, 3).join('、')
+                  return (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#6f665d]">{preview || '—'}{names.length > 3 ? ` +${names.length - 3}` : ''}</span>
+                      {names.length > 0 && <button onClick={() => openScheduleStudentsModal(row)} className="text-[#bc7844] text-xs">查看</button>}
+                    </div>
+                  )
+                }
+              },
               { key: 'teacherSigned', title: '教师签到', render: (row) => (row.teacherSigned ? '已签到' : '未签到') },
               { key: 'studentSigned', title: '学员签到', render: (row) => (row.studentSigned ? '已签到' : '未签到') },
               { key: 'cancelled', title: '是否取消', render: (row) => (row.cancelled ? '是' : '否') },
@@ -2098,8 +2494,9 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 )
               }
             ]}
-            rows={campus ? scheduleCourseRows.filter((item) => schedulePlanRows.find((p) => p.id === item.id)?.campus === campus) : scheduleCourseRows}
+            rows={filteredScheduleRows}
             pageSize={8}
+            emptyText="当前筛选条件下暂无已排课课程"
           />
         )}
         {scheduleListTab === 'bookable' && (
@@ -2150,7 +2547,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                     <input value={scheduleAssistDeductHours} onChange={(e) => setScheduleAssistDeductHours(e.target.value)} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none" />
                   </div>
                   <div className="col-span-2 rounded-xl bg-[#fffcf8] p-3 text-xs text-[#6f665d]">
-                    学员详情：{scheduleAssistStudent?.name || '—'} / 课包：{scheduleAssistStudent?.packageName || '待分配'} / 剩余课时：{scheduleAssistStudent?.remaining ?? 0} / 标签：{(scheduleAssistStudent?.progressTags || []).join('、') || '—'}
+                    学员详情：{scheduleAssistStudent?.name || '—'} / 课包：{scheduleAssistStudent?.packageName || '待分配'} / 总课时：{resolveStudentHours(scheduleAssistStudent).total} / 已上课时：{resolveStudentHours(scheduleAssistStudent).attended} / 剩余课时：{resolveStudentHours(scheduleAssistStudent).remaining} / 标签：{(scheduleAssistStudent?.progressTags || []).join('、') || '—'}
                   </div>
                 </div>
               )}
@@ -2182,7 +2579,9 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                       { key: 'name', title: '学员' },
                       { key: 'phone', title: '手机号' },
                       { key: 'packageName', title: '课包' },
-                      { key: 'remaining', title: '剩余课时' },
+                      { key: 'totalHours', title: '总课时', render: (row) => resolveStudentHours(row).total },
+                      { key: 'attendedHours', title: '已上课时', render: (row) => resolveStudentHours(row).attended },
+                      { key: 'remainingHours', title: '剩余课时', render: (row) => resolveStudentHours(row).remaining },
                       { key: 'action', title: '操作', render: (row) => <button onClick={() => chooseBookingStudent(row.id)} className="text-[#bc7844]">选择</button> }
                     ]}
                     rows={filteredBookingStudents}
@@ -2193,7 +2592,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
               {bookingStep === 2 && (
                 <div className="space-y-3">
                   <div className="rounded-xl bg-[#faf8f4] p-3 text-sm">
-                    已选学员：{bookingSelectedStudent?.name || '—'} / 课包：{bookingSelectedStudent?.packageName || '待分配'} / 剩余课时：{bookingSelectedStudent?.remaining ?? 0}
+                    已选学员：{bookingSelectedStudent?.name || '—'} / 课包：{bookingSelectedStudent?.packageName || '待分配'} / 总课时：{resolveStudentHours(bookingSelectedStudent).total} / 已上课时：{resolveStudentHours(bookingSelectedStudent).attended} / 剩余课时：{resolveStudentHours(bookingSelectedStudent).remaining}
                   </div>
                   <PaginatedTable
                     columns={[
@@ -2218,7 +2617,9 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="rounded-xl bg-[#faf8f4] p-3">学员：{bookingSelectedStudent?.name || '—'}</div>
-                    <div className="rounded-xl bg-[#faf8f4] p-3">剩余课时：{bookingSelectedStudent?.remaining ?? 0}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3">总课时：{resolveStudentHours(bookingSelectedStudent).total}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3">已上课时：{resolveStudentHours(bookingSelectedStudent).attended}</div>
+                    <div className="rounded-xl bg-[#faf8f4] p-3">剩余课时：{resolveStudentHours(bookingSelectedStudent).remaining}</div>
                     <div className="rounded-xl bg-[#faf8f4] p-3">课程日期：{bookingSelectedSlot?.date || '—'}</div>
                     <div className="rounded-xl bg-[#faf8f4] p-3">时间段：{bookingSelectedSlot?.timeSlot || '—'}</div>
                     <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">课程：{bookingSelectedSlot?.templateName || '—'} / {bookingSelectedSlot?.teacher || '—'} / {bookingSelectedSlot?.room || '—'}</div>
@@ -2239,6 +2640,47 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        {scheduleTeacherDetailOpen && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4">
+            <button className="absolute inset-0" onClick={() => setScheduleTeacherDetailOpen(false)} />
+            <div className="relative w-full max-w-[640px] rounded-2xl bg-white p-5 shadow-2xl">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-semibold">教师详情</h3>
+                <button className="text-sm text-[#8f8376]" onClick={() => setScheduleTeacherDetailOpen(false)}>关闭</button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-xl bg-[#faf8f4] p-3">姓名：{activeScheduleTeacherProfile?.name || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">工号：{activeScheduleTeacherProfile?.employeeNo || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">联系方式：{activeScheduleTeacherProfile?.phone || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">授课类型：{activeScheduleTeacherProfile?.teachingType || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">教师等级：{activeScheduleTeacherProfile?.level || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">所属校区：{activeScheduleTeacherProfile?.campus || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">教学资历：{activeScheduleTeacherProfile?.teachingQualification || '—'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">擅长曲目：{(activeScheduleTeacherProfile?.expertiseTracks || []).join(' / ') || '—'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        {scheduleStudentModalOpen && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4">
+            <button className="absolute inset-0" onClick={() => setScheduleStudentModalOpen(false)} />
+            <div className="relative w-full max-w-[560px] rounded-2xl bg-white p-5 shadow-2xl">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-semibold">预约学员列表</h3>
+                <button className="text-sm text-[#8f8376]" onClick={() => setScheduleStudentModalOpen(false)}>关闭</button>
+              </div>
+              <PaginatedTable
+                columns={[
+                  { key: 'no', title: '序号' },
+                  { key: 'name', title: '学员姓名' }
+                ]}
+                rows={scheduleStudentModalRows}
+                pageSize={8}
+                emptyText="暂无预约学员"
+              />
             </div>
           </div>
         )}
@@ -2354,7 +2796,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><div className="text-xs text-[#7b7064]">模板名称</div><input value={scheduleTemplateForm.name} onChange={(e) => setScheduleTemplateForm((prev) => ({ ...prev, name: e.target.value }))} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none" /></div>
-                <div className="space-y-1"><div className="text-xs text-[#7b7064]">课程类型</div><select value={scheduleTemplateForm.courseType} onChange={(e) => setScheduleTemplateForm((prev) => ({ ...prev, courseType: e.target.value, teachingType: e.target.value === '一对一' ? '一对一' : '团课', capacityMin: e.target.value === '一对一' ? '1' : prev.capacityMin, capacityMax: e.target.value === '一对一' ? '1' : prev.capacityMax, needStudentBinding: e.target.value === '一对一' }))} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none"><option>团购体验课</option><option>标准课</option><option>一对一</option></select></div>
+                <div className="space-y-1"><div className="text-xs text-[#7b7064]">课程类型</div><select value={scheduleTemplateForm.courseType} onChange={(e) => setScheduleTemplateForm((prev) => ({ ...prev, courseType: e.target.value, teachingType: e.target.value === '一对一' ? '一对一' : '团课', capacityMin: e.target.value === '一对一' ? '1' : prev.capacityMin, capacityMax: e.target.value === '一对一' ? '1' : prev.capacityMax, needStudentBinding: e.target.value === '一对一' }))} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none"><option>团购体验课</option><option>小班课</option><option>一对一</option></select></div>
                 <div className="space-y-1"><div className="text-xs text-[#7b7064]">科目</div><select value={scheduleTemplateForm.subject} onChange={(e) => setScheduleTemplateForm((prev) => ({ ...prev, subject: e.target.value }))} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none"><option>木吉他</option><option>电吉他</option><option>贝斯</option></select></div>
                 <div className="space-y-1"><div className="text-xs text-[#7b7064]">消耗课时</div><input value={scheduleTemplateForm.consumeHours} onChange={(e) => setScheduleTemplateForm((prev) => ({ ...prev, consumeHours: e.target.value }))} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none" /></div>
                 <div className="space-y-1"><div className="text-xs text-[#7b7064]">最小承载量</div><input value={scheduleTemplateForm.capacityMin} onChange={(e) => setScheduleTemplateForm((prev) => ({ ...prev, capacityMin: e.target.value }))} className="w-full rounded-lg border border-[#e9e2d8] px-2 py-2 text-xs outline-none" /></div>
@@ -2560,13 +3002,45 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
           <h2 className="text-sm font-semibold">学员管理 / 学员列表</h2>
           <button onClick={() => setNewStudentDrawerOpen(true)} className="rounded-lg bg-[#ff9b54] px-3 py-2 text-sm font-medium text-[#1f1f1f]">新建学生</button>
         </div>
+        <div className="rounded-2xl border border-[#f0ebe3] bg-[#fffaf2] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {studentFilterOptions.map((item) => (
+              <button
+                key={item}
+                onClick={() => setStudentProgressFilter(item)}
+                className={`rounded-full px-3 py-1 text-xs ${
+                  studentProgressFilter === item ? 'bg-[#ff9b54] text-[#1f1f1f]' : 'bg-white text-[#8f8376]'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+            {studentProgressFilter === '有上课记录' && studentScopeOptions.map((item) => (
+              <button
+                key={item}
+                onClick={() => setStudentRecordScope(item)}
+                className={`rounded-full px-3 py-1 text-xs ${
+                  studentRecordScope === item ? 'bg-[#ffe6cf] text-[#9a5b25]' : 'bg-white text-[#8f8376]'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+            {studentProgressFilter === '有上课记录' && studentRecordScope === '本月' && classRecordMonthKey && (
+              <span className="rounded-full bg-white px-3 py-1 text-xs text-[#8f8376]">统计月份：{classRecordMonthKey}</span>
+            )}
+            <span className="ml-auto text-xs text-[#8f8376]">校区：{campus || '全部'}</span>
+          </div>
+        </div>
         <PaginatedTable
           columns={[
             { key: 'name', title: '学员姓名' },
             { key: 'guitarCategory', title: '吉他门类', render: (row) => row.guitarCategory || row.intendedSubject || '木吉他' },
             { key: 'phone', title: '手机号' },
             { key: 'progressTags', title: '进度标签', render: (row) => (row.progressTags || row.tags || []).join(' / ') },
-            { key: 'remaining', title: '剩余课时' },
+            { key: 'totalHours', title: '总课时', render: (row) => resolveStudentHours(row).total },
+            { key: 'attendedHours', title: '已上课时', render: (row) => resolveStudentHours(row).attended },
+            { key: 'remainingHours', title: '剩余课时', render: (row) => resolveStudentHours(row).remaining },
             { key: 'signupTime', title: '报名时间', render: (row) => row.signupTime || '—' },
             { key: 'paymentAmount', title: '缴费金额', render: (row) => `¥${row.paymentAmount ?? 0}` },
             {
@@ -2588,7 +3062,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
               )
             }
           ]}
-          rows={studentRows}
+          rows={filteredStudentRows}
         />
         {studentDrawerOpen && (
           <div className="fixed inset-0 z-30 flex justify-end bg-black/20">
@@ -2629,7 +3103,10 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 <div className="rounded-xl bg-[#faf8f4] p-3">姓名：{activeStudent?.name}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">手机号：{activeStudent?.phone}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">吉他门类：{activeStudent?.guitarCategory || activeStudent?.intendedSubject || '木吉他'}</div>
-                <div className="rounded-xl bg-[#faf8f4] p-3">课包/课时余额：{activeStudent?.packageName || '待分配'} / {activeStudent?.remaining ?? 0}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">课包/课时余额：{activeStudent?.packageName || '待分配'} / {activeStudentHours.remaining}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">总课时：{activeStudentHours.total}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">已上课时：{activeStudentHours.attended}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3">剩余课时：{activeStudentHours.remaining}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">团购/体验课程预约登记表：{activeStudent?.registrationFormSummary || '待补充登记表信息'}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">学习目标/进度标签：{activeStudent?.goal || '待补充'} / {(activeStudent?.progressTags || activeStudent?.tags || []).join('、')}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">报名时间：{activeStudent?.signupTime || '—'}</div>
@@ -2658,7 +3135,7 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 <button className="text-sm text-[#8f8376]" onClick={() => setStudentArchiveDrawerOpen(false)}>关闭</button>
               </div>
               <div className="mb-3 rounded-xl bg-[#faf8f4] p-3 text-sm">
-                学员：{activeStudent?.name || '—'} / 当前课包：{activeStudent?.packageName || '待分配'} / 剩余课时：{activeStudent?.remaining ?? 0}
+                学员：{activeStudent?.name || '—'} / 当前课包：{activeStudent?.packageName || '待分配'} / 总课时：{activeStudentHours.total} / 已上课时：{activeStudentHours.attended} / 剩余课时：{activeStudentHours.remaining}
               </div>
               {studentArchiveDrawerType === 'hours' && (
                 <PaginatedTable
@@ -2851,7 +3328,18 @@ export default function AdminView({ page, messageFilter, onNavigate, campus }) {
                 <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">擅长曲目：{(activeTeacher?.expertiseTracks || []).join(' / ')}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">所属校区：{activeTeacher?.campus}</div>
                 <div className="rounded-xl bg-[#faf8f4] p-3">状态：{activeTeacher?.status}</div>
-                <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">已绑定学员：{(activeTeacher?.boundStudents || []).length ? activeTeacher.boundStudents.join('、') : '暂无绑定学员'}</div>
+                <div className="rounded-xl bg-[#faf8f4] p-3 col-span-2">
+                  <div className="mb-1">已绑定学员：</div>
+                  {(activeTeacher?.boundStudents || []).length > 0 ? (
+                    <div className="space-y-0.5">
+                      {(activeTeacher?.boundStudents || []).map((name, index) => (
+                        <div key={`${activeTeacher?.id}-${name}-${index}`}>{index + 1}. {name}</div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>暂无绑定学员</div>
+                  )}
+                </div>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2">
                 <button onClick={() => toggleFreezeTeacher(activeTeacher?.id)} className="rounded-lg border border-[#e8dfd3] px-3 py-2 text-sm">{activeTeacher?.status === '冻结' ? '解冻教师' : '冻结教师'}</button>

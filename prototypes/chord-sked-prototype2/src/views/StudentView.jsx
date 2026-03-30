@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, CalendarDays, BookOpen, UserSquare2, ChevronRight, Bell, Clock, ChevronLeft, X } from 'lucide-react'
+import { QrPreview } from '../components/shared/uiBlocks'
 
 export default function StudentView({ page }) {
   const navigate = useNavigate()
@@ -23,7 +24,8 @@ export default function StudentView({ page }) {
   }), [])
 
   const [remainingHours, setRemainingHours] = useState(21)
-  const [currentPackage, setCurrentPackage] = useState({ name: '标准课24节包', validUntil: '2026-12-31' })
+  const [totalHours, setTotalHours] = useState(24)
+  const [currentPackage, setCurrentPackage] = useState({ name: '小班课24节包', validUntil: '2026-12-31' })
   const [unreadNoticeCount, setUnreadNoticeCount] = useState(2)
 
   const [learningSubTab, setLearningSubTab] = useState('作业')
@@ -48,13 +50,14 @@ export default function StudentView({ page }) {
   const [bookingDraft, setBookingDraft] = useState(null)
 
   const [profilePage, setProfilePage] = useState('home')
+  const [purchaseTargetPackage, setPurchaseTargetPackage] = useState(null)
 
   const [myBookings, setMyBookings] = useState([
     {
       id: 'BK-001',
       date: '2026-03-24',
       time: '18:30-19:30',
-      title: '标准课（一对一）',
+      title: '小班课（一对一）',
       teacher: '赵老师',
       campus: '北环国基路校区',
       status: '未开始',
@@ -97,7 +100,7 @@ export default function StudentView({ page }) {
     {
       id: 'HW-001',
       title: '和弦转换练习（C-G-Am-F）',
-      course: '标准课（一对一）',
+      course: '小班课（一对一）',
       deadline: '明天 23:59',
       status: '未提交',
       review: ''
@@ -121,7 +124,7 @@ export default function StudentView({ page }) {
   ])
 
   const packageCatalog = useMemo(() => ([
-    { id: 'PK-001', name: '标准课24节包', hours: 24, price: 2980, tag: '热卖' },
+    { id: 'PK-001', name: '小班课24节包', hours: 24, price: 2980, tag: '热卖' },
     { id: 'PK-002', name: '进阶课12节包', hours: 12, price: 1680, tag: '推荐' },
     { id: 'PK-003', name: '体验课2节包', hours: 2, price: 199, tag: '转化' }
   ]), [])
@@ -129,6 +132,19 @@ export default function StudentView({ page }) {
   const teacherOptions = useMemo(() => (['不限', '刘老师', '陈老师', '赵老师']), [])
   const campusOptions = useMemo(() => (['全部', '北环国基路校区', '西大剧院校区']), [])
   const typeOptions = useMemo(() => (['全部', '体验课', '团课', '一对一']), [])
+  const studentLevel = useMemo(() => ({ level: 'Lv.2', title: '初级弹唱达人', progress: '成长值 1280 / 2000' }), [])
+  const teacherProfile = useMemo(() => ({
+    name: '陈老师',
+    tag: '木吉他主教',
+    intro: '6年教学经验，擅长启蒙与进阶节奏训练，课堂节奏清晰，重视作业跟进。'
+  }), [])
+  const coursePackageSummary = useMemo(() => ({ courseType: '小班课 / 团课 / 一对一', packageName: currentPackage.name }), [currentPackage.name])
+  const studentBenefits = useMemo(() => ({ beans: 1280, level: '青铜豆友', next: '距升级白银豆友还差 220 豆（待确定，二期）' }), [])
+  const studentHourSummary = useMemo(() => ({
+    total: totalHours,
+    attended: Math.max(totalHours - remainingHours, 0),
+    remaining: remainingHours
+  }), [remainingHours, totalHours])
 
   const scheduleDays = useMemo(() => ([
     { date: '2026-03-24', day: '一' },
@@ -262,10 +278,9 @@ export default function StudentView({ page }) {
     showToast('已提交调课申请')
   }
 
-  const buyPackage = (pkg) => {
-    setCurrentPackage({ name: pkg.name, validUntil: '2027-03-31' })
-    setRemainingHours((prev) => prev + pkg.hours)
-    showToast(`已购买：${pkg.name}`)
+  const openWecomPurchasePage = (pkg) => {
+    setPurchaseTargetPackage(pkg)
+    setProfilePage('wecom-qr')
   }
 
   const renderHome = () => (
@@ -286,6 +301,11 @@ export default function StudentView({ page }) {
             <div className="text-2xl font-bold text-[#1f1f1f]">{remainingHours}</div>
           </div>
         </div>
+        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-white/55 p-2 text-center text-[11px] text-[#1f1f1f]">
+          <div>总课时 {studentHourSummary.total}</div>
+          <div>已上课时 {studentHourSummary.attended}</div>
+          <div>剩余课时 {studentHourSummary.remaining}</div>
+        </div>
       </div>
 
       <div className="-mt-6 px-4 space-y-4">
@@ -297,6 +317,34 @@ export default function StudentView({ page }) {
             {homeworkItems.some((x) => x.status === '未提交') ? '您有作业未提交' : '今日没有待办作业'}
           </div>
           <button className="text-xs text-[#ff9b54] bg-[#fff4ea] px-3 py-1 rounded-full font-medium" onClick={(event) => { event.stopPropagation(); setLearningSubTab('作业'); setHomeworkStatus('未提交'); handleTabChange('learning') }}>去处理</button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-white p-4 shadow-sm border border-[#f0ebe3]">
+            <div className="text-xs text-[#7f7f88]">学员等级</div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-xl font-black text-[#2b2b2b]">{studentLevel.level}</span>
+              <span className="text-xs font-medium text-[#ff9b54]">{studentLevel.title}</span>
+            </div>
+            <div className="mt-2 text-xs text-[#7f7f88]">{studentLevel.progress}</div>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm border border-[#f0ebe3]">
+            <div className="text-xs text-[#7f7f88]">老师信息</div>
+            <div className="mt-2 text-sm font-bold text-[#2b2b2b]">{teacherProfile.name}</div>
+            <div className="mt-1 inline-flex rounded-full bg-[#fff4ea] px-2 py-0.5 text-[10px] font-bold text-[#ff9b54]">{teacherProfile.tag}</div>
+            <div className="mt-2 line-clamp-2 text-xs text-[#7f7f88]">{teacherProfile.intro}</div>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm border border-[#f0ebe3]">
+            <div className="text-xs text-[#7f7f88]">课程类型，课时包</div>
+            <div className="mt-2 text-sm font-bold text-[#2b2b2b]">{coursePackageSummary.courseType}</div>
+            <div className="mt-1 text-xs text-[#7f7f88]">当前课时包：{coursePackageSummary.packageName}</div>
+          </div>
+          <div className="rounded-2xl bg-white p-4 shadow-sm border border-[#f0ebe3]">
+            <div className="text-xs text-[#7f7f88]">学员权益</div>
+            <div className="mt-2 text-sm font-bold text-[#2b2b2b]">{studentBenefits.level}</div>
+            <div className="mt-1 text-xs text-[#ff9b54]">权益豆：{studentBenefits.beans}</div>
+            <div className="mt-2 text-[11px] text-[#7f7f88]">{studentBenefits.next}</div>
+          </div>
         </div>
 
         <div className="rounded-2xl bg-white p-5 shadow-sm border border-[#f0ebe3]">
@@ -538,7 +586,7 @@ export default function StudentView({ page }) {
       <div className="bg-white px-4 pt-10 pb-0 border-b border-[#f0ebe3]">
         <h2 className="text-lg font-bold text-[#2b2b2b] text-center mb-4">学习</h2>
         <div className="flex justify-around">
-          {['作业', '成长记录', '阶段报告(二期)'].map(tab => (
+          {['作业', '成长记录', '等级(二期)'].map(tab => (
             <button key={tab} className={`pb-3 px-2 text-sm font-bold border-b-2 transition ${learningSubTab === tab ? 'border-[#ff9b54] text-[#ff9b54]' : 'border-transparent text-[#7f7f88]'}`} onClick={() => setLearningSubTab(tab)}>
               {tab}
             </button>
@@ -642,7 +690,7 @@ export default function StudentView({ page }) {
           </div>
         )}
 
-        {learningSubTab === '阶段报告' && (
+        {learningSubTab === '等级' && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#f0ebe3] text-center mt-2">
             <div className="w-20 h-20 bg-gradient-to-br from-[#ff9b54] to-[#ffb37a] rounded-full mx-auto flex items-center justify-center text-[#1f1f1f] text-2xl font-black mb-4 shadow-md">
               Lv.2
@@ -688,7 +736,9 @@ export default function StudentView({ page }) {
                               ? '通知中心'
                               : profilePage === 'info'
                                   ? '个人信息'
-                                  : '隐私设置'}
+                                  : profilePage === 'privacy'
+                                      ? '隐私设置'
+                                      : '添加企微购买课包'}
           </div>
           <div className="w-10" />
         </div>
@@ -717,6 +767,7 @@ export default function StudentView({ page }) {
               <div>
                 <div className="text-xs text-white/70 mb-1 font-medium">当前课包：{currentPackage.name}</div>
                 <div className="text-4xl font-black mt-2">{remainingHours} <span className="text-sm font-medium text-white/70">课时</span></div>
+                <div className="mt-3 text-xs text-white/70">总课时 {studentHourSummary.total} / 已上课时 {studentHourSummary.attended} / 剩余课时 {studentHourSummary.remaining}</div>
               </div>
               <button className="bg-gradient-to-r from-[#ff9b54] to-[#ffb37a] text-[#1f1f1f] px-4 py-2 rounded-xl text-sm font-bold shadow-sm" onClick={() => setProfilePage('packages')}>
                 购买课包(二期)
@@ -772,7 +823,7 @@ export default function StudentView({ page }) {
           <div className="rounded-2xl bg-white border border-[#f0ebe3] p-4">
             <div className="text-sm font-bold text-[#2b2b2b]">当前课包</div>
             <div className="mt-2 text-sm text-[#7f7f88]">{currentPackage.name} · 有效期至 {currentPackage.validUntil}</div>
-            <div className="mt-2 text-sm text-[#7f7f88]">剩余课时：<span className="font-bold text-[#2b2b2b]">{remainingHours}</span></div>
+            <div className="mt-2 text-sm text-[#7f7f88]">总课时：<span className="font-bold text-[#2b2b2b]">{studentHourSummary.total}</span> · 已上课时：<span className="font-bold text-[#2b2b2b]">{studentHourSummary.attended}</span> · 剩余课时：<span className="font-bold text-[#2b2b2b]">{studentHourSummary.remaining}</span></div>
           </div>
           {packageCatalog.map((pkg) => (
             <div key={pkg.id} className="rounded-2xl bg-white border border-[#f0ebe3] p-4">
@@ -785,10 +836,48 @@ export default function StudentView({ page }) {
               </div>
               <div className="mt-3 flex gap-2">
                 <button className="flex-1 rounded-xl bg-[#faf8f4] px-3 py-2 text-sm font-bold text-[#2b2b2b]" onClick={() => showToast('已查看课包权益说明')}>查看权益</button>
-                <button className="flex-1 rounded-xl bg-[#ff9b54] px-3 py-2 text-sm font-bold text-[#1f1f1f]" onClick={() => buyPackage(pkg)}>立即购买</button>
+                <button className="flex-1 rounded-xl bg-[#ff9b54] px-3 py-2 text-sm font-bold text-[#1f1f1f]" onClick={() => openWecomPurchasePage(pkg)}>立即购买</button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {profilePage === 'wecom-qr' && (
+        <div className="p-4 space-y-4">
+          <div className="rounded-2xl bg-white border border-[#f0ebe3] p-4">
+            <div className="text-base font-bold text-[#2b2b2b]">添加企微购买课包</div>
+            <div className="mt-2 text-sm text-[#7f7f88]">请扫码添加课程顾问企微，发送“购买课包”即可完成下单。</div>
+            {purchaseTargetPackage && (
+              <div className="mt-3 rounded-xl bg-[#faf8f4] px-3 py-2 text-xs text-[#2b2b2b]">
+                目标课包：{purchaseTargetPackage.name}（{purchaseTargetPackage.hours}课时 / ¥{purchaseTargetPackage.price}）
+              </div>
+            )}
+          </div>
+          <div className="rounded-2xl bg-white border border-[#f0ebe3] p-6">
+            <div className="mx-auto w-fit">
+              <QrPreview value={`student-buy-package-${purchaseTargetPackage?.id || 'default'}`} />
+            </div>
+            <div className="mt-4 space-y-1 text-center text-xs text-[#7f7f88]">
+              <div>扫码后备注：{student.name} / {student.phone}</div>
+              <div>客服将引导完成支付并发放课时</div>
+            </div>
+            <button
+              className="mt-4 w-full rounded-xl bg-[#ff9b54] px-3 py-2 text-sm font-bold text-[#1f1f1f]"
+              onClick={() => {
+                if (!purchaseTargetPackage) {
+                  showToast('已通知课程顾问')
+                  return
+                }
+                setCurrentPackage({ name: purchaseTargetPackage.name, validUntil: '2027-03-31' })
+                setTotalHours((prev) => prev + purchaseTargetPackage.hours)
+                setRemainingHours((prev) => prev + purchaseTargetPackage.hours)
+                showToast(`已完成购买：${purchaseTargetPackage.name}`)
+              }}
+            >
+              我已添加企微，完成购买
+            </button>
+          </div>
         </div>
       )}
 
@@ -885,7 +974,10 @@ export default function StudentView({ page }) {
             { label: '姓名', value: student.name },
             { label: '手机号', value: student.phone },
             { label: '学习方向', value: student.track },
-            { label: '当前校区', value: student.campus }
+            { label: '当前校区', value: student.campus },
+            { label: '总课时', value: `${studentHourSummary.total}` },
+            { label: '已上课时', value: `${studentHourSummary.attended}` },
+            { label: '剩余课时', value: `${studentHourSummary.remaining}` }
           ].map((row) => (
             <div key={row.label} className="rounded-2xl bg-white border border-[#f0ebe3] p-4 flex items-center justify-between">
               <div className="text-sm text-[#7f7f88]">{row.label}</div>
