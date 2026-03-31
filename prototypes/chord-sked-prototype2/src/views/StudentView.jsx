@@ -296,10 +296,6 @@ export default function StudentView({ page }) {
               <div className="text-xs text-[#1f1f1f]/70 mt-0.5 font-medium">{student.campus}</div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-[#1f1f1f]/70 font-medium">剩余课时</div>
-            <div className="text-2xl font-bold text-[#1f1f1f]">{remainingHours}</div>
-          </div>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-white/55 p-2 text-center text-[11px] text-[#1f1f1f]">
           <div>总课时 {studentHourSummary.total}</div>
@@ -875,7 +871,7 @@ export default function StudentView({ page }) {
                 showToast(`已完成购买：${purchaseTargetPackage.name}`)
               }}
             >
-              我已添加企微，完成购买
+              我已添加企微，购买完成后课时将自动添加
             </button>
           </div>
         </div>
