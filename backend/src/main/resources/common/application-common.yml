@@ -26,3 +26,7 @@ chordsked:
       issuer: ${CHORDSKED_JWT_ISSUER:chordsked-backend}
       access-expiration-seconds: ${CHORDSKED_JWT_ACCESS_EXPIRATION_SECONDS:7200}
       refresh-expiration-seconds: ${CHORDSKED_JWT_REFRESH_EXPIRATION_SECONDS:1209600}
+    redis:
+      enabled: ${CHORDSKED_SECURITY_REDIS_ENABLED:true}
+      authority-cache-ttl-seconds: ${CHORDSKED_SECURITY_AUTHORITY_CACHE_TTL_SECONDS:300}
+      token-session-enabled: ${CHORDSKED_SECURITY_TOKEN_SESSION_ENABLED:true}

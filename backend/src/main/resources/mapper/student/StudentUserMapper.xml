@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chordsked.backend.dao.mapper.StudentUserMapper">
+
+    <sql id="StudentUserColumns">
+        id,
+        phone,
+        name,
+        avatar,
+        status,
+        campus_id,
+        created_at,
+        updated_at,
+        is_deleted
+    </sql>
+
+    <sql id="StudentUserWhere">
+        <where>
+            AND is_deleted = 0
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%') OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </sql>
+
+    <select id="listStudents" resultType="com.chordsked.backend.model.entity.StudentUserEntity">
+        SELECT
+        <include refid="StudentUserColumns"/>
+        FROM sys_student_user
+        <include refid="StudentUserWhere"/>
+        ORDER BY id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countStudents" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_student_user
+        <include refid="StudentUserWhere"/>
+    </select>
+
+    <select id="getById" resultType="com.chordsked.backend.model.entity.StudentUserEntity">
+        SELECT
+        <include refid="StudentUserColumns"/>
+        FROM sys_student_user
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </select>
+
+    <insert id="insertStudent" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_student_user (
+            phone,
+            name,
+            avatar,
+            status,
+            campus_id,
+            created_at,
+            updated_at,
+            is_deleted
+        ) VALUES (
+            #{phone},
+            #{name},
+            #{avatar},
+            #{status},
+            #{campusId},
+            #{createdAt},
+            #{updatedAt},
+            #{isDeleted}
+        )
+    </insert>
+
+    <update id="updateStudent">
+        UPDATE sys_student_user
+        SET phone = #{phone},
+            name = #{name},
+            avatar = #{avatar},
+            status = #{status},
+            campus_id = #{campusId},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteStudent">
+        UPDATE sys_student_user
+        SET is_deleted = 1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+</mapper>

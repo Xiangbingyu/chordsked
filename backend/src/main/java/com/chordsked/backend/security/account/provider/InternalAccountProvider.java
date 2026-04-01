@@ -1,28 +1,29 @@
 package com.chordsked.backend.security.account.provider;
 
+import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.dao.mapper.SecurityAccountMapper;
+import com.chordsked.backend.model.entity.InternalUserEntity;
+import com.chordsked.backend.model.enums.InternalUserStatus;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component("internalAccountProvider")
 public class InternalAccountProvider implements AccountProvider {
     private static final String USER_TYPE = "ADMIN";
-    // 当前为静态权限占位实现，便于安全链路先跑通。
-    // 后续接入数据库时，建议改为：根据 userId 查询用户 -> 查询角色 -> 查询权限点 -> 转换为 GrantedAuthority。
-    private static final List<SimpleGrantedAuthority> AUTHORITIES = List.of(
-            new SimpleGrantedAuthority("admin:role"),
-            new SimpleGrantedAuthority("admin:user:view"),
-            new SimpleGrantedAuthority("admin:user:create"),
-            new SimpleGrantedAuthority("admin:user:update"),
-            new SimpleGrantedAuthority("admin:user:delete"),
-            new SimpleGrantedAuthority("admin:role:view"),
-            new SimpleGrantedAuthority("admin:role:create"),
-            new SimpleGrantedAuthority("admin:role:update"),
-            new SimpleGrantedAuthority("admin:role:delete")
-    );
+
+    @Resource(name = "securityAccountMapper")
+    private SecurityAccountMapper securityAccountMapper;
+
+    @Resource(name = "securityCacheService")
+    private SecurityCacheService securityCacheService;
 
     @Override
     public String getUserType() {
@@ -31,11 +32,35 @@ public class InternalAccountProvider implements AccountProvider {
 
     @Override
     public UserDetails getUserDetails(Long userId) {
-        // 数据库化改造示例：
-        // 1) internalUserMapper.findById(userId)
-        // 2) roleMapper.findByUserId(userId)
-        // 3) permissionMapper.findCodesByUserId(userId)
-        // 4) 将权限码映射为 SimpleGrantedAuthority 并返回 ChordSkedUserDetails
-        return new ChordSkedUserDetails(userId, USER_TYPE, null, AUTHORITIES);
+        InternalUserEntity internalUser = securityAccountMapper.selectInternalUserById(userId);
+        if (internalUser == null) {
+            throw new UsernameNotFoundException("Internal user not found: " + userId);
+        }
+
+        List<String> permissionCodes = securityCacheService.getAuthorityCodes(USER_TYPE, userId);
+        if (permissionCodes.isEmpty()) {
+            permissionCodes = securityAccountMapper.selectPermissionCodesByInternalUserId(userId);
+            securityCacheService.cacheAuthorityCodes(USER_TYPE, userId, permissionCodes);
+        }
+        List<SimpleGrantedAuthority> authorities = permissionCodes
+                .stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+        if (authorities.isEmpty()) {
+            throw new UsernameNotFoundException("No authority for internal user: " + userId);
+        }
+
+        boolean accountNonLocked = internalUser.getLockedUntil() == null || internalUser.getLockedUntil().isBefore(LocalDateTime.now());
+        boolean enabled = InternalUserStatus.ENABLED.equals(internalUser.getStatusEnum());
+        Long currentCampusId = securityAccountMapper.selectPrimaryCampusIdByInternalUserId(userId);
+
+        return new ChordSkedUserDetails(
+                userId,
+                USER_TYPE,
+                currentCampusId,
+                accountNonLocked,
+                enabled,
+                authorities
+        );
     }
 }

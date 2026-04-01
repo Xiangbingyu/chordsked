@@ -1,5 +1,6 @@
 package com.chordsked.backend.security.jwt;
 
+import com.chordsked.backend.cache.SecurityCacheService;
 import com.chordsked.backend.security.account.service.MultiAccountUserDetailsService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import io.jsonwebtoken.Claims;
@@ -37,6 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired(required = false)
     private MultiAccountUserDetailsService multiAccountUserDetailsService;
 
+    @Autowired(required = false)
+    private SecurityCacheService securityCacheService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -53,15 +57,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtTokenUtils.parseClaims(token);
                 // 业务 API 统一要求 access token；refresh token 仅用于续签接口
                 if (jwtTokenUtils.isClaimsValid(claims, JwtTokenUtils.TOKEN_TYPE_ACCESS)) {
+                    if (securityCacheService != null) {
+                        if (!securityCacheService.isTokenActive(token) || securityCacheService.isTokenRevoked(token)) {
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
+                    }
                     Long userId = claims.get(CLAIM_USER_ID, Long.class);
                     String userType = claims.get(CLAIM_USER_TYPE, String.class);
                     if (userId != null && userType != null && !userType.isBlank()) {
-                        // 根据 userType 路由到对应账号体系，加载权限集合
                         UserDetails userDetails = multiAccountUserDetailsService.loadUserByTokenContext(
                                 userType,
                                 userId
                         );
-                        // 认证成功后写入上下文，供后续 requestMatchers/@PreAuthorize 判权
+                        if (!userDetails.isEnabled()
+                                || !userDetails.isAccountNonLocked()
+                                || !userDetails.isAccountNonExpired()
+                                || !userDetails.isCredentialsNonExpired()) {
+                            logger.warn("User status invalid for request: {}", request.getRequestURI());
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities()
                         );

@@ -2,18 +2,19 @@ package com.chordsked.backend.controller;
 
 import com.chordsked.backend.common.ApiResponse;
 import com.chordsked.backend.common.PageResult;
-import com.chordsked.backend.model.vo.StudentVO;
-import com.chordsked.backend.service.StudentService;
+import com.chordsked.backend.model.dto.StudentListRequest;
+import com.chordsked.backend.model.vo.StudentListResultVO;
+import com.chordsked.backend.service.StudentListService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/admin/students")
@@ -21,21 +22,26 @@ import jakarta.validation.constraints.Min;
 @Tag(name = "学员管理", description = "学员相关接口")
 public class StudentController {
 
-    @Resource(name = "studentService")
-    private StudentService studentService;
+    @Resource(name = "studentListService")
+    private StudentListService studentListService;
 
-    @GetMapping
+    @GetMapping("/list")
     @Operation(summary = "查询学员列表", description = "按条件分页查询学员列表")
-    public ApiResponse<PageResult<StudentVO>> listStudents(
+    public ApiResponse<PageResult<StudentListResultVO>> list(
             @Parameter(description = "页码，从 1 开始")
-            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) Integer page,
             @Parameter(description = "每页条数")
-            @RequestParam(name = "pageSize", defaultValue = "20") @Min(1) int pageSize,
+            @RequestParam(name = "pageSize", defaultValue = "20") @Min(1) Integer pageSize,
             @Parameter(description = "关键词（学员姓名）")
             @RequestParam(name = "keyword", required = false) String keyword,
-            @Parameter(description = "等级（例如：初级/中级/体验）")
-            @RequestParam(name = "level", required = false) String level
+            @Parameter(description = "状态")
+            @RequestParam(name = "status", required = false) Integer status
     ) {
-        return ApiResponse.success(studentService.listStudents(keyword, level, page, pageSize));
+        StudentListRequest request = new StudentListRequest();
+        request.setPage(page);
+        request.setPageSize(pageSize);
+        request.setKeyword(keyword);
+        request.setStatus(status);
+        return ApiResponse.success(studentListService.list(request));
     }
 }

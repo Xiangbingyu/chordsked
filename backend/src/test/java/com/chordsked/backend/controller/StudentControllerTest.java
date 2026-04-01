@@ -1,8 +1,9 @@
 package com.chordsked.backend.controller;
 
 import com.chordsked.backend.common.PageResult;
-import com.chordsked.backend.model.vo.StudentVO;
-import com.chordsked.backend.service.StudentService;
+import com.chordsked.backend.model.dto.StudentListRequest;
+import com.chordsked.backend.model.vo.StudentListResultVO;
+import com.chordsked.backend.service.StudentListService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,21 +23,21 @@ class StudentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean(name = "studentService")
-    private StudentService studentService;
+    @MockitoBean(name = "studentListService")
+    private StudentListService studentListService;
 
     @Test
     void shouldListStudents() throws Exception {
-        when(studentService.listStudents("张", "初级", 1, 2))
+        when(studentListService.list(any(StudentListRequest.class)))
                 .thenReturn(PageResult.of(1, List.of(
-                        new StudentVO(1L, "张小明", 8, "初级")
+                        new StudentListResultVO(1L, "13700000000", "张小明", 1, 1L)
                 )));
 
-        mockMvc.perform(get("/api/v1/admin/students")
-                        .param("page", "1")
-                        .param("pageSize", "2")
-                        .param("keyword", "张")
-                        .param("level", "初级"))
+        mockMvc.perform(get("/api/v1/admin/students/list")
+                        .queryParam("page", "1")
+                        .queryParam("pageSize", "2")
+                        .queryParam("keyword", "张")
+                        .queryParam("status", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.total").value(1))

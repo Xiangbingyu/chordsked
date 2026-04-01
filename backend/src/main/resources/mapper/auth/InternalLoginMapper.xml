@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.InternalLoginMapper">
+
+    <select id="selectInternalUserByUsername" resultType="com.chordsked.backend.model.entity.InternalUserEntity">
+        SELECT id, username, password, phone, name, avatar, status, must_change_password, login_fail_count,
+               locked_until, data_scope_type, created_at, updated_at, is_deleted
+        FROM sys_internal_user
+        WHERE username = #{username}
+          AND is_deleted = 0
+        LIMIT 1
+    </select>
+
+    <update id="increaseInternalUserLoginFail">
+        UPDATE sys_internal_user
+        SET login_fail_count = CASE
+                                   WHEN locked_until IS NOT NULL AND locked_until <![CDATA[<=]]> #{updatedAt} THEN 1
+                                   ELSE login_fail_count + 1
+            END,
+            locked_until = CASE
+                               WHEN (CASE
+                                         WHEN locked_until IS NOT NULL AND locked_until <![CDATA[<=]]> #{updatedAt} THEN 1
+                                         ELSE login_fail_count + 1
+                                   END) >= 5 THEN #{lockedUntil}
+                               ELSE NULL
+                END,
+            updated_at = #{updatedAt}
+        WHERE id = #{userId}
+          AND is_deleted = 0
+    </update>
+
+    <update id="resetInternalUserLoginFail">
+        UPDATE sys_internal_user
+        SET login_fail_count = 0,
+            locked_until = NULL,
+            updated_at = #{updatedAt}
+        WHERE id = #{userId}
+          AND is_deleted = 0
+    </update>
+
+</mapper>
