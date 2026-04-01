@@ -34,7 +34,7 @@ export const adminSitemap = [
   { key: 'workbench', label: '工作台', icon: Home, directPage: 'workbench-overview', children: [] },
   { key: 'messages', label: '消息中心', icon: MessageSquare, children: [{ key: 'messages-list', label: '消息列表' }] },
   { key: 'conversion', label: '团购转化', icon: ShoppingBag, children: [{ key: 'conversion-import', label: '订单导入/列表' }, { key: 'conversion-clue', label: '核销登记/线索详情' }, { key: 'conversion-qr', label: '预约二维码页' }] },
-  { key: 'teaching', label: '教学管理', icon: CalendarDays, children: [{ key: 'schedule-list', label: '课程列表（排课）' }, { key: 'homework-list', label: '作业列表' }, { key: 'schedule-template', label: '课程模板管理' }, { key: 'schedule-room', label: '教室资源管理' }, { key: 'schedule-calendar', label: '排课日历' }] },
+  { key: 'teaching', label: '教学管理', icon: CalendarDays, children: [{ key: 'schedule-calendar', label: '排课日历' }, { key: 'homework-list', label: '作业列表' }, { key: 'schedule-template', label: '课程模板管理' }, { key: 'schedule-room', label: '教室资源管理' }] },
   { key: 'adjustments', label: '调课/取消/补课', icon: Repeat2, children: [{ key: 'adjustments-list', label: '申请列表' }, { key: 'adjustments-log', label: '审核日志' }] },
   { key: 'students', label: '学员管理', icon: Users, children: [{ key: 'students-list', label: '学员列表' }] },
   { key: 'teachers', label: '教师管理', icon: GraduationCap, children: [{ key: 'teachers-list', label: '教师列表/档案' }] },

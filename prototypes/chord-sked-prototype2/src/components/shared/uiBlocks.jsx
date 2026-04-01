@@ -38,11 +38,11 @@ export function PaginatedTable({ columns, rows, rowKey = 'id', pageSize = 5, emp
 
   return (
     <div className="rounded-2xl border border-[#f0ebe3] overflow-hidden">
-      <table className="w-full text-sm">
+      <table className="w-full text-[15px] leading-6">
         <thead className="bg-[#faf7f1] text-[#6f655b]">
           <tr>
             {columns.map((col) => (
-              <th key={col.key} className="px-3 py-2 text-left font-medium">{col.title}</th>
+              <th key={col.key} className="px-4 py-3 text-left font-semibold">{col.title}</th>
             ))}
           </tr>
         </thead>
@@ -50,7 +50,7 @@ export function PaginatedTable({ columns, rows, rowKey = 'id', pageSize = 5, emp
           {pageRows.map((row) => (
             <tr key={row[rowKey]} className="border-t border-[#f1ece4]">
               {columns.map((col) => (
-                <td key={col.key} className="px-3 py-2 text-[#3a352f]">
+                <td key={col.key} className="px-4 py-3 text-[#3a352f]">
                   {col.render ? col.render(row) : row[col.key]}
                 </td>
               ))}
@@ -58,15 +58,15 @@ export function PaginatedTable({ columns, rows, rowKey = 'id', pageSize = 5, emp
           ))}
           {pageRows.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-8 text-center text-[#9b9187]">{emptyText}</td>
+              <td colSpan={columns.length} className="px-4 py-10 text-center text-[#9b9187]">{emptyText}</td>
             </tr>
           )}
         </tbody>
       </table>
-      <div className="flex items-center justify-end gap-2 border-t border-[#f1ece4] bg-white px-3 py-2 text-xs">
-        <button onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded border border-[#e8dfd3] px-2 py-1">上一页</button>
+      <div className="flex items-center justify-end gap-2 border-t border-[#f1ece4] bg-white px-4 py-3 text-sm">
+        <button onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded-lg border border-[#e8dfd3] px-3 py-1.5">上一页</button>
         <span>{safePage}/{totalPages}</span>
-        <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="rounded border border-[#e8dfd3] px-2 py-1">下一页</button>
+        <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="rounded-lg border border-[#e8dfd3] px-3 py-1.5">下一页</button>
       </div>
     </div>
   )

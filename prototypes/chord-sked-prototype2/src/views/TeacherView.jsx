@@ -39,6 +39,7 @@ export default function TeacherView({ page, onNavigate }) {
           name: student.name,
           checked: idx === 0 ? !!student.checked : idx === 1 ? true : student.name !== baseStudents[0]?.name,
           leave: false,
+          truancy: false,
           deductHours: idx === 1 ? 1 : idx === 2 ? (student.name !== baseStudents[0]?.name ? 1 : 0) : student.checked ? 1 : 0
         }))
       }
@@ -191,7 +192,7 @@ export default function TeacherView({ page, onNavigate }) {
   const activeTeacherStudent = assignedStudents.find((item) => item.id === activeTeacherStudentId) || assignedStudents[0]
   const activeTeacherStudentHours = resolveStudentHours(activeTeacherStudent)
 
-  const toggleAttendanceStudent = (name) => {
+  const setAttendanceStudentStatus = (name, status) => {
     setAttendanceRows((prev) =>
       prev.map((course) =>
         course.id === activeAttendance.id
@@ -199,7 +200,11 @@ export default function TeacherView({ page, onNavigate }) {
               ...course,
               students: course.students.map((student) =>
                 student.name === name
-                  ? { ...student, checked: !student.checked, leave: student.checked ? true : false, deductHours: student.checked ? 0 : 1 }
+                  ? status === 'present'
+                      ? { ...student, checked: true, leave: false, truancy: false, deductHours: Math.max(Number(student.deductHours || 0), 1) }
+                      : status === 'leave'
+                          ? { ...student, checked: false, leave: true, truancy: false, deductHours: 0 }
+                          : { ...student, checked: false, leave: false, truancy: true, deductHours: 0 }
                   : student
               )
             }
@@ -215,7 +220,11 @@ export default function TeacherView({ page, onNavigate }) {
           ? {
               ...course,
               students: course.students.map((student) =>
-                student.name === name ? { ...student, deductHours: Number(value || 0) } : student
+                student.name === name
+                  ? student.leave || student.truancy
+                      ? student
+                      : { ...student, deductHours: Number(value || 0) }
+                  : student
               )
             }
           : course
@@ -242,7 +251,7 @@ export default function TeacherView({ page, onNavigate }) {
           ? {
               ...course,
               status: '待签到',
-              students: course.students.map((student) => ({ ...student, checked: false, deductHours: 0 }))
+              students: course.students.map((student) => ({ ...student, checked: false, leave: false, truancy: false, deductHours: 0 }))
             }
           : course
       )
@@ -608,11 +617,15 @@ export default function TeacherView({ page, onNavigate }) {
                   <div key={student.name} className="rounded-xl border border-[#f0ebe3] p-3">
                     <div className="flex items-center justify-between text-sm">
                       <div>{student.name}</div>
-                      <button onClick={() => toggleAttendanceStudent(student.name)} className={`rounded px-2 py-1 text-xs ${student.checked ? 'bg-[#effaf1] text-[#2f8a47]' : 'bg-[#fff1ef] text-[#c9413a]'}`}>{student.checked ? '已签到' : '请假'}</button>
+                      <div className="flex gap-2">
+                        <button onClick={() => setAttendanceStudentStatus(student.name, 'present')} className={`rounded px-2 py-1 text-xs ${student.checked ? 'bg-[#effaf1] text-[#2f8a47]' : 'bg-[#faf8f4] text-[#7b7064]'}`}>签到</button>
+                        <button onClick={() => setAttendanceStudentStatus(student.name, 'leave')} className={`rounded px-2 py-1 text-xs ${student.leave ? 'bg-[#fff4ea] text-[#bc7844]' : 'bg-[#faf8f4] text-[#7b7064]'}`}>请假</button>
+                        <button onClick={() => setAttendanceStudentStatus(student.name, 'truancy')} className={`rounded px-2 py-1 text-xs ${student.truancy ? 'bg-[#fff1ef] text-[#c9413a]' : 'bg-[#faf8f4] text-[#7b7064]'}`}>旷课</button>
+                      </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-xs text-[#7b7064]">
                       <span>特殊扣减课时</span>
-                      <input value={student.deductHours} onChange={(e) => setAttendanceDeduct(student.name, e.target.value)} className="w-16 rounded-md border border-[#e9e2d8] px-2 py-1 text-center outline-none" />
+                      <input disabled={student.leave || student.truancy} value={student.deductHours} onChange={(e) => setAttendanceDeduct(student.name, e.target.value)} className={`w-16 rounded-md border border-[#e9e2d8] px-2 py-1 text-center outline-none ${student.leave || student.truancy ? 'bg-[#faf8f4] text-[#c4c4c4]' : 'bg-white'}`} />
                     </div>
                   </div>
                 ))}

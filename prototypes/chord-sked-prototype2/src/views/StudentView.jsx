@@ -20,7 +20,8 @@ export default function StudentView({ page }) {
     avatar: '李',
     campus: '北环国基路校区',
     phone: '138****1122',
-    track: '木吉他'
+    track: '木吉他',
+    boundTeacher: '陈老师'
   }), [])
 
   const [remainingHours, setRemainingHours] = useState(21)
@@ -45,12 +46,15 @@ export default function StudentView({ page }) {
   const [bookingDate, setBookingDate] = useState('2026-03-25')
   const [bookingType, setBookingType] = useState('全部')
   const [bookingCampus, setBookingCampus] = useState('全部')
-  const [bookingTeacher, setBookingTeacher] = useState('不限')
   const [bookingModalOpen, setBookingModalOpen] = useState(false)
   const [bookingDraft, setBookingDraft] = useState(null)
 
   const [profilePage, setProfilePage] = useState('home')
   const [purchaseTargetPackage, setPurchaseTargetPackage] = useState(null)
+  const [packagePurchaseRows, setPackagePurchaseRows] = useState([
+    { id: 'PR-001', date: '2026-01-15 12:10', packageName: '小班课24节包', hours: 24, originalAmount: 2980, paidAmount: 2680, channel: '门店', status: '已支付' },
+    { id: 'PR-002', date: '2026-03-22 14:30', packageName: '体验课2节包', hours: 2, originalAmount: 199, paidAmount: 99, channel: '抖音团购', status: '已支付' }
+  ])
 
   const [myBookings, setMyBookings] = useState([
     {
@@ -58,7 +62,7 @@ export default function StudentView({ page }) {
       date: '2026-03-24',
       time: '18:30-19:30',
       title: '小班课（一对一）',
-      teacher: '赵老师',
+      teacher: '陈老师',
       campus: '北环国基路校区',
       status: '未开始',
       hoursCost: 1
@@ -124,20 +128,22 @@ export default function StudentView({ page }) {
   ])
 
   const packageCatalog = useMemo(() => ([
-    { id: 'PK-001', name: '小班课24节包', hours: 24, price: 2980, tag: '热卖' },
-    { id: 'PK-002', name: '进阶课12节包', hours: 12, price: 1680, tag: '推荐' },
-    { id: 'PK-003', name: '体验课2节包', hours: 2, price: 199, tag: '转化' }
+    { id: 'PK-001', name: '小班课24节包', hours: 24, displayPrice: 2980, salePrice: 2680, tag: '热卖' },
+    { id: 'PK-002', name: '进阶课12节包', hours: 12, displayPrice: 1680, salePrice: 1480, tag: '推荐' },
+    { id: 'PK-003', name: '体验课2节包', hours: 2, displayPrice: 199, salePrice: 99, tag: '转化' }
   ]), [])
 
-  const teacherOptions = useMemo(() => (['不限', '刘老师', '陈老师', '赵老师']), [])
   const campusOptions = useMemo(() => (['全部', '北环国基路校区', '西大剧院校区']), [])
   const typeOptions = useMemo(() => (['全部', '体验课', '团课', '一对一']), [])
-  const studentLevel = useMemo(() => ({ level: 'Lv.2', title: '初级弹唱达人', progress: '成长值 1280 / 2000' }), [])
+  const studentLevel = useMemo(() => ({ level: 'Lv.2', title: '初级弹唱达人', progress: '积分值 1280 / 2000' }), [])
   const teacherProfile = useMemo(() => ({
     name: '陈老师',
     tag: '木吉他主教',
     intro: '6年教学经验，擅长启蒙与进阶节奏训练，课堂节奏清晰，重视作业跟进。'
   }), [])
+  const boundTeacherName = useMemo(() => {
+    return student.boundTeacher || teacherProfile.name || '陈老师'
+  }, [student.boundTeacher, teacherProfile.name])
   const coursePackageSummary = useMemo(() => ({ courseType: '小班课 / 团课 / 一对一', packageName: currentPackage.name }), [currentPackage.name])
   const studentBenefits = useMemo(() => ({ beans: 1280, level: '青铜豆友', next: '距升级白银豆友还差 220 豆（待确定，二期）' }), [])
   const studentHourSummary = useMemo(() => ({
@@ -171,27 +177,31 @@ export default function StudentView({ page }) {
   }, [scheduleByDate])
 
   const bookingSlots = useMemo(() => ([
-    { id: 'SL-001', date: '2026-03-25', time: '14:00-15:00', type: '一对一', title: '吉他一对一', teacher: '刘老师', campus: '北环国基路校区', remain: 1, available: true, hoursCost: 1 },
-    { id: 'SL-002', date: '2026-03-25', time: '16:00-17:00', type: '团课', title: '节奏强化团课', teacher: '系统推荐', campus: '北环国基路校区', remain: 3, available: true, hoursCost: 1 },
-    { id: 'SL-003', date: '2026-03-25', time: '19:00-20:00', type: '体验课', title: '基础试听体验课', teacher: '刘老师', campus: '西大剧院校区', remain: 0, available: false, hoursCost: 0 },
-    { id: 'SL-004', date: '2026-03-26', time: '15:00-16:00', type: '团课', title: '吉他基础团课', teacher: '陈老师', campus: '北环国基路校区', remain: 5, available: true, hoursCost: 1 },
-    { id: 'SL-005', date: '2026-03-26', time: '20:00-21:00', type: '一对一', title: '进阶技巧一对一', teacher: '赵老师', campus: '北环国基路校区', remain: 1, available: true, hoursCost: 1 },
-    { id: 'SL-006', date: '2026-03-28', time: '10:00-11:00', type: '体验课', title: '入门体验课', teacher: '刘老师', campus: '西大剧院校区', remain: 6, available: true, hoursCost: 0 }
-  ]), [])
+    { id: 'SL-001', date: '2026-03-25', time: '14:00-15:00', type: '一对一', title: '一对一：基础巩固', teacher: boundTeacherName, campus: '北环国基路校区', remain: 1, available: true, hoursCost: 1 },
+    { id: 'SL-002', date: '2026-03-25', time: '16:00-17:00', type: '团课', title: '小班课：节奏训练', teacher: boundTeacherName, campus: '北环国基路校区', remain: 4, available: true, hoursCost: 1 },
+    { id: 'SL-003', date: '2026-03-25', time: '19:00-20:00', type: '体验课', title: '体验课：入门试听', teacher: boundTeacherName, campus: '北环国基路校区', remain: 0, available: false, hoursCost: 0 },
+    { id: 'SL-004', date: '2026-03-26', time: '15:00-16:00', type: '团课', title: '小班课：扫弦进阶', teacher: boundTeacherName, campus: '北环国基路校区', remain: 6, available: true, hoursCost: 1 },
+    { id: 'SL-005', date: '2026-03-26', time: '20:00-21:00', type: '一对一', title: '一对一：进阶技巧', teacher: boundTeacherName, campus: '北环国基路校区', remain: 1, available: true, hoursCost: 1 },
+    { id: 'SL-006', date: '2026-03-28', time: '10:00-11:00', type: '团课', title: '小班课：弹唱练习', teacher: boundTeacherName, campus: '西大剧院校区', remain: 3, available: true, hoursCost: 1 },
+    { id: 'SL-007', date: '2026-03-28', time: '15:00-16:00', type: '一对一', title: '一对一：周末冲刺', teacher: boundTeacherName, campus: '西大剧院校区', remain: 1, available: true, hoursCost: 1 },
+    { id: 'SL-008', date: '2026-03-25', time: '15:00-16:00', type: '一对一', title: '一对一：技巧纠正', teacher: '王老师', campus: '北环国基路校区', remain: 1, available: true, hoursCost: 1 },
+    { id: 'SL-009', date: '2026-03-26', time: '18:00-19:00', type: '团课', title: '小班课：视奏训练', teacher: '王老师', campus: '西大剧院校区', remain: 4, available: true, hoursCost: 1 }
+  ]), [boundTeacherName])
 
-  const recommendedSlot = useMemo(() => bookingSlots.find((s) => s.id === 'SL-004'), [bookingSlots])
+  const teacherVisibleSlots = useMemo(() => {
+    return bookingSlots.filter((s) => s.teacher === boundTeacherName)
+  }, [bookingSlots, boundTeacherName])
+
+  const recommendedSlot = useMemo(() => {
+    return teacherVisibleSlots.find((s) => s.date === bookingDate && s.available) || teacherVisibleSlots.find((s) => s.available) || null
+  }, [bookingDate, teacherVisibleSlots])
 
   const filteredSlots = useMemo(() => {
-    return bookingSlots
+    return teacherVisibleSlots
       .filter((slot) => slot.date === bookingDate)
       .filter((slot) => (bookingType === '全部' ? true : slot.type === bookingType))
       .filter((slot) => (bookingCampus === '全部' ? true : slot.campus === bookingCampus))
-      .filter((slot) => {
-        if (slot.type !== '一对一') return true
-        if (bookingTeacher === '不限') return true
-        return slot.teacher === bookingTeacher
-      })
-  }, [bookingSlots, bookingCampus, bookingDate, bookingTeacher, bookingType])
+  }, [teacherVisibleSlots, bookingCampus, bookingDate, bookingType])
 
   const handleTabChange = (key) => {
     navigate(`/student/${key}`)
@@ -204,10 +214,6 @@ export default function StudentView({ page }) {
 
   const confirmBooking = () => {
     if (!bookingDraft) return
-    if (bookingDraft.type === '一对一' && bookingTeacher === '不限') {
-      showToast('一对一课程必须选择教师')
-      return
-    }
     if (bookingDraft.hoursCost > remainingHours) {
       showToast('剩余课时不足，请先购买课包')
       return
@@ -217,7 +223,7 @@ export default function StudentView({ page }) {
       date: bookingDraft.date,
       time: bookingDraft.time,
       title: bookingDraft.type === '一对一' ? `${bookingDraft.title}（一对一）` : bookingDraft.title,
-      teacher: bookingDraft.type === '一对一' ? (bookingTeacher === '不限' ? bookingDraft.teacher : bookingTeacher) : bookingDraft.teacher,
+      teacher: boundTeacherName,
       campus: bookingDraft.campus,
       status: '未开始',
       hoursCost: bookingDraft.hoursCost
@@ -459,11 +465,10 @@ export default function StudentView({ page }) {
               <option key={c} value={c}>{c === '全部' ? '全部校区' : c}</option>
             ))}
           </select>
-          <select value={bookingTeacher} onChange={(e) => setBookingTeacher(e.target.value)} className="w-full rounded-xl border border-[#f0ebe3] bg-white px-3 py-2 text-sm outline-none">
-            {teacherOptions.map((t) => (
-              <option key={t} value={t}>{t === '不限' ? '教师（可选）' : t}</option>
-            ))}
-          </select>
+          <div className="w-full rounded-xl border border-[#f0ebe3] bg-white px-3 py-2 text-sm">
+            <div className="text-xs text-[#7f7f88]">仅展示绑定老师</div>
+            <div className="mt-1 font-bold text-[#2b2b2b]">{boundTeacherName}</div>
+          </div>
         </div>
 
         <div>
@@ -512,18 +517,16 @@ export default function StudentView({ page }) {
               <div className="rounded-2xl bg-white p-4 text-sm text-[#7f7f88] border border-[#f0ebe3]">暂无可预约课程，可切换筛选条件</div>
             )}
             {filteredSlots.map((slot) => {
-              const needTeacher = slot.type === '一对一' && bookingTeacher === '不限'
-              const canBook = slot.available && !needTeacher
+              const canBook = slot.available
               return (
                 <div key={slot.id} className="bg-white rounded-2xl p-4 shadow-sm border border-[#f0ebe3] flex items-center justify-between">
                   <div>
                     <div className="text-base font-bold text-[#2b2b2b]">{slot.time}</div>
                     <div className="text-sm font-bold text-[#2b2b2b] mt-1.5">
                       {slot.title}
-                      <span className="text-xs text-[#7f7f88] font-medium ml-1">· {slot.type === '一对一' ? slot.teacher : slot.teacher}</span>
+                      <span className="text-xs text-[#7f7f88] font-medium ml-1">· {slot.teacher}</span>
                     </div>
                     <div className="text-xs text-[#7f7f88] mt-1">校区：{slot.campus} · 剩余名额：{slot.remain}</div>
-                    {needTeacher && <div className="text-xs text-[#ff4d4f] mt-1">一对一需先选择教师</div>}
                     {!slot.available && <div className="text-xs text-[#7f7f88] mt-1">暂时满班</div>}
                   </div>
                   <button
@@ -531,10 +534,6 @@ export default function StudentView({ page }) {
                     onClick={() => {
                       if (!slot.available) {
                         showToast('当前时间段已满')
-                        return
-                      }
-                      if (needTeacher) {
-                        showToast('一对一课程必须选择教师')
                         return
                       }
                       openBookingConfirm(slot)
@@ -562,7 +561,7 @@ export default function StudentView({ page }) {
             <div className="bg-[#faf8f4] rounded-2xl p-5 space-y-4 mb-8 border border-[#f0ebe3]">
               <div className="flex justify-between"><span className="text-[#7f7f88] text-sm">课程类型</span><span className="font-bold text-[#2b2b2b] text-sm">{bookingDraft ? bookingDraft.type : '—'}</span></div>
               <div className="flex justify-between"><span className="text-[#7f7f88] text-sm">课程名称</span><span className="font-bold text-[#2b2b2b] text-sm">{bookingDraft ? bookingDraft.title : '—'}</span></div>
-              <div className="flex justify-between"><span className="text-[#7f7f88] text-sm">上课教师</span><span className="font-bold text-[#2b2b2b] text-sm">{bookingDraft ? (bookingDraft.type === '一对一' ? (bookingTeacher === '不限' ? bookingDraft.teacher : bookingTeacher) : bookingDraft.teacher) : '—'}</span></div>
+              <div className="flex justify-between"><span className="text-[#7f7f88] text-sm">上课教师</span><span className="font-bold text-[#2b2b2b] text-sm">{boundTeacherName}</span></div>
               <div className="flex justify-between"><span className="text-[#7f7f88] text-sm">上课校区</span><span className="font-bold text-[#2b2b2b] text-sm">{bookingDraft ? bookingDraft.campus : '—'}</span></div>
               <div className="flex justify-between"><span className="text-[#7f7f88] text-sm">上课时间</span><span className="font-bold text-[#2b2b2b] text-sm">{bookingDraft ? `${bookingDraft.date} ${bookingDraft.time}` : '—'}</span></div>
               <div className="border-t border-[#e9e2d8] my-2 pt-4 flex justify-between items-center"><span className="text-[#7f7f88] text-sm">消耗课时</span><span className="font-bold text-[#ff9b54] text-lg">{bookingDraft ? bookingDraft.hoursCost : 1} 课时</span></div>
@@ -826,7 +825,7 @@ export default function StudentView({ page }) {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-base font-bold text-[#2b2b2b]">{pkg.name}</div>
-                  <div className="mt-1 text-xs text-[#7f7f88]">{pkg.hours} 课时 · ¥{pkg.price}</div>
+                  <div className="mt-1 text-xs text-[#7f7f88]">{pkg.hours} 课时 · 原价 ¥{pkg.displayPrice} · 优惠价 ¥{pkg.salePrice}</div>
                 </div>
                 <span className="text-[10px] font-bold text-[#ff9b54] bg-[#fff4ea] px-2 py-1 rounded-full">{pkg.tag}</span>
               </div>
@@ -836,6 +835,31 @@ export default function StudentView({ page }) {
               </div>
             </div>
           ))}
+          <div className="rounded-2xl bg-white border border-[#f0ebe3] p-4">
+            <div className="text-sm font-bold text-[#2b2b2b]">购买记录</div>
+            {packagePurchaseRows.length === 0 ? (
+              <div className="mt-3 text-sm text-[#7f7f88]">暂无购买记录</div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {packagePurchaseRows.map((row) => (
+                  <div key={row.id} className="rounded-2xl border border-[#f0ebe3] bg-[#faf8f4] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-xs text-[#7f7f88]">{row.date}</div>
+                        <div className="mt-1 text-sm font-bold text-[#2b2b2b]">{row.packageName}</div>
+                        <div className="mt-1 text-xs text-[#7f7f88]">{row.hours} 课时 · 渠道：{row.channel}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-[#7f7f88]">原价 ¥{row.originalAmount}</div>
+                        <div className="mt-1 text-sm font-bold text-[#ff9b54]">优惠价 ¥{row.paidAmount}</div>
+                        <div className="mt-1 text-[10px] font-bold text-[#7f7f88] bg-white border border-[#f0ebe3] px-2 py-1 rounded-full inline-block">{row.status}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -846,7 +870,7 @@ export default function StudentView({ page }) {
             <div className="mt-2 text-sm text-[#7f7f88]">请扫码添加课程顾问企微，发送“购买课包”即可完成下单。</div>
             {purchaseTargetPackage && (
               <div className="mt-3 rounded-xl bg-[#faf8f4] px-3 py-2 text-xs text-[#2b2b2b]">
-                目标课包：{purchaseTargetPackage.name}（{purchaseTargetPackage.hours}课时 / ¥{purchaseTargetPackage.price}）
+                目标课包：{purchaseTargetPackage.name}（{purchaseTargetPackage.hours}课时 / 原价¥{purchaseTargetPackage.displayPrice} / 优惠价¥{purchaseTargetPackage.salePrice}）
               </div>
             )}
           </div>
@@ -865,6 +889,22 @@ export default function StudentView({ page }) {
                   showToast('已通知课程顾问')
                   return
                 }
+                const now = new Date()
+                const pad = (v) => String(v).padStart(2, '0')
+                const at = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`
+                setPackagePurchaseRows((prev) => [
+                  {
+                    id: `PR-${String(prev.length + 1).padStart(3, '0')}`,
+                    date: at,
+                    packageName: purchaseTargetPackage.name,
+                    hours: purchaseTargetPackage.hours,
+                    originalAmount: purchaseTargetPackage.displayPrice,
+                    paidAmount: purchaseTargetPackage.salePrice,
+                    channel: '企微',
+                    status: '已支付'
+                  },
+                  ...prev
+                ])
                 setCurrentPackage({ name: purchaseTargetPackage.name, validUntil: '2027-03-31' })
                 setTotalHours((prev) => prev + purchaseTargetPackage.hours)
                 setRemainingHours((prev) => prev + purchaseTargetPackage.hours)
@@ -1133,7 +1173,7 @@ export default function StudentView({ page }) {
                   <div className="text-sm font-bold text-[#2b2b2b] mb-2">选择目标课程（示例）</div>
                   <select value={adjustTargetId} onChange={(e) => setAdjustTargetId(e.target.value)} className="w-full rounded-xl border border-[#f0ebe3] bg-white px-3 py-2 text-sm outline-none">
                     <option value="">请选择一个可调课课程</option>
-                    {bookingSlots.filter((x) => x.available).slice(0, 5).map((x) => (
+                    {teacherVisibleSlots.filter((x) => x.available).slice(0, 5).map((x) => (
                       <option key={x.id} value={x.id}>{x.date} {x.time} · {x.title}</option>
                     ))}
                   </select>

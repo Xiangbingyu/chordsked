@@ -151,6 +151,7 @@ export default function Shell() {
                   onChange={(event) => setCampus(event.target.value)}
                   className="w-full rounded-lg border border-white/20 bg-[#2c2d38] px-2.5 py-2 text-xs text-white outline-none"
                 >
+                  <option className="text-black">所有</option>
                   <option className="text-black">北环国基路校区</option>
                   <option className="text-black">西大剧院校区</option>
                 </select>
