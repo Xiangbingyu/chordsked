@@ -4,8 +4,6 @@ import com.chordsked.backend.model.enums.InternalUserDataScopeType;
 import com.chordsked.backend.model.enums.InternalUserStatus;
 import com.chordsked.backend.model.enums.MustChangePasswordFlag;
 
-import java.time.LocalDateTime;
-
 public class InternalUserEntity {
     private Long id;
     private String username;
@@ -15,12 +13,9 @@ public class InternalUserEntity {
     private String avatar;
     private InternalUserStatus status;
     private MustChangePasswordFlag mustChangePassword;
-    private Integer loginFailCount;
-    private LocalDateTime lockedUntil;
     private InternalUserDataScopeType dataScopeType;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Integer isDeleted;
+    private Long createdAt;
+    private Long updatedAt;
 
     public Long getId() {
         return id;
@@ -102,22 +97,6 @@ public class InternalUserEntity {
         this.mustChangePassword = mustChangePassword;
     }
 
-    public Integer getLoginFailCount() {
-        return loginFailCount;
-    }
-
-    public void setLoginFailCount(Integer loginFailCount) {
-        this.loginFailCount = loginFailCount;
-    }
-
-    public LocalDateTime getLockedUntil() {
-        return lockedUntil;
-    }
-
-    public void setLockedUntil(LocalDateTime lockedUntil) {
-        this.lockedUntil = lockedUntil;
-    }
-
     public Integer getDataScopeType() {
         return dataScopeType == null ? null : dataScopeType.getCode();
     }
@@ -134,27 +113,19 @@ public class InternalUserEntity {
         this.dataScopeType = dataScopeType;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Long getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Long updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public Integer getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Integer isDeleted) {
-        this.isDeleted = isDeleted;
     }
 }

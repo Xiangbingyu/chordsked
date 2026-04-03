@@ -7,13 +7,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,13 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_USER_TYPE = "userType";
 
-    @Autowired(required = false)
+    @Resource(name = "jwtTokenUtils")
     private JwtTokenUtils jwtTokenUtils;
 
-    @Autowired(required = false)
+    @Resource(name = "multiAccountUserDetailsService")
     private MultiAccountUserDetailsService multiAccountUserDetailsService;
 
-    @Autowired(required = false)
+    @Resource(name = "securityCacheService")
     private SecurityCacheService securityCacheService;
 
     @Override
@@ -46,9 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String authorization = request.getHeader(AUTHORIZATION_HEADER);
         // 仅在：依赖可用、上下文未认证、且请求带 Bearer Token 时执行鉴权
-        if (jwtTokenUtils != null
-                && multiAccountUserDetailsService != null
-                && SecurityContextHolder.getContext().getAuthentication() == null
+        if (SecurityContextHolder.getContext().getAuthentication() == null
                 && authorization != null
                 && authorization.startsWith(BEARER_PREFIX)) {
             String token = authorization.substring(BEARER_PREFIX.length());
@@ -57,11 +55,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtTokenUtils.parseClaims(token);
                 // 业务 API 统一要求 access token；refresh token 仅用于续签接口
                 if (jwtTokenUtils.isClaimsValid(claims, JwtTokenUtils.TOKEN_TYPE_ACCESS)) {
-                    if (securityCacheService != null) {
-                        if (!securityCacheService.isTokenActive(token) || securityCacheService.isTokenRevoked(token)) {
-                            filterChain.doFilter(request, response);
-                            return;
-                        }
+                    if (!securityCacheService.isTokenActive(token) || securityCacheService.isTokenRevoked(token)) {
+                        filterChain.doFilter(request, response);
+                        return;
                     }
                     Long userId = claims.get(CLAIM_USER_ID, Long.class);
                     String userType = claims.get(CLAIM_USER_TYPE, String.class);
@@ -71,7 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 userId
                         );
                         if (!userDetails.isEnabled()
-                                || !userDetails.isAccountNonLocked()
                                 || !userDetails.isAccountNonExpired()
                                 || !userDetails.isCredentialsNonExpired()) {
                             logger.warn("User status invalid for request: {}", request.getRequestURI());

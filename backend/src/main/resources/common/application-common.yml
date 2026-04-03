@@ -21,12 +21,19 @@ chordsked:
     max-page-size: 100
     default-page-size: 20
   security:
+    internal-auth:
+      login:
+        fail-lock-threshold: ${CHORDSKED_INTERNAL_AUTH_LOGIN_FAIL_LOCK_THRESHOLD:5}
+        fail-lock-minutes: ${CHORDSKED_INTERNAL_AUTH_LOGIN_FAIL_LOCK_MINUTES:30}
     jwt:
       secret: ${CHORDSKED_JWT_SECRET:chordsked-jwt-secret-2026-001-dev-secure-key}
       issuer: ${CHORDSKED_JWT_ISSUER:chordsked-backend}
       access-expiration-seconds: ${CHORDSKED_JWT_ACCESS_EXPIRATION_SECONDS:7200}
       refresh-expiration-seconds: ${CHORDSKED_JWT_REFRESH_EXPIRATION_SECONDS:1209600}
     redis:
-      enabled: ${CHORDSKED_SECURITY_REDIS_ENABLED:true}
-      authority-cache-ttl-seconds: ${CHORDSKED_SECURITY_AUTHORITY_CACHE_TTL_SECONDS:300}
-      token-session-enabled: ${CHORDSKED_SECURITY_TOKEN_SESSION_ENABLED:true}
+      enabled: ${chordsked.redis.enabled:${CHORDSKED_SECURITY_REDIS_ENABLED:${CHORDSKED_REDIS_ENABLED:true}}}
+      authority-cache-ttl-seconds: ${chordsked.redis.authority-cache-ttl-seconds:${chordsked.redis.authorityCacheTtlSeconds:${CHORDSKED_SECURITY_AUTHORITY_CACHE_TTL_SECONDS:${CHORDSKED_REDIS_AUTHORITY_CACHE_TTL_SECONDS:300}}}}
+      user-snapshot-cache-ttl-seconds: ${chordsked.redis.user-snapshot-cache-ttl-seconds:${chordsked.redis.userSnapshotCacheTtlSeconds:${CHORDSKED_SECURITY_USER_SNAPSHOT_CACHE_TTL_SECONDS:${CHORDSKED_REDIS_USER_SNAPSHOT_CACHE_TTL_SECONDS:300}}}}
+      token-session-enabled: ${chordsked.redis.token-session-enabled:${chordsked.redis.tokenSessionEnabled:${CHORDSKED_SECURITY_TOKEN_SESSION_ENABLED:${CHORDSKED_REDIS_TOKEN_SESSION_ENABLED:true}}}}
+      login-fail-count-max: ${chordsked.redis.login-fail-count-max:${chordsked.redis.loginFailCountMax:${CHORDSKED_SECURITY_LOGIN_FAIL_COUNT_MAX:${CHORDSKED_REDIS_LOGIN_FAIL_COUNT_MAX:255}}}}
+      login-state-min-ttl-minutes: ${chordsked.redis.login-state-min-ttl-minutes:${chordsked.redis.loginStateMinTtlMinutes:${CHORDSKED_SECURITY_LOGIN_STATE_MIN_TTL_MINUTES:${CHORDSKED_REDIS_LOGIN_STATE_MIN_TTL_MINUTES:60}}}}

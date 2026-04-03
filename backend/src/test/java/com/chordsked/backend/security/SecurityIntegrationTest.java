@@ -2,6 +2,7 @@ package com.chordsked.backend.security;
 
 import com.chordsked.backend.common.PageResult;
 import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.model.enums.StudentUserStatus;
 import com.chordsked.backend.model.vo.StudentListResultVO;
 import com.chordsked.backend.service.StudentListService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
@@ -60,6 +61,7 @@ class SecurityIntegrationTest {
         when(securityCacheService.isTokenActive(anyString())).thenReturn(false);
         when(securityCacheService.getAuthorityCodes(eq("ADMIN"), anyLong())).thenReturn(List.of("admin:role"));
         when(securityCacheService.getAuthorityCodes(eq("TEACHER"), anyLong())).thenReturn(List.of("teacher:role"));
+        when(securityCacheService.getAuthorityCodes(eq("STUDENT"), anyLong())).thenReturn(List.of("student:role"));
     }
 
     @Test
@@ -82,7 +84,7 @@ class SecurityIntegrationTest {
 
     @Test
     void shouldReturnUnauthorizedWhenTokenMissing() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .queryParam("keyword", "张")
@@ -92,9 +94,16 @@ class SecurityIntegrationTest {
     }
 
     @Test
+    void shouldProtectBaseApiPrefixWhenTokenMissing() throws Exception {
+        mockMvc.perform(get("/students/api/v1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
     void shouldReturnUnauthorizedWhenTokenTypeIsRefresh() throws Exception {
         String refreshToken = jwtTokenUtils.generateRefreshToken(1001L, "ADMIN");
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .header("Authorization", "Bearer " + refreshToken))
@@ -105,7 +114,7 @@ class SecurityIntegrationTest {
     @Test
     void shouldReturnUnauthorizedWhenTokenExpired() throws Exception {
         String expiredToken = jwtTokenUtils.generateToken(1001L, "ADMIN", -1L, "access");
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .header("Authorization", "Bearer " + expiredToken))
@@ -115,7 +124,7 @@ class SecurityIntegrationTest {
 
     @Test
     void shouldReturnUnauthorizedWhenTokenMalformed() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .header("Authorization", "Bearer malformed-jwt-token"))
@@ -126,7 +135,7 @@ class SecurityIntegrationTest {
     @Test
     void shouldReturnUnauthorizedWhenUserTypeUnsupported() throws Exception {
         String token = jwtTokenUtils.generateAccessToken(1001L, "UNKNOWN");
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .header("Authorization", "Bearer " + token))
@@ -138,7 +147,7 @@ class SecurityIntegrationTest {
     void shouldReturnForbiddenWhenRoleDoesNotMatchApiPrefix() throws Exception {
         String teacherToken = jwtTokenUtils.generateAccessToken(1001L, "TEACHER");
         when(securityCacheService.isTokenActive(eq(teacherToken))).thenReturn(true);
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .header("Authorization", "Bearer " + teacherToken))
@@ -149,11 +158,11 @@ class SecurityIntegrationTest {
     @Test
     void shouldPassSecurityWhenAccessTokenIsValid() throws Exception {
         when(studentListService.list(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(PageResult.of(1, List.of(new StudentListResultVO(1L, "13700000000", "张小明", 1, 1L))));
+                .thenReturn(PageResult.of(1, List.of(new StudentListResultVO(1L, "13700000000", "张小明", StudentUserStatus.ENABLED, 1L))));
 
-        String accessToken = jwtTokenUtils.generateAccessToken(1001L, "ADMIN");
+        String accessToken = jwtTokenUtils.generateAccessToken(1001L, "STUDENT");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
-        mockMvc.perform(get("/api/v1/admin/students/list")
+        mockMvc.perform(get("/students/api/v1/list")
                         .queryParam("page", "1")
                         .queryParam("pageSize", "2")
                         .queryParam("keyword", "张")

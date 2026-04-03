@@ -1,10 +1,23 @@
 package com.chordsked.backend.model.vo;
 
-public class AuthLoginResultVO {
+import com.chordsked.backend.model.enums.AccountUserType;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "InternalAuthLoginResultVO", description = "教务端登录结果")
+public class InternalAuthLoginResultVO {
+    @Schema(description = "用户ID")
     private Long userId;
-    private String userType;
+
+    @Schema(description = "用户类型", allowableValues = {"ADMIN", "TEACHER", "STUDENT"})
+    private AccountUserType userType;
+
+    @Schema(description = "用户名")
     private String username;
+
+    @Schema(description = "姓名")
     private String name;
+
+    @Schema(description = "是否需要修改密码")
     private Boolean mustChangePassword;
 
     public Long getUserId() {
@@ -15,11 +28,11 @@ public class AuthLoginResultVO {
         this.userId = userId;
     }
 
-    public String getUserType() {
+    public AccountUserType getUserType() {
         return userType;
     }
 
-    public void setUserType(String userType) {
+    public void setUserType(AccountUserType userType) {
         this.userType = userType;
     }
 

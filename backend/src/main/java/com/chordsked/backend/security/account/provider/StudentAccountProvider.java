@@ -1,9 +1,11 @@
 package com.chordsked.backend.security.account.provider;
 
 import com.chordsked.backend.cache.SecurityCacheService;
-import com.chordsked.backend.dao.mapper.SecurityAccountMapper;
+import com.chordsked.backend.dao.StudentUserDao;
 import com.chordsked.backend.model.entity.StudentUserEntity;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.StudentUserStatus;
+import com.chordsked.backend.model.permission.PermissionCodeResolver;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,32 +16,35 @@ import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 学员端账号 Provider。
+ * 负责根据 JWT 中的 userId 装载学员端 UserDetails，并与权限缓存、用户快照缓存协同工作。
+ */
 @Component("studentAccountProvider")
 public class StudentAccountProvider implements AccountProvider {
-    private static final String USER_TYPE = "STUDENT";
-    private static final String ROLE_PERMISSION_CODE = "student:role";
+    private static final AccountUserType USER_TYPE = AccountUserType.STUDENT;
 
-    @Resource(name = "securityAccountMapper")
-    private SecurityAccountMapper securityAccountMapper;
+    @Resource(name = "studentUserDao")
+    private StudentUserDao studentUserDao;
 
     @Resource(name = "securityCacheService")
     private SecurityCacheService securityCacheService;
 
     @Override
     public String getUserType() {
-        return USER_TYPE;
+        return USER_TYPE.getCode();
     }
 
+    /**
+     * 组装学员端 UserDetails。
+     * 先读取权限缓存与 security 用户快照缓存，缓存未命中时再回源数据库并回填缓存。
+     */
     @Override
     public UserDetails getUserDetails(Long userId) {
-        StudentUserEntity studentUser = securityAccountMapper.selectStudentUserById(userId);
-        if (studentUser == null) {
-            throw new UsernameNotFoundException("Student user not found: " + userId);
-        }
-        List<String> permissionCodes = securityCacheService.getAuthorityCodes(USER_TYPE, userId);
+        List<String> permissionCodes = securityCacheService.getAuthorityCodes(USER_TYPE.getCode(), userId);
         if (permissionCodes.isEmpty()) {
-            permissionCodes = securityAccountMapper.selectExistingPermissionCodes(List.of(ROLE_PERMISSION_CODE));
-            securityCacheService.cacheAuthorityCodes(USER_TYPE, userId, permissionCodes);
+            permissionCodes = PermissionCodeResolver.resolvePermissionCodes(USER_TYPE);
+            securityCacheService.cacheAuthorityCodes(USER_TYPE.getCode(), userId, permissionCodes);
         }
         List<SimpleGrantedAuthority> authorities = permissionCodes
                 .stream()
@@ -48,12 +53,28 @@ public class StudentAccountProvider implements AccountProvider {
         if (authorities.isEmpty()) {
             throw new UsernameNotFoundException("No authority for student user: " + userId);
         }
-        boolean enabled = StudentUserStatus.ENABLED.equals(studentUser.getStatusEnum());
+        SecurityCacheService.SecurityUserSnapshot userSnapshot =
+                securityCacheService.getUserSnapshot(USER_TYPE.getCode(), userId);
+        boolean enabled;
+        Long currentCampusId;
+        if (userSnapshot != null) {
+            enabled = userSnapshot.enabled();
+            currentCampusId = userSnapshot.currentCampusId();
+        } else {
+            StudentUserEntity studentUser = studentUserDao.getById(userId);
+            if (studentUser == null) {
+                throw new UsernameNotFoundException("Student user not found: " + userId);
+            }
+            enabled = StudentUserStatus.ENABLED.equals(studentUser.getStatusEnum());
+            currentCampusId = studentUser.getCampusId();
+            securityCacheService.cacheUserSnapshot(
+                    new SecurityCacheService.SecurityUserSnapshot(USER_TYPE.getCode(), userId, enabled, currentCampusId)
+            );
+        }
         return new ChordSkedUserDetails(
                 userId,
                 USER_TYPE,
-                studentUser.getCampusId(),
-                true,
+                currentCampusId,
                 enabled,
                 authorities
         );

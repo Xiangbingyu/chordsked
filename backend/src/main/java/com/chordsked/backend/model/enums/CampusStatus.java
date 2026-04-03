@@ -2,7 +2,8 @@ package com.chordsked.backend.model.enums;
 
 public enum CampusStatus {
     DISABLED(0),
-    ENABLED(1);
+    ENABLED(1),
+    DELETED(2);
 
     private final int code;
 

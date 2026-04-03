@@ -2,10 +2,7 @@ package com.chordsked.backend.model.entity;
 
 import com.chordsked.backend.model.enums.MustChangePasswordFlag;
 import com.chordsked.backend.model.enums.TeacherUserLevelType;
-import com.chordsked.backend.model.enums.TeacherUserTeachingType;
 import com.chordsked.backend.model.enums.TeacherUserStatus;
-
-import java.time.LocalDateTime;
 
 public class TeacherUserEntity {
     private Long id;
@@ -14,19 +11,15 @@ public class TeacherUserEntity {
     private String phone;
     private String password;
     private String avatar;
-    private TeacherUserTeachingType teachingType;
     private TeacherUserLevelType teacherLevel;
     private Long campusId;
     private TeacherUserStatus status;
     private MustChangePasswordFlag mustChangePassword;
-    private Integer loginFailCount;
-    private LocalDateTime lockedUntil;
-    private LocalDateTime lastLoginAt;
+    private Long lastLoginAt;
     private String experience;
     private String goodAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Integer isDeleted;
+    private Long createdAt;
+    private Long updatedAt;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -40,12 +33,8 @@ public class TeacherUserEntity {
     public void setPassword(String password) { this.password = password; }
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
-    public String getTeachingType() { return teachingType == null ? null : teachingType.name(); }
-    public void setTeachingType(String teachingType) { this.teachingType = TeacherUserTeachingType.fromValue(teachingType); }
-    public TeacherUserTeachingType getTeachingTypeEnum() { return teachingType; }
-    public void setTeachingTypeEnum(TeacherUserTeachingType teachingType) { this.teachingType = teachingType; }
-    public String getTeacherLevel() { return teacherLevel == null ? null : teacherLevel.name(); }
-    public void setTeacherLevel(String teacherLevel) { this.teacherLevel = TeacherUserLevelType.fromValue(teacherLevel); }
+    public Integer getTeacherLevel() { return teacherLevel == null ? null : teacherLevel.getCode(); }
+    public void setTeacherLevel(Integer teacherLevel) { this.teacherLevel = TeacherUserLevelType.fromCode(teacherLevel); }
     public TeacherUserLevelType getTeacherLevelEnum() { return teacherLevel; }
     public void setTeacherLevelEnum(TeacherUserLevelType teacherLevel) { this.teacherLevel = teacherLevel; }
     public Long getCampusId() { return campusId; }
@@ -58,20 +47,14 @@ public class TeacherUserEntity {
     public void setMustChangePassword(Integer mustChangePassword) { this.mustChangePassword = MustChangePasswordFlag.fromCode(mustChangePassword); }
     public MustChangePasswordFlag getMustChangePasswordEnum() { return mustChangePassword; }
     public void setMustChangePasswordEnum(MustChangePasswordFlag mustChangePassword) { this.mustChangePassword = mustChangePassword; }
-    public Integer getLoginFailCount() { return loginFailCount; }
-    public void setLoginFailCount(Integer loginFailCount) { this.loginFailCount = loginFailCount; }
-    public LocalDateTime getLockedUntil() { return lockedUntil; }
-    public void setLockedUntil(LocalDateTime lockedUntil) { this.lockedUntil = lockedUntil; }
-    public LocalDateTime getLastLoginAt() { return lastLoginAt; }
-    public void setLastLoginAt(LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
+    public Long getLastLoginAt() { return lastLoginAt; }
+    public void setLastLoginAt(Long lastLoginAt) { this.lastLoginAt = lastLoginAt; }
     public String getExperience() { return experience; }
     public void setExperience(String experience) { this.experience = experience; }
     public String getGoodAt() { return goodAt; }
     public void setGoodAt(String goodAt) { this.goodAt = goodAt; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    public Integer getIsDeleted() { return isDeleted; }
-    public void setIsDeleted(Integer isDeleted) { this.isDeleted = isDeleted; }
+    public Long getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Long createdAt) { this.createdAt = createdAt; }
+    public Long getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Long updatedAt) { this.updatedAt = updatedAt; }
 }

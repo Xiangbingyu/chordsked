@@ -28,5 +28,5 @@ public interface StudentUserMapper {
 
     int updateStudent(StudentUserEntity studentUserEntity);
 
-    int deleteStudent(@Param("id") Long id);
+    int deleteStudent(@Param("id") Long id, @Param("updatedAt") Long updatedAt);
 }

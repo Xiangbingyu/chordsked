@@ -2,8 +2,6 @@ package com.chordsked.backend.model.entity;
 
 import com.chordsked.backend.model.enums.CampusStatus;
 
-import java.time.LocalDateTime;
-
 public class CampusEntity {
     private Long id;
     private String name;
@@ -14,9 +12,8 @@ public class CampusEntity {
     private Integer sort;
     private CampusStatus status;
     private String remark;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Integer isDeleted;
+    private Long createdAt;
+    private Long updatedAt;
 
     public Long getId() {
         return id;
@@ -98,27 +95,19 @@ public class CampusEntity {
         this.remark = remark;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Long getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Long updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public Integer getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Integer isDeleted) {
-        this.isDeleted = isDeleted;
     }
 }

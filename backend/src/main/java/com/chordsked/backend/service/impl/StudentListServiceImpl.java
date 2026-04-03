@@ -5,6 +5,7 @@ import com.chordsked.backend.config.properties.AppProperties;
 import com.chordsked.backend.dao.StudentUserDao;
 import com.chordsked.backend.model.dto.StudentListRequest;
 import com.chordsked.backend.model.entity.StudentUserEntity;
+import com.chordsked.backend.model.enums.StudentUserStatus;
 import com.chordsked.backend.model.vo.StudentListResultVO;
 import com.chordsked.backend.service.StudentListService;
 import jakarta.annotation.Resource;
@@ -27,6 +28,9 @@ public class StudentListServiceImpl implements StudentListService {
 
     @Override
     public PageResult<StudentListResultVO> list(StudentListRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request must not be null");
+        }
         int page = request.getPage() == null ? 1 : request.getPage();
         int pageSize = request.getPageSize() == null ? 20 : request.getPageSize();
         String keyword = request.getKeyword();
@@ -40,11 +44,14 @@ public class StudentListServiceImpl implements StudentListService {
         if (pageSize > appProperties.getMaxPageSize()) {
             throw new IllegalArgumentException("pageSize too large");
         }
+        if (status != null && StudentUserStatus.fromCode(status) == null) {
+            throw new IllegalArgumentException("status is invalid");
+        }
         int offset = (page - 1) * pageSize;
         long total = studentUserDao.countStudents(keyword, status);
         List<StudentUserEntity> entities = studentUserDao.listStudents(keyword, status, offset, pageSize);
         List<StudentListResultVO> items = entities.stream()
-                .map(s -> new StudentListResultVO(s.getId(), s.getPhone(), s.getName(), s.getStatus(), s.getCampusId()))
+                .map(s -> new StudentListResultVO(s.getId(), s.getPhone(), s.getName(), s.getStatusEnum(), s.getCampusId()))
                 .collect(Collectors.toList());
         logger.info("List students, page={}, pageSize={}", page, pageSize);
         return PageResult.of(total, items);

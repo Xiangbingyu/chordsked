@@ -1,5 +1,6 @@
 package com.chordsked.backend.security.account.model;
 
+import com.chordsked.backend.model.enums.AccountUserType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -7,24 +8,21 @@ import java.util.Collection;
 
 public class ChordSkedUserDetails implements UserDetails {
     private final Long userId;
-    private final String userType;
+    private final AccountUserType userType;
     private final Long currentCampusId;
-    private final boolean accountNonLocked;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public ChordSkedUserDetails(
             Long userId,
-            String userType,
+            AccountUserType userType,
             Long currentCampusId,
-            boolean accountNonLocked,
             boolean enabled,
             Collection<? extends GrantedAuthority> authorities
     ) {
         this.userId = userId;
         this.userType = userType;
         this.currentCampusId = currentCampusId;
-        this.accountNonLocked = accountNonLocked;
         this.enabled = enabled;
         this.authorities = authorities;
     }
@@ -34,6 +32,10 @@ public class ChordSkedUserDetails implements UserDetails {
     }
 
     public String getUserType() {
+        return userType.getCode();
+    }
+
+    public AccountUserType getUserTypeEnum() {
         return userType;
     }
 
@@ -53,7 +55,7 @@ public class ChordSkedUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return userType + ":" + userId;
+        return userType.getCode() + ":" + userId;
     }
 
     @Override
@@ -63,7 +65,7 @@ public class ChordSkedUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return accountNonLocked;
+        return true;
     }
 
     @Override
@@ -75,4 +77,5 @@ public class ChordSkedUserDetails implements UserDetails {
     public boolean isEnabled() {
         return enabled;
     }
+
 }

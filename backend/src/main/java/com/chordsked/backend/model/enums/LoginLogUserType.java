@@ -1,16 +1,44 @@
 package com.chordsked.backend.model.enums;
 
 public enum LoginLogUserType {
-    INTERNAL,
-    TEACHER,
-    STUDENT;
+    ADMIN(1, AccountUserType.ADMIN),
+    TEACHER(2, AccountUserType.TEACHER),
+    STUDENT(3, AccountUserType.STUDENT);
 
-    public static LoginLogUserType fromValue(String value) {
-        if (value == null || value.isBlank()) {
+    private final int code;
+    private final AccountUserType accountUserType;
+
+    LoginLogUserType(int code, AccountUserType accountUserType) {
+        this.code = code;
+        this.accountUserType = accountUserType;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public AccountUserType getAccountUserType() {
+        return accountUserType;
+    }
+
+    public static LoginLogUserType fromCode(Integer code) {
+        if (code == null) {
             return null;
         }
         for (LoginLogUserType type : values()) {
-            if (type.name().equalsIgnoreCase(value.trim())) {
+            if (type.code == code) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    public static LoginLogUserType fromAccountUserType(AccountUserType accountUserType) {
+        if (accountUserType == null) {
+            return null;
+        }
+        for (LoginLogUserType type : values()) {
+            if (type.accountUserType == accountUserType) {
                 return type;
             }
         }

@@ -1,17 +1,27 @@
 package com.chordsked.backend.model.enums;
 
 public enum TeacherUserLevelType {
-    JUNIOR,
-    INTERMEDIATE,
-    SENIOR,
-    EXPERT;
+    JUNIOR(1),
+    INTERMEDIATE(2),
+    SENIOR(3),
+    EXPERT(4);
 
-    public static TeacherUserLevelType fromValue(String value) {
-        if (value == null || value.isBlank()) {
+    private final int code;
+
+    TeacherUserLevelType(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public static TeacherUserLevelType fromCode(Integer code) {
+        if (code == null) {
             return null;
         }
         for (TeacherUserLevelType level : values()) {
-            if (level.name().equalsIgnoreCase(value.trim())) {
+            if (level.code == code) {
                 return level;
             }
         }

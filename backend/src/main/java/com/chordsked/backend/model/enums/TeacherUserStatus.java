@@ -3,7 +3,8 @@ package com.chordsked.backend.model.enums;
 public enum TeacherUserStatus {
     ON_DUTY(1),
     LEAVED(2),
-    DISABLED(3);
+    DISABLED(3),
+    DELETED(4);
 
     private final int code;
 

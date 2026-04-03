@@ -3,6 +3,7 @@ package com.chordsked.backend.controller;
 import com.chordsked.backend.common.ApiResponse;
 import com.chordsked.backend.common.PageResult;
 import com.chordsked.backend.model.dto.StudentListRequest;
+import com.chordsked.backend.model.enums.StudentUserStatus;
 import com.chordsked.backend.model.vo.StudentListResultVO;
 import com.chordsked.backend.service.StudentListService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/students")
+@RequestMapping("/students/api/v1")
 @Validated
 @Tag(name = "学员管理", description = "学员相关接口")
 public class StudentController {
@@ -37,6 +38,9 @@ public class StudentController {
             @Parameter(description = "状态")
             @RequestParam(name = "status", required = false) Integer status
     ) {
+        if (status != null && StudentUserStatus.fromCode(status) == null) {
+            throw new IllegalArgumentException("status is invalid");
+        }
         StudentListRequest request = new StudentListRequest();
         request.setPage(page);
         request.setPageSize(pageSize);

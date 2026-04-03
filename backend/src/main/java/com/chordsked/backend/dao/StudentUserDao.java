@@ -23,5 +23,5 @@ public interface StudentUserDao {
 
     int updateStudent(StudentUserEntity studentUserEntity);
 
-    int deleteStudent(Long id);
+    int deleteStudent(Long id, Long updatedAt);
 }

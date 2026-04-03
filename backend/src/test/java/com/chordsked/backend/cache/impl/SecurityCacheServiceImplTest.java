@@ -1,5 +1,6 @@
 package com.chordsked.backend.cache.impl;
 
+import com.chordsked.backend.cache.SecurityCacheService;
 import com.chordsked.backend.config.properties.RedisProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,7 +38,31 @@ class SecurityCacheServiceImplTest {
 
         when(redisProperties.isEnabled()).thenReturn(true);
         when(redisProperties.getAuthorityCacheTtlSeconds()).thenReturn(300L);
+        when(redisProperties.getUserSnapshotCacheTtlSeconds()).thenReturn(300L);
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+    }
+
+    @Test
+    void shouldReadUserSnapshotFromCache() {
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001");
+
+        SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
+
+        assertEquals("ADMIN", userSnapshot.userType());
+        assertEquals(1001L, userSnapshot.userId());
+        assertEquals(true, userSnapshot.enabled());
+        assertEquals(2001L, userSnapshot.currentCampusId());
+    }
+
+    @Test
+    void shouldWriteUserSnapshotToCache() {
+        securityCacheService.cacheUserSnapshot(new SecurityCacheService.SecurityUserSnapshot("ADMIN", 1001L, true, 2001L));
+
+        verify(valueOperations).set(
+                eq("chordsked:security:user:ADMIN:1001"),
+                eq("1|2001"),
+                eq(Duration.ofSeconds(300))
+        );
     }
 
     @Test
@@ -56,5 +83,22 @@ class SecurityCacheServiceImplTest {
                 eq("__EMPTY__"),
                 eq(Duration.ofSeconds(300))
         );
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenAuthorityCacheParameterInvalid() {
+        List<String> codes = securityCacheService.getAuthorityCodes("   ", 1001L);
+
+        assertEquals(Collections.emptyList(), codes);
+        verify(stringRedisTemplate, never()).opsForValue();
+    }
+
+    @Test
+    void shouldSkipWriteWhenAuthorityCacheParameterInvalid() {
+        clearInvocations(stringRedisTemplate, valueOperations);
+
+        securityCacheService.cacheAuthorityCodes("ADMIN", 0L, Collections.emptyList());
+
+        verify(stringRedisTemplate, never()).opsForValue();
     }
 }

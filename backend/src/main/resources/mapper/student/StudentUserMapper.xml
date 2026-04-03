@@ -13,13 +13,12 @@
         status,
         campus_id,
         created_at,
-        updated_at,
-        is_deleted
+        updated_at
     </sql>
 
     <sql id="StudentUserWhere">
         <where>
-            AND is_deleted = 0
+            AND status != 2
             <if test="keyword != null and keyword != ''">
                 AND (name LIKE CONCAT('%', #{keyword}, '%') OR phone LIKE CONCAT('%', #{keyword}, '%'))
             </if>
@@ -49,7 +48,7 @@
         <include refid="StudentUserColumns"/>
         FROM sys_student_user
         WHERE id = #{id}
-          AND is_deleted = 0
+          AND status != 2
     </select>
 
     <insert id="insertStudent" useGeneratedKeys="true" keyProperty="id">
@@ -60,8 +59,7 @@
             status,
             campus_id,
             created_at,
-            updated_at,
-            is_deleted
+            updated_at
         ) VALUES (
             #{phone},
             #{name},
@@ -69,8 +67,7 @@
             #{status},
             #{campusId},
             #{createdAt},
-            #{updatedAt},
-            #{isDeleted}
+            #{updatedAt}
         )
     </insert>
 
@@ -83,15 +80,15 @@
             campus_id = #{campusId},
             updated_at = #{updatedAt}
         WHERE id = #{id}
-          AND is_deleted = 0
+          AND status != 2
     </update>
 
     <update id="deleteStudent">
         UPDATE sys_student_user
-        SET is_deleted = 1,
-            updated_at = CURRENT_TIMESTAMP
+        SET status = 2,
+            updated_at = #{updatedAt}
         WHERE id = #{id}
-          AND is_deleted = 0
+          AND status != 2
     </update>
 
 </mapper>

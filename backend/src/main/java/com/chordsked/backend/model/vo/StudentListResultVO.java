@@ -1,16 +1,18 @@
 package com.chordsked.backend.model.vo;
 
+import com.chordsked.backend.model.enums.StudentUserStatus;
+
 public class StudentListResultVO {
     private Long id;
     private String phone;
     private String name;
-    private Integer status;
+    private StudentUserStatus status;
     private Long campusId;
 
     public StudentListResultVO() {
     }
 
-    public StudentListResultVO(Long id, String phone, String name, Integer status, Long campusId) {
+    public StudentListResultVO(Long id, String phone, String name, StudentUserStatus status, Long campusId) {
         this.id = id;
         this.phone = phone;
         this.name = name;
@@ -42,11 +44,11 @@ public class StudentListResultVO {
         this.name = name;
     }
 
-    public Integer getStatus() {
+    public StudentUserStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Integer status) {
+    public void setStatus(StudentUserStatus status) {
         this.status = status;
     }
 
