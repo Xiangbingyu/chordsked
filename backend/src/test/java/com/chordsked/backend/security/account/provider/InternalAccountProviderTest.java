@@ -1,6 +1,6 @@
 package com.chordsked.backend.security.account.provider;
 
-import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
 import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
@@ -42,7 +42,7 @@ class InternalAccountProviderTest {
         when(securityCacheService.getUserSnapshot("ADMIN", 1001L))
                 .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", 1001L, true, 2001L));
 
-        ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.getUserDetails(1001L);
+        ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
         assertEquals(2001L, userDetails.getCurrentCampusId());
@@ -62,7 +62,7 @@ class InternalAccountProviderTest {
         when(internalUserDao.getById(1001L)).thenReturn(internalUser);
         when(userCampusDao.getPrimaryCampusIdByUserId(1001L)).thenReturn(2001L);
 
-        ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.getUserDetails(1001L);
+        ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
         assertEquals(2001L, userDetails.getCurrentCampusId());

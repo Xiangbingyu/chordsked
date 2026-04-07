@@ -1,12 +1,12 @@
 package com.chordsked.backend.controller;
 
 import com.chordsked.backend.common.PageResult;
-import com.chordsked.backend.cache.SecurityCacheService;
-import com.chordsked.backend.model.dto.StudentListRequest;
+import com.chordsked.backend.cache.security.SecurityCacheService;
+import com.chordsked.backend.model.dto.student.StudentListRequest;
 import com.chordsked.backend.model.enums.StudentUserStatus;
-import com.chordsked.backend.model.vo.StudentListResultVO;
+import com.chordsked.backend.model.vo.student.StudentListResultVO;
 import com.chordsked.backend.security.account.service.MultiAccountUserDetailsService;
-import com.chordsked.backend.service.StudentListService;
+import com.chordsked.backend.service.student.StudentListService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import java.util.List;
 import org.junit.jupiter.api.Test;

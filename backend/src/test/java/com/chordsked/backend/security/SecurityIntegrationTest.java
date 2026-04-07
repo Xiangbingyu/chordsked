@@ -1,10 +1,10 @@
 package com.chordsked.backend.security;
 
 import com.chordsked.backend.common.PageResult;
-import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.model.enums.StudentUserStatus;
-import com.chordsked.backend.model.vo.StudentListResultVO;
-import com.chordsked.backend.service.StudentListService;
+import com.chordsked.backend.model.vo.student.StudentListResultVO;
+import com.chordsked.backend.service.student.StudentListService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;

@@ -1,6 +1,6 @@
 package com.chordsked.backend.security.account.provider;
 
-import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.StudentUserDao;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +37,7 @@ class StudentAccountProviderTest {
         when(securityCacheService.getUserSnapshot("STUDENT", 3001L))
                 .thenReturn(new SecurityCacheService.SecurityUserSnapshot("STUDENT", 3001L, true, 4001L));
 
-        ChordSkedUserDetails userDetails = (ChordSkedUserDetails) studentAccountProvider.getUserDetails(3001L);
+        ChordSkedUserDetails userDetails = (ChordSkedUserDetails) studentAccountProvider.loadUserDetails(3001L);
 
         assertEquals(3001L, userDetails.getUserId());
         assertEquals(4001L, userDetails.getCurrentCampusId());

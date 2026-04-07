@@ -1,10 +1,15 @@
 package com.chordsked.backend.controller;
 
-import com.chordsked.backend.cache.InternalAuthLoginCacheService;
-import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.cache.auth.AuthLoginStateCacheService;
+import com.chordsked.backend.cache.auth.provider.AuthLoginSnapshotCacheProvider;
+import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
+import com.chordsked.backend.model.auth.AuthLoginMethod;
+import com.chordsked.backend.model.auth.UsernamePasswordLoginSnapshot;
 import com.chordsked.backend.model.entity.InternalUserEntity;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,8 +39,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:chordsked_auth_login_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "chordsked.security.internal-auth.login.fail-lock-threshold=7",
-        "chordsked.security.internal-auth.login.fail-lock-minutes=45"
+        "chordsked.security.auth.login.fail-lock-threshold=7",
+        "chordsked.security.auth.login.fail-lock-minutes=45"
 })
 class AuthControllerIntegrationTest {
     private static final String USERNAME = "admin";
@@ -57,22 +62,30 @@ class AuthControllerIntegrationTest {
     @MockitoBean(name = "internalUserDao")
     private InternalUserDao internalUserDao;
 
-    @MockitoBean(name = "internalAuthLoginCacheService")
-    private InternalAuthLoginCacheService authLoginCacheService;
+    @MockitoBean(name = "authLoginStateCacheService")
+    private AuthLoginStateCacheService authLoginStateCacheService;
+
+    @MockitoBean(name = "usernamePasswordLoginSnapshotCacheProvider")
+    private AuthLoginSnapshotCacheProvider usernamePasswordLoginSnapshotCacheProvider;
 
     @MockitoBean(name = "securityCacheService")
     private SecurityCacheService securityCacheService;
 
+    @BeforeEach
+    void setUp() {
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginMethod()).thenReturn(AuthLoginMethod.USERNAME_PASSWORD);
+    }
+
     @Test
     void shouldLoginSuccessfullyAndSetTokenCookies() throws Exception {
         InternalUserEntity internalUser = createEnabledUser();
-        when(authLoginCacheService.getInternalUserLoginSnapshot(USERNAME)).thenReturn(null);
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, USERNAME)).thenReturn(null);
         when(internalUserDao.getByUsername(USERNAME)).thenReturn(internalUser);
-        when(authLoginCacheService.getLockedUntil(USERNAME)).thenReturn(null);
+        when(authLoginStateCacheService.getLockedUntil(any(), eq(USERNAME))).thenReturn(null);
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.userId").value(1001))
@@ -83,69 +96,69 @@ class AuthControllerIntegrationTest {
                     assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("access_token=") && cookie.contains("HttpOnly")));
                     assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("refresh_token=") && cookie.contains("HttpOnly")));
                 });
-        verify(authLoginCacheService, times(1)).clearLoginState(USERNAME);
+        verify(authLoginStateCacheService, times(1)).clearLoginState(any(), eq(USERNAME));
         verify(securityCacheService, times(2)).markTokenActive(any(), any());
     }
 
     @Test
     void shouldRejectWhenPasswordWrongAndIncreaseFailCount() throws Exception {
         InternalUserEntity internalUser = createEnabledUser();
-        when(authLoginCacheService.getInternalUserLoginSnapshot(USERNAME)).thenReturn(null);
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, USERNAME)).thenReturn(null);
         when(internalUserDao.getByUsername(USERNAME)).thenReturn(internalUser);
-        when(authLoginCacheService.getLockedUntil(USERNAME)).thenReturn(null);
+        when(authLoginStateCacheService.getLockedUntil(any(), eq(USERNAME))).thenReturn(null);
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"WrongPassword1!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"WrongPassword1!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号或密码错误"));
 
-        verify(authLoginCacheService, times(1)).recordLoginFailure(eq(USERNAME), eq(7), eq(45L));
-        verify(authLoginCacheService, never()).clearLoginState(USERNAME);
+        verify(authLoginStateCacheService, times(1)).recordLoginFailure(any(), eq(USERNAME), eq(7), eq(45L));
+        verify(authLoginStateCacheService, never()).clearLoginState(any(), eq(USERNAME));
     }
 
     @Test
     void shouldRejectWhenAccountLocked() throws Exception {
         InternalUserEntity internalUser = createEnabledUser();
-        when(authLoginCacheService.getInternalUserLoginSnapshot(USERNAME)).thenReturn(null);
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, USERNAME)).thenReturn(null);
         when(internalUserDao.getByUsername(USERNAME)).thenReturn(internalUser);
-        when(authLoginCacheService.getLockedUntil(USERNAME)).thenReturn(System.currentTimeMillis() + 10 * 60 * 1000L);
+        when(authLoginStateCacheService.getLockedUntil(any(), eq(USERNAME))).thenReturn(System.currentTimeMillis() + 10 * 60 * 1000L);
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号已锁定，请 45 分钟后重试"));
 
-        verify(authLoginCacheService, never()).recordLoginFailure(eq(USERNAME), eq(7), eq(45L));
-        verify(authLoginCacheService, never()).clearLoginState(USERNAME);
+        verify(authLoginStateCacheService, never()).recordLoginFailure(any(), eq(USERNAME), eq(7), eq(45L));
+        verify(authLoginStateCacheService, never()).clearLoginState(any(), eq(USERNAME));
     }
 
     @Test
     void shouldRejectWhenUserDisabled() throws Exception {
-        when(authLoginCacheService.getInternalUserLoginSnapshot(USERNAME)).thenReturn(null);
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, USERNAME)).thenReturn(null);
         when(internalUserDao.getByUsername(USERNAME)).thenReturn(createDisabledUser());
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号已被禁用，请联系管理员"));
 
-        verify(authLoginCacheService, never()).recordLoginFailure(eq(USERNAME), eq(7), eq(45L));
+        verify(authLoginStateCacheService, never()).recordLoginFailure(any(), eq(USERNAME), eq(7), eq(45L));
     }
 
     @Test
     void shouldRejectWhenUserNotFound() throws Exception {
-        when(authLoginCacheService.getInternalUserLoginSnapshot(USERNAME)).thenReturn(null);
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, USERNAME)).thenReturn(null);
         when(internalUserDao.getByUsername(USERNAME)).thenReturn(null);
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号或密码错误"));
@@ -155,8 +168,8 @@ class AuthControllerIntegrationTest {
     void shouldReturnBadRequestWhenPasswordBlank() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"\"}"))
-                .andExpect(status().isBadRequest())
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"\"}"))
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400));
     }
 
@@ -164,7 +177,7 @@ class AuthControllerIntegrationTest {
     void shouldReturnBadRequestWhenUsernameContainsWhitespace() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"admin test\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin test\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -173,24 +186,94 @@ class AuthControllerIntegrationTest {
     void shouldReturnBadRequestWhenUsernameTooLong() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"username\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
 
     @Test
-    void shouldUseSnapshotWhenLoginCacheHit() throws Exception {
-        InternalUserEntity internalUser = createEnabledUser();
-        when(authLoginCacheService.getInternalUserLoginSnapshot(USERNAME)).thenReturn(internalUser);
-        when(authLoginCacheService.getLockedUntil(USERNAME)).thenReturn(null);
-
+    void shouldRejectWhenRequestUserTypeMissing() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
                         .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("登录用户类型不能为空"));
+    }
+
+    @Test
+    void shouldRejectWhenUsernamePasswordMethodFieldsMissing() throws Exception {
+        mockMvc.perform(post("/admin/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"ADMIN\",\"loginMethod\":\"USERNAME_PASSWORD\",\"password\":\"Aa123456!\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("用户名和密码不能为空"));
+    }
+
+    @Test
+    void shouldRejectWhenPhoneSmsCodeMethodFieldsMissing() throws Exception {
+        mockMvc.perform(post("/students/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"STUDENT\",\"loginMethod\":\"PHONE_SMS_CODE\",\"smsCode\":\"123456\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("手机号和短信验证码不能为空"));
+    }
+
+    @Test
+    void shouldRejectWhenLoginMethodCannotBeResolvedAtController() throws Exception {
+        mockMvc.perform(post("/admin/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("登录请求参数不合法"));
+    }
+
+    @Test
+    void shouldUseSnapshotWhenLoginCacheHit() throws Exception {
+        when(usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, USERNAME))
+                .thenReturn(createUsernamePasswordSnapshot());
+        when(authLoginStateCacheService.getLockedUntil(any(), eq(USERNAME))).thenReturn(null);
+
+        mockMvc.perform(post("/admin/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
 
         verify(internalUserDao, never()).getByUsername(USERNAME);
+    }
+
+    @Test
+    void shouldRejectWhenTeacherUsernamePasswordLoginNotSupported() throws Exception {
+        mockMvc.perform(post("/teachers/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"TEACHER\",\"username\":\"teacher01\",\"password\":\"Aa123456!\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("当前账号类型暂不支持该登录方式"));
+    }
+
+    @Test
+    void shouldRejectStudentPhoneSmsCodeLoginWhenMethodNotOpen() throws Exception {
+        mockMvc.perform(post("/students/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"STUDENT\",\"phone\":\"13800138000\",\"smsCode\":\"123456\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("手机号验证码登录暂未开放"));
+    }
+
+    @Test
+    void shouldRejectWhenRequestUserTypeDoesNotMatchRoute() throws Exception {
+        mockMvc.perform(post("/admin/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"userType\":\"TEACHER\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("登录用户类型与访问端不匹配"));
     }
 
     private InternalUserEntity createEnabledUser() {
@@ -210,5 +293,19 @@ class AuthControllerIntegrationTest {
         InternalUserEntity internalUser = createEnabledUser();
         internalUser.setStatus(0);
         return internalUser;
+    }
+
+    private UsernamePasswordLoginSnapshot createUsernamePasswordSnapshot() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        UsernamePasswordLoginSnapshot snapshot = new UsernamePasswordLoginSnapshot();
+        snapshot.setUserId(USER_ID);
+        snapshot.setUserType(AccountUserType.ADMIN);
+        snapshot.setLoginMethod(AuthLoginMethod.USERNAME_PASSWORD);
+        snapshot.setPrincipal(USERNAME);
+        snapshot.setPassword(encoder.encode(RAW_PASSWORD));
+        snapshot.setEnabled(true);
+        snapshot.setMustChangePassword(false);
+        snapshot.setName("系统管理员");
+        return snapshot;
     }
 }

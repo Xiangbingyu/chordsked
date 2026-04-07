@@ -40,7 +40,7 @@ public class JwtTokenUtils {
      */
     public Claims parseClaims(String token) {
         return Jwts.parser()
-                .verifyWith(signingKey())
+                .verifyWith(buildSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -107,7 +107,7 @@ public class JwtTokenUtils {
                 .issuer(jwtProperties.getIssuer())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expirationSeconds)))
-                .signWith(signingKey())
+                .signWith(buildSigningKey())
                 .compact();
     }
 
@@ -121,7 +121,7 @@ public class JwtTokenUtils {
         return generateToken(userId, userType, jwtProperties.getRefreshExpirationSeconds(), TOKEN_TYPE_REFRESH);
     }
 
-    private SecretKey signingKey() {
+    private SecretKey buildSigningKey() {
         // 基于配置密钥生成 HMAC key，密钥长度由 JwtProperties 在启动时校验
         byte[] secretBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(secretBytes);

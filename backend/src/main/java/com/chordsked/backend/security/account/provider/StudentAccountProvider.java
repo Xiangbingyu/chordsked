@@ -1,6 +1,6 @@
 package com.chordsked.backend.security.account.provider;
 
-import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.StudentUserDao;
 import com.chordsked.backend.model.entity.StudentUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
@@ -40,7 +40,7 @@ public class StudentAccountProvider implements AccountProvider {
      * 先读取权限缓存与 security 用户快照缓存，缓存未命中时再回源数据库并回填缓存。
      */
     @Override
-    public UserDetails getUserDetails(Long userId) {
+    public UserDetails loadUserDetails(Long userId) {
         List<String> permissionCodes = securityCacheService.getAuthorityCodes(USER_TYPE.getCode(), userId);
         if (permissionCodes.isEmpty()) {
             permissionCodes = PermissionCodeResolver.resolvePermissionCodes(USER_TYPE);

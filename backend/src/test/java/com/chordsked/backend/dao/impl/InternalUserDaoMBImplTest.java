@@ -1,6 +1,6 @@
 package com.chordsked.backend.dao.impl;
 
-import com.chordsked.backend.dao.mapper.InternalLoginMapper;
+import com.chordsked.backend.dao.mapper.InternalUserMapper;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +14,13 @@ import static org.mockito.Mockito.when;
 
 class InternalUserDaoMBImplTest {
     private InternalUserDaoMBImpl internalUserDao;
-    private InternalLoginMapper internalLoginMapper;
+    private InternalUserMapper internalUserMapper;
 
     @BeforeEach
     void setUp() {
         internalUserDao = new InternalUserDaoMBImpl();
-        internalLoginMapper = mock(InternalLoginMapper.class);
-        ReflectionTestUtils.setField(internalUserDao, "internalLoginMapper", internalLoginMapper);
+        internalUserMapper = mock(InternalUserMapper.class);
+        ReflectionTestUtils.setField(internalUserDao, "internalUserMapper", internalUserMapper);
     }
 
     @Test
@@ -28,17 +28,17 @@ class InternalUserDaoMBImplTest {
         assertNull(internalUserDao.getById(null));
         assertNull(internalUserDao.getById(0L));
 
-        verifyNoInteractions(internalLoginMapper);
+        verifyNoInteractions(internalUserMapper);
     }
 
     @Test
     void shouldTrimUsernameBeforeQuery() {
         InternalUserEntity internalUser = new InternalUserEntity();
-        when(internalLoginMapper.getByUsername("admin")).thenReturn(internalUser);
+        when(internalUserMapper.getByUsername("admin")).thenReturn(internalUser);
 
         internalUserDao.getByUsername("  admin  ");
 
-        verify(internalLoginMapper).getByUsername("admin");
+        verify(internalUserMapper).getByUsername("admin");
     }
 
     @Test
@@ -46,6 +46,6 @@ class InternalUserDaoMBImplTest {
         assertNull(internalUserDao.getByUsername(null));
         assertNull(internalUserDao.getByUsername("   "));
 
-        verifyNoInteractions(internalLoginMapper);
+        verifyNoInteractions(internalUserMapper);
     }
 }

@@ -30,7 +30,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
      * 基于 JWT 中的 userType + userId 进行账号体系路由并装载 UserDetails。
      * 后续接入数据库/缓存时，仅需改造具体 Provider 实现。
      */
-    public UserDetails loadUserByTokenContext(String userType, Long userId) {
+    public UserDetails loadUserDetailsByTokenContext(String userType, Long userId) {
         if (userId == null || userId <= 0) {
             throw new UsernameNotFoundException("Invalid user id");
         }
@@ -38,7 +38,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
         if (accountProvider == null) {
             throw new UsernameNotFoundException("Unsupported user type: " + userType);
         }
-        return accountProvider.getUserDetails(userId);
+        return accountProvider.loadUserDetails(userId);
     }
 
     @Override

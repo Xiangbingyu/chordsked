@@ -1,6 +1,6 @@
 package com.chordsked.backend.security.jwt;
 
-import com.chordsked.backend.cache.SecurityCacheService;
+import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.security.account.service.MultiAccountUserDetailsService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import io.jsonwebtoken.Claims;
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Long userId = claims.get(CLAIM_USER_ID, Long.class);
                     String userType = claims.get(CLAIM_USER_TYPE, String.class);
                     if (userId != null && userType != null && !userType.isBlank()) {
-                        UserDetails userDetails = multiAccountUserDetailsService.loadUserByTokenContext(
+                        UserDetails userDetails = multiAccountUserDetailsService.loadUserDetailsByTokenContext(
                                 userType,
                                 userId
                         );

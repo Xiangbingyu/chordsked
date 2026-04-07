@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.InternalUserMapper">
+
+    <select id="getById" resultType="com.chordsked.backend.model.entity.InternalUserEntity">
+        SELECT id, username, password, phone, name, avatar, status, must_change_password,
+               data_scope_type, created_at, updated_at
+        FROM sys_internal_user
+        WHERE id = #{userId}
+          AND status != 2
+    </select>
+
+    <select id="getByUsername" resultType="com.chordsked.backend.model.entity.InternalUserEntity">
+        SELECT id, username, password, phone, name, avatar, status, must_change_password,
+               data_scope_type, created_at, updated_at
+        FROM sys_internal_user
+        WHERE username = #{username}
+          AND status != 2
+        LIMIT 1
+    </select>
+
+</mapper>

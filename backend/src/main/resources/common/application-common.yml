@@ -21,10 +21,10 @@ chordsked:
     max-page-size: 100
     default-page-size: 20
   security:
-    internal-auth:
+    auth:
       login:
-        fail-lock-threshold: ${CHORDSKED_INTERNAL_AUTH_LOGIN_FAIL_LOCK_THRESHOLD:5}
-        fail-lock-minutes: ${CHORDSKED_INTERNAL_AUTH_LOGIN_FAIL_LOCK_MINUTES:30}
+        fail-lock-threshold: ${CHORDSKED_AUTH_LOGIN_FAIL_LOCK_THRESHOLD:${CHORDSKED_INTERNAL_AUTH_LOGIN_FAIL_LOCK_THRESHOLD:5}}
+        fail-lock-minutes: ${CHORDSKED_AUTH_LOGIN_FAIL_LOCK_MINUTES:${CHORDSKED_INTERNAL_AUTH_LOGIN_FAIL_LOCK_MINUTES:30}}
     jwt:
       secret: ${CHORDSKED_JWT_SECRET:chordsked-jwt-secret-2026-001-dev-secure-key}
       issuer: ${CHORDSKED_JWT_ISSUER:chordsked-backend}
