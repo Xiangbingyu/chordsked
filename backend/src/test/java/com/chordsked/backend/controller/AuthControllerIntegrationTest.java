@@ -8,7 +8,10 @@ import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.auth.UsernamePasswordLoginSnapshot;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.service.verification.userstatus.UserStatusVerificationService;
+import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +62,9 @@ class AuthControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private JwtTokenUtils jwtTokenUtils;
+
     @MockitoBean(name = "internalUserDao")
     private InternalUserDao internalUserDao;
 
@@ -70,6 +76,9 @@ class AuthControllerIntegrationTest {
 
     @MockitoBean(name = "securityCacheService")
     private SecurityCacheService securityCacheService;
+
+    @MockitoBean(name = "userStatusVerificationService")
+    private UserStatusVerificationService userStatusVerificationService;
 
     @BeforeEach
     void setUp() {
@@ -274,6 +283,49 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("登录用户类型与访问端不匹配"));
+    }
+
+    @Test
+    void shouldRefreshSuccessfullyAndSetNewTokenCookies() throws Exception {
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, AccountUserType.ADMIN.getCode());
+        String refreshToken = jwtTokenUtils.generateRefreshToken(USER_ID, AccountUserType.ADMIN.getCode());
+        when(securityCacheService.isTokenActive(eq(refreshToken))).thenReturn(true);
+        when(securityCacheService.isTokenRevoked(eq(refreshToken))).thenReturn(false);
+
+        mockMvc.perform(post("/admin/api/v1/refresh")
+                        .cookie(
+                                new Cookie("access_token", accessToken),
+                                new Cookie("refresh_token", refreshToken)
+                        ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.userId").value(1001))
+                .andExpect(jsonPath("$.data.userType").value("ADMIN"))
+                .andExpect(result -> {
+                    List<String> cookies = result.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("access_token=") && cookie.contains("HttpOnly")));
+                    assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("refresh_token=") && cookie.contains("HttpOnly")));
+                });
+
+        verify(userStatusVerificationService, times(1))
+                .verify(eq(USER_ID), eq(AccountUserType.ADMIN));
+        verify(securityCacheService, times(2)).markTokenRevoked(any(), any());
+        verify(securityCacheService, times(2)).markTokenActive(any(), any());
+    }
+
+    @Test
+    void shouldRejectRefreshWhenTokenUserTypeDoesNotMatchRoute() throws Exception {
+        String refreshToken = jwtTokenUtils.generateRefreshToken(USER_ID, AccountUserType.TEACHER.getCode());
+        when(securityCacheService.isTokenActive(eq(refreshToken))).thenReturn(true);
+        when(securityCacheService.isTokenRevoked(eq(refreshToken))).thenReturn(false);
+
+        mockMvc.perform(post("/admin/api/v1/refresh")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("登录用户类型与访问端不匹配"));
+
+        verify(userStatusVerificationService, never()).verify(any(), any());
     }
 
     private InternalUserEntity createEnabledUser() {

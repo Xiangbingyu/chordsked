@@ -2,6 +2,7 @@ package com.chordsked.backend.utils.jwt;
 
 import com.chordsked.backend.config.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Resource;
@@ -44,6 +45,14 @@ public class JwtTokenUtils {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public Claims parseClaimsAllowExpired(String token) {
+        try {
+            return parseClaims(token);
+        } catch (ExpiredJwtException exception) {
+            return exception.getClaims();
+        }
     }
 
     /**

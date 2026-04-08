@@ -1,5 +1,7 @@
 package com.chordsked.backend.utils.cookie;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -33,6 +35,21 @@ public final class CookieUtils {
     public static void clearCookie(HttpServletResponse response, String cookieName, boolean secure) {
         Objects.requireNonNull(response, "response must not be null");
         response.addHeader(HttpHeaders.SET_COOKIE, buildClearedCookie(cookieName, secure).toString());
+    }
+
+    public static String readCookieValue(HttpServletRequest request, String cookieName) {
+        Objects.requireNonNull(request, "request must not be null");
+        String normalizedCookieName = Objects.requireNonNull(cookieName, "cookieName must not be null").trim();
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null || cookies.length == 0) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie != null && normalizedCookieName.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 
     public static ResponseCookie buildCookie(String cookieName, String cookieValue, long maxAgeSeconds, boolean secure) {

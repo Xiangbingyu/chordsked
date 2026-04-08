@@ -27,7 +27,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // 预留认证端点，后续接入登录/续签实现时无需再改安全主干。
-                        .requestMatchers("/admin/api/v1/login", "/teachers/api/v1/login", "/students/api/v1/login").permitAll()
+                        .requestMatchers(
+                                "/admin/api/v1/login",
+                                "/teachers/api/v1/login",
+                                "/students/api/v1/login",
+                                "/admin/api/v1/refresh",
+                                "/teachers/api/v1/refresh",
+                                "/students/api/v1/refresh"
+                        ).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/admin/api/v1", "/admin/api/v1/**").hasAuthority("admin:role")
                         .requestMatchers("/teachers/api/v1", "/teachers/api/v1/**").hasAuthority("teacher:role")
