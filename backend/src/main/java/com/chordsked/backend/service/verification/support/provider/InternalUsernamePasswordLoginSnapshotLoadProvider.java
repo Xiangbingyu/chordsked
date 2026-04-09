@@ -42,8 +42,8 @@ public class InternalUsernamePasswordLoginSnapshotLoadProvider implements LoginS
      * 再将结果组装为用户名密码登录快照并写回缓存。
      * 当前实现面向内部账号，后续若其他账号来源也支持该登录方式，可新增新的 provider。
      */
-    public AuthLoginSnapshot load(AuthLoginRequest request, String principal) {
-        UsernamePasswordLoginSnapshot cachedSnapshot = getCachedSnapshot(request, principal);
+    public AuthLoginSnapshot load(AuthLoginRequest request, AccountUserType userType, String principal) {
+        UsernamePasswordLoginSnapshot cachedSnapshot = getCachedSnapshot(userType, principal);
         if (cachedSnapshot != null) {
             return cachedSnapshot;
         }
@@ -53,7 +53,7 @@ public class InternalUsernamePasswordLoginSnapshotLoadProvider implements LoginS
         }
         UsernamePasswordLoginSnapshot snapshot = new UsernamePasswordLoginSnapshot();
         snapshot.setUserId(internalUser.getId());
-        snapshot.setUserType(request.getUserType());
+        snapshot.setUserType(userType);
         snapshot.setLoginMethod(AuthLoginMethod.USERNAME_PASSWORD);
         snapshot.setPrincipal(internalUser.getUsername());
         snapshot.setName(internalUser.getName());
@@ -69,8 +69,8 @@ public class InternalUsernamePasswordLoginSnapshotLoadProvider implements LoginS
      * 从缓存中读取用户名密码登录快照。
      * 当前缓存 key 仍由 userType 和 principal 共同决定，便于兼容同一登录方式下的多账号来源。
      */
-    private UsernamePasswordLoginSnapshot getCachedSnapshot(AuthLoginRequest request, String principal) {
-        Object cachedSnapshot = usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(request.getUserType(), principal);
+    private UsernamePasswordLoginSnapshot getCachedSnapshot(AccountUserType userType, String principal) {
+        Object cachedSnapshot = usernamePasswordLoginSnapshotCacheProvider.getLoginSnapshot(userType, principal);
         if (cachedSnapshot instanceof UsernamePasswordLoginSnapshot usernamePasswordLoginSnapshot) {
             return usernamePasswordLoginSnapshot;
         }

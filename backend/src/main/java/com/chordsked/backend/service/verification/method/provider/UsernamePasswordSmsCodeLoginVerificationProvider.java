@@ -4,6 +4,7 @@ import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.dto.auth.AuthLoginRequest;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.vo.auth.AuthLoginResultVO;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ public class UsernamePasswordSmsCodeLoginVerificationProvider implements LoginVe
      * 当前阶段尚未开放该登录方式，因此仅保留基础入参校验。
      * 后续扩展时可直接在此补充密码校验、短信验证码校验与 support 装载调用。
      */
-    public AuthLoginResultVO verify(AuthLoginRequest request) {
+    public AuthLoginResultVO verify(AuthLoginRequest request, AccountUserType userType) {
         if (request == null || request.getUsername() == null
                 || request.getPassword() == null || request.getSmsCode() == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录请求参数不合法");

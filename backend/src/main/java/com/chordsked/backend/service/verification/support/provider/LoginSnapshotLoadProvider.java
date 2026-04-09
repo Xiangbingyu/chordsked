@@ -10,5 +10,5 @@ public interface LoginSnapshotLoadProvider {
 
     AccountUserType getUserType();
 
-    AuthLoginSnapshot load(AuthLoginRequest request, String principal);
+    AuthLoginSnapshot load(AuthLoginRequest request, AccountUserType userType, String principal);
 }

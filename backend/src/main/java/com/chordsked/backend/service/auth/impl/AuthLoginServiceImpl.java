@@ -5,6 +5,7 @@ import com.chordsked.backend.config.properties.JwtProperties;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.auth.AuthLoginRequest;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.vo.auth.AuthLoginResultVO;
 import com.chordsked.backend.service.auth.AuthLoginService;
 import com.chordsked.backend.service.verification.method.LoginMethodVerificationService;
@@ -36,11 +37,11 @@ public class AuthLoginServiceImpl implements AuthLoginService {
      * 该方法不直接处理具体凭证校验细节，而是委托 verification 模块按登录方式完成验证。
      */
     @Override
-    public LoginExecutionResult login(AuthLoginRequest request, boolean secureRequest) {
+    public LoginExecutionResult login(AuthLoginRequest request, AccountUserType userType, boolean secureRequest) {
         if (request == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录请求参数不合法");
         }
-        if (request.getUserType() == null) {
+        if (userType == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录用户类型不能为空");
         }
         /**
@@ -51,7 +52,7 @@ public class AuthLoginServiceImpl implements AuthLoginService {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录方式不能为空");
         }
 
-        AuthLoginResultVO loginResult = loginMethodVerificationService.verify(request);
+        AuthLoginResultVO loginResult = loginMethodVerificationService.verify(request, userType);
 
         /**
          * 登录校验通过后立即签发 access/refresh token，并把 token 状态写入安全缓存，

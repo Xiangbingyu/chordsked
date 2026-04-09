@@ -33,7 +33,10 @@ public class SecurityConfig {
                                 "/students/api/v1/login",
                                 "/admin/api/v1/refresh",
                                 "/teachers/api/v1/refresh",
-                                "/students/api/v1/refresh"
+                                "/students/api/v1/refresh",
+                                "/admin/api/v1/logout",
+                                "/teachers/api/v1/logout",
+                                "/students/api/v1/logout"
                         ).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/admin/api/v1", "/admin/api/v1/**").hasAuthority("admin:role")

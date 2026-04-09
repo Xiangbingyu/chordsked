@@ -9,6 +9,7 @@ import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.vo.auth.AuthLoginResultVO;
 import com.chordsked.backend.model.vo.auth.AuthRefreshResultVO;
 import com.chordsked.backend.service.auth.AuthLoginService;
+import com.chordsked.backend.service.auth.AuthLogoutService;
 import com.chordsked.backend.service.auth.AuthRefreshService;
 import com.chordsked.backend.utils.cookie.CookieUtils;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
@@ -45,21 +46,24 @@ public class AuthController {
     @Resource(name = "authRefreshService")
     private AuthRefreshService authRefreshService;
 
+    @Resource(name = "authLogoutService")
+    private AuthLogoutService authLogoutService;
+
     @Resource(name = "jwtTokenUtils")
     private JwtTokenUtils jwtTokenUtils;
 
     @PostMapping("/login")
-    @Operation(summary = "统一登录", description = "请求体必须显式携带 userType，且必须与当前访问端路由一致；登录成功后通过 HttpOnly Cookie 下发 access token 与 refresh token")
+    @Operation(summary = "统一登录", description = "用户类型由当前访问端路由自动解析；登录成功后通过 HttpOnly Cookie 下发 access token 与 refresh token")
     public ApiResponse<AuthLoginResultVO> login(
             @Valid @RequestBody AuthLoginRequest request,
             HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse
     ) {
-        request.setUserType(validateLoginUserType(request.getUserType(), httpServletRequest.getRequestURI()));
+        AccountUserType userType = resolveRouteUserType(httpServletRequest.getRequestURI(), "登录请求路由无效");
         request.setLoginMethod(resolveLoginMethod(request));
         validateLoginRequest(request);
         AuthLoginService.LoginExecutionResult loginExecutionResult =
-                authLoginService.login(request, httpServletRequest.isSecure());
+                authLoginService.login(request, userType, httpServletRequest.isSecure());
         CookieUtils.writeCookie(
                 httpServletResponse,
                 CookieUtils.ACCESS_TOKEN_COOKIE_NAME,
@@ -75,21 +79,6 @@ public class AuthController {
                 loginExecutionResult.secureCookie()
         );
         return ApiResponse.success(loginExecutionResult.loginResult());
-    }
-
-    /**
-     * 校验请求声明的用户类型是否与当前访问路由一致。
-     * controller 不再负责推断默认用户类型，避免不同端请求在入口层出现歧义。
-     */
-    private AccountUserType validateLoginUserType(AccountUserType requestUserType, String requestUri) {
-        if (requestUserType == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "登录用户类型不能为空");
-        }
-        AccountUserType routeUserType = resolveRouteUserType(requestUri, "登录请求路由无效");
-        if (!routeUserType.equals(requestUserType)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "登录用户类型与访问端不匹配");
-        }
-        return requestUserType;
     }
 
     /**
@@ -233,7 +222,7 @@ public class AuthController {
 
     /**
      * 根据访问路由解析当前访问端对应的用户类型。
-     * login 与 refresh 链路都会复用该方法，确保端路由解析口径一致。
+     * login、refresh 链路都会复用该方法，确保端路由解析口径一致。
      */
     private AccountUserType resolveRouteUserType(String requestUri, String invalidRouteMessage) {
         if (requestUri == null || requestUri.isBlank()) {
@@ -249,5 +238,33 @@ public class AuthController {
             return AccountUserType.STUDENT;
         }
         throw new BusinessException(ErrorCode.BAD_REQUEST, invalidRouteMessage);
+    }
+
+    /**
+     * 退出登录。
+     * 该接口采用幂等语义：即使 token 缺失、已过期或部分损坏，也仍会尽力执行撤销并清理 Cookie，
+     * 避免前端在“本地仍残留登录态但服务端已不可用”的场景下无法完成退出。
+     */
+    @PostMapping("/logout")
+    @Operation(summary = "退出登录", description = "从 HttpOnly Cookie 中读取 access token 与 refresh token，尽力吊销缓存中的登录态，并清理登录 Cookie")
+    public ApiResponse<Void> logout(
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse
+    ) {
+        authLogoutService.logout(
+                CookieUtils.readCookieValue(httpServletRequest, CookieUtils.ACCESS_TOKEN_COOKIE_NAME),
+                CookieUtils.readCookieValue(httpServletRequest, CookieUtils.REFRESH_TOKEN_COOKIE_NAME)
+        );
+        CookieUtils.clearCookie(
+                httpServletResponse,
+                CookieUtils.ACCESS_TOKEN_COOKIE_NAME,
+                httpServletRequest.isSecure()
+        );
+        CookieUtils.clearCookie(
+                httpServletResponse,
+                CookieUtils.REFRESH_TOKEN_COOKIE_NAME,
+                httpServletRequest.isSecure()
+        );
+        return ApiResponse.success(null);
     }
 }

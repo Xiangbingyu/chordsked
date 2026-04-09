@@ -49,18 +49,23 @@ public class LoginSnapshotLoadServiceImpl implements LoginSnapshotLoadService {
      * 按登录方式装载快照，并校验返回类型是否与调用方预期一致。
      * 此层只做路由与类型守卫，具体缓存回源策略由各 provider 自行实现。
      */
-    public <T extends AuthLoginSnapshot> T load(AuthLoginRequest request, String principal, Class<T> snapshotType) {
-        if (request == null || request.getLoginMethod() == null || request.getUserType() == null
+    public <T extends AuthLoginSnapshot> T load(
+            AuthLoginRequest request,
+            AccountUserType userType,
+            String principal,
+            Class<T> snapshotType
+    ) {
+        if (request == null || request.getLoginMethod() == null || userType == null
                 || principal == null || principal.isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录快照装载参数不合法");
         }
         LoginSnapshotLoadProvider provider = providerRoute.get(
-                new LoginSnapshotRouteKey(request.getLoginMethod(), request.getUserType())
+                new LoginSnapshotRouteKey(request.getLoginMethod(), userType)
         );
         if (provider == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "当前账号类型暂不支持该登录方式");
         }
-        AuthLoginSnapshot snapshot = provider.load(request, principal);
+        AuthLoginSnapshot snapshot = provider.load(request, userType, principal);
         if (snapshot == null) {
             return null;
         }

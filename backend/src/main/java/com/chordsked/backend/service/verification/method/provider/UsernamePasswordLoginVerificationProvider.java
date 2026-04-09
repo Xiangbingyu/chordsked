@@ -7,6 +7,7 @@ import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.auth.UsernamePasswordLoginSnapshot;
 import com.chordsked.backend.model.dto.auth.AuthLoginRequest;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.vo.auth.AuthLoginResultVO;
 import com.chordsked.backend.service.verification.support.LoginSnapshotLoadService;
 import jakarta.annotation.Resource;
@@ -46,9 +47,12 @@ public class UsernamePasswordLoginVerificationProvider implements LoginVerificat
      * 用户名密码登录主流程。
      * 该方法只处理“登录方式”层面的通用校验逻辑，账号来源与缓存装载由 support 模块负责。
      */
-    public AuthLoginResultVO verify(AuthLoginRequest request) {
+    public AuthLoginResultVO verify(AuthLoginRequest request, AccountUserType userType) {
         if (request == null || request.getUsername() == null || request.getPassword() == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录请求参数不合法");
+        }
+        if (userType == null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "登录用户类型不能为空");
         }
         String principal = request.getUsername().trim();
         if (principal.isEmpty() || request.getPassword().isBlank()) {
@@ -60,18 +64,18 @@ public class UsernamePasswordLoginVerificationProvider implements LoginVerificat
          * support 层会先查快照缓存，未命中时再回源账号数据并回填缓存。
          */
         UsernamePasswordLoginSnapshot loginSnapshot =
-                loginSnapshotLoadService.load(request, principal, UsernamePasswordLoginSnapshot.class);
+                loginSnapshotLoadService.load(request, userType, principal, UsernamePasswordLoginSnapshot.class);
         if (loginSnapshot == null) {
-            auditLoginFailure(request.getUserType().getCode(), principal, "user_not_found");
+            auditLoginFailure(userType.getCode(), principal, "user_not_found");
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "账号或密码错误");
         }
         if (!Boolean.TRUE.equals(loginSnapshot.getEnabled())) {
-            auditLoginFailure(request.getUserType().getCode(), principal, "user_disabled");
+            auditLoginFailure(userType.getCode(), principal, "user_disabled");
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "账号已被禁用，请联系管理员");
         }
-        Long lockedUntil = authLoginStateCacheService.getLockedUntil(request.getUserType(), principal);
+        Long lockedUntil = authLoginStateCacheService.getLockedUntil(userType, principal);
         if (lockedUntil != null && lockedUntil > System.currentTimeMillis()) {
-            auditLoginFailure(request.getUserType().getCode(), principal, "user_locked");
+            auditLoginFailure(userType.getCode(), principal, "user_locked");
             throw new BusinessException(
                     ErrorCode.UNAUTHORIZED,
                     "账号已锁定，请 " + authLoginProperties.getFailLockMinutes() + " 分钟后重试"
@@ -79,18 +83,18 @@ public class UsernamePasswordLoginVerificationProvider implements LoginVerificat
         }
         if (!passwordEncoder.matches(request.getPassword(), loginSnapshot.getPassword())) {
             authLoginStateCacheService.recordLoginFailure(
-                    request.getUserType(),
+                    userType,
                     principal,
                     authLoginProperties.getFailLockThreshold(),
                     authLoginProperties.getFailLockMinutes()
             );
-            auditLoginFailure(request.getUserType().getCode(), principal, "password_mismatch");
+            auditLoginFailure(userType.getCode(), principal, "password_mismatch");
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "账号或密码错误");
         }
-        authLoginStateCacheService.clearLoginState(request.getUserType(), principal);
+        authLoginStateCacheService.clearLoginState(userType, principal);
         logger.info(
                 "Login succeeded, userType={}, userId={}, principal={}",
-                request.getUserType().getCode(),
+                userType.getCode(),
                 loginSnapshot.getUserId(),
                 principal
         );

@@ -4,6 +4,7 @@ import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.dto.auth.AuthLoginRequest;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.vo.auth.AuthLoginResultVO;
 import com.chordsked.backend.service.verification.method.LoginMethodVerificationService;
 import com.chordsked.backend.service.verification.method.provider.LoginVerificationProvider;
@@ -42,14 +43,14 @@ public class LoginMethodVerificationServiceImpl implements LoginMethodVerificati
      * 按请求中声明的登录方式执行校验。
      * 此层不关心不同账号类型的数据来源，只负责把请求交给对应登录方式 provider。
      */
-    public AuthLoginResultVO verify(AuthLoginRequest request) {
-        if (request == null || request.getLoginMethod() == null) {
+    public AuthLoginResultVO verify(AuthLoginRequest request, AccountUserType userType) {
+        if (request == null || request.getLoginMethod() == null || userType == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录请求参数不合法");
         }
         LoginVerificationProvider provider = providerRoute.get(request.getLoginMethod());
         if (provider == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "当前登录方式暂不支持");
         }
-        return provider.verify(request);
+        return provider.verify(request, userType);
     }
 }

@@ -4,6 +4,7 @@ import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.dto.auth.AuthLoginRequest;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.vo.auth.AuthLoginResultVO;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ public class PhoneSmsCodeLoginVerificationProvider implements LoginVerificationP
      * 当前阶段先完成参数校验与 principal 规范化。
      * 待手机号验证码登录正式开放后，可在此接入验证码校验、装载快照与登录结果组装。
      */
-    public AuthLoginResultVO verify(AuthLoginRequest request) {
+    public AuthLoginResultVO verify(AuthLoginRequest request, AccountUserType userType) {
         if (request == null || request.getPhone() == null || request.getSmsCode() == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "登录请求参数不合法");
         }

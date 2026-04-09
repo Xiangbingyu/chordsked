@@ -94,7 +94,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.userId").value(1001))
@@ -118,7 +118,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"WrongPassword1!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"WrongPassword1!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号或密码错误"));
@@ -136,7 +136,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号已锁定，请 45 分钟后重试"));
@@ -152,7 +152,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号已被禁用，请联系管理员"));
@@ -167,7 +167,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("账号或密码错误"));
@@ -177,7 +177,7 @@ class AuthControllerIntegrationTest {
     void shouldReturnBadRequestWhenPasswordBlank() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -186,7 +186,7 @@ class AuthControllerIntegrationTest {
     void shouldReturnBadRequestWhenUsernameContainsWhitespace() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin test\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"admin test\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -195,26 +195,16 @@ class AuthControllerIntegrationTest {
     void shouldReturnBadRequestWhenUsernameTooLong() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
-    }
-
-    @Test
-    void shouldRejectWhenRequestUserTypeMissing() throws Exception {
-        mockMvc.perform(post("/admin/api/v1/login")
-                        .contentType("application/json")
-                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("登录用户类型不能为空"));
     }
 
     @Test
     void shouldRejectWhenUsernamePasswordMethodFieldsMissing() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"loginMethod\":\"USERNAME_PASSWORD\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"loginMethod\":\"USERNAME_PASSWORD\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("用户名和密码不能为空"));
@@ -224,7 +214,7 @@ class AuthControllerIntegrationTest {
     void shouldRejectWhenPhoneSmsCodeMethodFieldsMissing() throws Exception {
         mockMvc.perform(post("/students/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"STUDENT\",\"loginMethod\":\"PHONE_SMS_CODE\",\"smsCode\":\"123456\"}"))
+                        .content("{\"loginMethod\":\"PHONE_SMS_CODE\",\"smsCode\":\"123456\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("手机号和短信验证码不能为空"));
@@ -234,7 +224,7 @@ class AuthControllerIntegrationTest {
     void shouldRejectWhenLoginMethodCannotBeResolvedAtController() throws Exception {
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\"}"))
+                        .content("{\"username\":\"admin\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("登录请求参数不合法"));
@@ -248,7 +238,7 @@ class AuthControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"ADMIN\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
 
@@ -259,7 +249,7 @@ class AuthControllerIntegrationTest {
     void shouldRejectWhenTeacherUsernamePasswordLoginNotSupported() throws Exception {
         mockMvc.perform(post("/teachers/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"TEACHER\",\"username\":\"teacher01\",\"password\":\"Aa123456!\"}"))
+                        .content("{\"username\":\"teacher01\",\"password\":\"Aa123456!\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("当前账号类型暂不支持该登录方式"));
@@ -269,20 +259,10 @@ class AuthControllerIntegrationTest {
     void shouldRejectStudentPhoneSmsCodeLoginWhenMethodNotOpen() throws Exception {
         mockMvc.perform(post("/students/api/v1/login")
                         .contentType("application/json")
-                        .content("{\"userType\":\"STUDENT\",\"phone\":\"13800138000\",\"smsCode\":\"123456\"}"))
+                        .content("{\"phone\":\"13800138000\",\"smsCode\":\"123456\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("手机号验证码登录暂未开放"));
-    }
-
-    @Test
-    void shouldRejectWhenRequestUserTypeDoesNotMatchRoute() throws Exception {
-        mockMvc.perform(post("/admin/api/v1/login")
-                        .contentType("application/json")
-                        .content("{\"userType\":\"TEACHER\",\"username\":\"admin\",\"password\":\"Aa123456!\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("登录用户类型与访问端不匹配"));
     }
 
     @Test
@@ -326,6 +306,43 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").value("登录用户类型与访问端不匹配"));
 
         verify(userStatusVerificationService, never()).verify(any(), any());
+    }
+
+    @Test
+    void shouldLogoutSuccessfullyAndClearTokenCookies() throws Exception {
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, AccountUserType.ADMIN.getCode());
+        String refreshToken = jwtTokenUtils.generateRefreshToken(USER_ID, AccountUserType.ADMIN.getCode());
+
+        mockMvc.perform(post("/admin/api/v1/logout")
+                        .cookie(
+                                new Cookie("access_token", accessToken),
+                                new Cookie("refresh_token", refreshToken)
+                        ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(result -> {
+                    List<String> cookies = result.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("access_token=") && cookie.contains("Max-Age=0")));
+                    assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("refresh_token=") && cookie.contains("Max-Age=0")));
+                });
+
+        verify(securityCacheService, times(2)).markTokenRevoked(any(), any());
+    }
+
+    @Test
+    void shouldLogoutSuccessfullyWhenTokenCookiesMissing() throws Exception {
+        mockMvc.perform(post("/admin/api/v1/logout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(result -> {
+                    List<String> cookies = result.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("access_token=") && cookie.contains("Max-Age=0")));
+                    assertTrue(cookies.stream().anyMatch(cookie -> cookie.startsWith("refresh_token=") && cookie.contains("Max-Age=0")));
+                });
+
+        verify(securityCacheService, never()).markTokenRevoked(any(), any());
     }
 
     private InternalUserEntity createEnabledUser() {
