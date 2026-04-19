@@ -13,7 +13,7 @@ spring:
   data:
     redis:
       host: ${CHORDSKED_REDIS_HOST:127.0.0.1}
-      port: ${CHORDSKED_REDIS_PORT:6379}
+      port: ${CHORDSKED_REDIS_PORT:6380}
       password: ${CHORDSKED_REDIS_PASSWORD:}
       database: ${CHORDSKED_REDIS_DB:0}
       timeout: ${CHORDSKED_REDIS_TIMEOUT:3s}

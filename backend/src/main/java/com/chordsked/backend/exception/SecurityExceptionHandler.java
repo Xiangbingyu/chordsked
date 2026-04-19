@@ -19,11 +19,7 @@ import java.nio.charset.StandardCharsets;
 @Component("securityExceptionHandler")
 public class SecurityExceptionHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
     private static final Logger logger = LoggerFactory.getLogger(SecurityExceptionHandler.class);
-    private final ObjectMapper objectMapper;
-
-    public SecurityExceptionHandler(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {

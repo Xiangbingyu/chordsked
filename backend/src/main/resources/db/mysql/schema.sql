@@ -88,6 +88,24 @@ CREATE TABLE IF NOT EXISTS sys_role (
     INDEX idx_sys_role_status (status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '角色表';
 
+CREATE TABLE IF NOT EXISTS sys_permission (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '权限ID',
+    code VARCHAR(100) NOT NULL COMMENT '权限代码(如 admin:user:view)',
+    name VARCHAR(50) NOT NULL COMMENT '权限名称',
+    type TINYINT NOT NULL COMMENT '类型(1:菜单 2:按钮)',
+    parent_id BIGINT NULL COMMENT '父级权限ID',
+    path VARCHAR(200) NULL COMMENT '前端路由路径',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序号',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态(0:禁用 1:启用)',
+    user_type VARCHAR(20) NOT NULL COMMENT '账号体系(ADMIN/TEACHER/STUDENT)',
+    created_at BIGINT NOT NULL COMMENT '创建时间',
+    updated_at BIGINT NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_sys_permission_code (code),
+    INDEX idx_sys_permission_status (status),
+    INDEX idx_sys_permission_user_type (user_type)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '权限表';
+
 CREATE TABLE IF NOT EXISTS sys_user_role (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',
     user_id BIGINT NOT NULL COMMENT '用户ID(教务端账号)',
@@ -100,6 +118,19 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
     CONSTRAINT fk_sys_user_role_user_id FOREIGN KEY (user_id) REFERENCES sys_internal_user (id),
     CONSTRAINT fk_sys_user_role_role_id FOREIGN KEY (role_id) REFERENCES sys_role (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '用户角色关联表';
+
+CREATE TABLE IF NOT EXISTS sys_role_permission (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    permission_id BIGINT NOT NULL COMMENT '权限ID',
+    created_at BIGINT NOT NULL COMMENT '创建时间',
+    updated_at BIGINT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_sys_role_permission_role_id_permission_id (role_id, permission_id),
+    INDEX idx_sys_role_permission_permission_id (permission_id),
+    CONSTRAINT fk_sys_role_permission_role_id FOREIGN KEY (role_id) REFERENCES sys_role (id),
+    CONSTRAINT fk_sys_role_permission_permission_id FOREIGN KEY (permission_id) REFERENCES sys_permission (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '角色权限关联表';
 
 CREATE TABLE IF NOT EXISTS sys_user_campus (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',
@@ -164,4 +195,3 @@ CREATE TABLE IF NOT EXISTS sys_data_scope (
     PRIMARY KEY (id),
     INDEX idx_sys_data_scope_target_type_target_id (target_type, target_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '数据权限配置表';
-

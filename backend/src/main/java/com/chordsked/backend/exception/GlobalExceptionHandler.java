@@ -4,6 +4,7 @@ import com.chordsked.backend.common.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,10 +24,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BusinessException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiResponse<?> handleBusiness(BusinessException e) {
+    public ResponseEntity<ApiResponse<?>> handleBusiness(BusinessException e) {
         logger.warn("Business exception, code={}, message={}", e.getCode(), e.getMessage());
-        return ApiResponse.error(e.getCode(), e.getMessage());
+        return ResponseEntity
+                .status(resolveBusinessStatus(e.getCode()))
+                .body(ApiResponse.error(e.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
@@ -34,5 +36,14 @@ public class GlobalExceptionHandler {
     public ApiResponse<?> handleUnknown(Exception e) {
         logger.error("Internal server error", e);
         return ApiResponse.error(ErrorCode.INTERNAL_ERROR.getCode(), "系统繁忙");
+    }
+
+    private HttpStatus resolveBusinessStatus(int code) {
+        return switch (code) {
+            case 400 -> HttpStatus.BAD_REQUEST;
+            case 401 -> HttpStatus.UNAUTHORIZED;
+            case 403 -> HttpStatus.FORBIDDEN;
+            default -> HttpStatus.CONFLICT;
+        };
     }
 }

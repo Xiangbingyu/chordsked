@@ -6,7 +6,7 @@ import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.InternalUserStatus;
-import com.chordsked.backend.model.permission.PermissionCodeResolver;
+import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,6 +34,9 @@ public class InternalAccountProvider implements AccountProvider {
     @Resource(name = "securityCacheService")
     private SecurityCacheService securityCacheService;
 
+    @Resource(name = "authorityCodeService")
+    private AuthorityCodeService authorityCodeService;
+
     @Override
     public String getUserType() {
         return USER_TYPE.getCode();
@@ -47,7 +50,7 @@ public class InternalAccountProvider implements AccountProvider {
     public UserDetails loadUserDetails(Long userId) {
         List<String> permissionCodes = securityCacheService.getAuthorityCodes(USER_TYPE.getCode(), userId);
         if (permissionCodes.isEmpty()) {
-            permissionCodes = PermissionCodeResolver.resolvePermissionCodes(USER_TYPE);
+            permissionCodes = authorityCodeService.getAuthorityCodes(USER_TYPE, userId);
             securityCacheService.cacheAuthorityCodes(USER_TYPE.getCode(), userId, permissionCodes);
         }
         List<SimpleGrantedAuthority> authorities = permissionCodes

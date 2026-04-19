@@ -8,7 +8,7 @@ spring:
       mode: always
       encoding: UTF-8
       schema-locations: classpath:db/h2/schema.sql
-      data-locations: classpath:db/h2/data.sql
+      data-locations: classpath:db/data.sql
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml

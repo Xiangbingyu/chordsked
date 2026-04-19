@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.RolePermissionMapper">
+
+    <sql id="rolePermissionColumns">
+        id,
+        role_id,
+        permission_id,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="getById" resultType="com.chordsked.backend.model.entity.RolePermissionEntity">
+        SELECT <include refid="rolePermissionColumns"/>
+        FROM sys_role_permission
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="listByRoleId" resultType="com.chordsked.backend.model.entity.RolePermissionEntity">
+        SELECT <include refid="rolePermissionColumns"/>
+        FROM sys_role_permission
+        WHERE role_id = #{roleId}
+        ORDER BY id ASC
+    </select>
+
+    <select id="listByPermissionId" resultType="com.chordsked.backend.model.entity.RolePermissionEntity">
+        SELECT <include refid="rolePermissionColumns"/>
+        FROM sys_role_permission
+        WHERE permission_id = #{permissionId}
+        ORDER BY id ASC
+    </select>
+
+</mapper>

@@ -93,6 +93,25 @@ CREATE TABLE IF NOT EXISTS sys_role (
 
 CREATE INDEX IF NOT EXISTS idx_sys_role_status ON sys_role(status);
 
+CREATE TABLE IF NOT EXISTS sys_permission (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '权限ID',
+    code VARCHAR(100) NOT NULL COMMENT '权限代码(如 admin:user:view)',
+    name VARCHAR(50) NOT NULL COMMENT '权限名称',
+    type TINYINT NOT NULL COMMENT '类型(1:菜单 2:按钮)',
+    parent_id BIGINT NULL COMMENT '父级权限ID',
+    path VARCHAR(200) NULL COMMENT '前端路由路径',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序号',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态(0:禁用 1:启用)',
+    user_type VARCHAR(20) NOT NULL COMMENT '账号体系(ADMIN/TEACHER/STUDENT)',
+    created_at BIGINT NOT NULL COMMENT '创建时间',
+    updated_at BIGINT NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE (code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sys_permission_status ON sys_permission(status);
+CREATE INDEX IF NOT EXISTS idx_sys_permission_user_type ON sys_permission(user_type);
+
 CREATE TABLE IF NOT EXISTS sys_user_role (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',
     user_id BIGINT NOT NULL COMMENT '用户ID(教务端账号)',
@@ -106,6 +125,20 @@ CREATE TABLE IF NOT EXISTS sys_user_role (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sys_user_role_role_id ON sys_user_role(role_id);
+
+CREATE TABLE IF NOT EXISTS sys_role_permission (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    permission_id BIGINT NOT NULL COMMENT '权限ID',
+    created_at BIGINT NOT NULL COMMENT '创建时间',
+    updated_at BIGINT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE (role_id, permission_id),
+    CONSTRAINT fk_sys_role_permission_role_id FOREIGN KEY (role_id) REFERENCES sys_role (id),
+    CONSTRAINT fk_sys_role_permission_permission_id FOREIGN KEY (permission_id) REFERENCES sys_permission (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sys_role_permission_permission_id ON sys_role_permission(permission_id);
 
 CREATE TABLE IF NOT EXISTS sys_user_campus (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '关联ID',

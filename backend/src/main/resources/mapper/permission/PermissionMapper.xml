@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.PermissionMapper">
+
+    <sql id="permissionColumns">
+        id,
+        code,
+        name,
+        type,
+        parent_id,
+        path,
+        sort,
+        status,
+        user_type,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="getById" resultType="com.chordsked.backend.model.entity.PermissionEntity">
+        SELECT <include refid="permissionColumns"/>
+        FROM sys_permission
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="listByUserType" resultType="com.chordsked.backend.model.entity.PermissionEntity">
+        SELECT <include refid="permissionColumns"/>
+        FROM sys_permission
+        WHERE user_type = #{userType}
+          AND status = 1
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="listByRoleId" resultType="com.chordsked.backend.model.entity.PermissionEntity">
+        SELECT p.<include refid="permissionColumns"/>
+        FROM sys_role_permission rp
+                 INNER JOIN sys_permission p ON p.id = rp.permission_id
+        WHERE rp.role_id = #{roleId}
+          AND p.status = 1
+        ORDER BY p.sort ASC, p.id ASC
+    </select>
+
+    <select id="listByInternalUserId" resultType="com.chordsked.backend.model.entity.PermissionEntity">
+        SELECT DISTINCT p.<include refid="permissionColumns"/>
+        FROM sys_user_role ur
+                 INNER JOIN sys_role r ON r.id = ur.role_id
+                 INNER JOIN sys_role_permission rp ON rp.role_id = r.id
+                 INNER JOIN sys_permission p ON p.id = rp.permission_id
+        WHERE ur.user_id = #{userId}
+          AND r.status = 1
+          AND p.status = 1
+        ORDER BY p.sort ASC, p.id ASC
+    </select>
+
+    <select id="listPermissionCodesByInternalUserId" resultType="string">
+        SELECT DISTINCT p.code
+        FROM sys_user_role ur
+                 INNER JOIN sys_role r ON r.id = ur.role_id
+                 INNER JOIN sys_role_permission rp ON rp.role_id = r.id
+                 INNER JOIN sys_permission p ON p.id = rp.permission_id
+        WHERE ur.user_id = #{userId}
+          AND r.status = 1
+          AND p.status = 1
+        ORDER BY p.sort ASC, p.id ASC
+    </select>
+
+    <select id="listPermissionCodesByUserType" resultType="string">
+        SELECT DISTINCT code
+        FROM sys_permission
+        WHERE user_type = #{userType}
+          AND status = 1
+        ORDER BY sort ASC, id ASC
+    </select>
+
+</mapper>
