@@ -4,6 +4,7 @@ import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
 import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
+import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ class InternalAccountProviderTest {
     private InternalUserDao internalUserDao;
     private UserCampusDao userCampusDao;
     private SecurityCacheService securityCacheService;
+    private AuthorityCodeService authorityCodeService;
 
     @BeforeEach
     void setUp() {
@@ -30,10 +32,12 @@ class InternalAccountProviderTest {
         internalUserDao = mock(InternalUserDao.class);
         userCampusDao = mock(UserCampusDao.class);
         securityCacheService = mock(SecurityCacheService.class);
+        authorityCodeService = mock(AuthorityCodeService.class);
 
         ReflectionTestUtils.setField(internalAccountProvider, "internalUserDao", internalUserDao);
         ReflectionTestUtils.setField(internalAccountProvider, "userCampusDao", userCampusDao);
         ReflectionTestUtils.setField(internalAccountProvider, "securityCacheService", securityCacheService);
+        ReflectionTestUtils.setField(internalAccountProvider, "authorityCodeService", authorityCodeService);
     }
 
     @Test

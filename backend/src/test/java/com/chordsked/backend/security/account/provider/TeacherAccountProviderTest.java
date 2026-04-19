@@ -2,6 +2,7 @@ package com.chordsked.backend.security.account.provider;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.TeacherUserDao;
+import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,15 +21,18 @@ class TeacherAccountProviderTest {
     private TeacherAccountProvider teacherAccountProvider;
     private TeacherUserDao teacherUserDao;
     private SecurityCacheService securityCacheService;
+    private AuthorityCodeService authorityCodeService;
 
     @BeforeEach
     void setUp() {
         teacherAccountProvider = new TeacherAccountProvider();
         teacherUserDao = mock(TeacherUserDao.class);
         securityCacheService = mock(SecurityCacheService.class);
+        authorityCodeService = mock(AuthorityCodeService.class);
 
         ReflectionTestUtils.setField(teacherAccountProvider, "teacherUserDao", teacherUserDao);
         ReflectionTestUtils.setField(teacherAccountProvider, "securityCacheService", securityCacheService);
+        ReflectionTestUtils.setField(teacherAccountProvider, "authorityCodeService", authorityCodeService);
     }
 
     @Test

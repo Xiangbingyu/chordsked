@@ -11,10 +11,11 @@ export default defineConfig(({ mode }) => {
     server: {
       port,
       proxy: {
-        '/api': {
-          target: proxyTarget,
-          changeOrigin: true,
-        },
+          '/api': {
+            target: proxyTarget,
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api/, ''),
+          },
       },
     },
   }

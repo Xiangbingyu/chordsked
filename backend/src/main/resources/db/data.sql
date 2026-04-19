@@ -1,0 +1,104 @@
+INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, created_at, updated_at)
+VALUES (1001, 'admin', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000000', '系统管理员', NULL, 1, 0, 1, 1774483200000, 1774483200000);
+
+INSERT INTO sys_campus (id, name, address, phone, leader_id, leader_name, sort, status, remark, created_at, updated_at)
+VALUES (1, '默认校区', '杭州', '0571-00000000', 1001, '系统管理员', 1, 1, '初始化校区', 1774483200000, 1774483200000);
+
+INSERT INTO sys_teacher_user (id, teacher_no, name, phone, password, avatar, teacher_level, campus_id, status, must_change_password, last_login_at, experience, good_at, created_at, updated_at)
+VALUES (1001, 'T0001', '王老师', '13900000000', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', NULL, 3, 1, 1, 0, NULL, '5年教学经验', '钢琴基础', 1774483200000, 1774483200000);
+
+INSERT INTO sys_student_user (id, phone, name, avatar, status, campus_id, created_at, updated_at)
+VALUES (1001, '13700000000', '张同学', NULL, 1, 1, 1774483200000, 1774483200000);
+
+INSERT INTO sys_role (id, code, name, description, status, created_at, updated_at)
+VALUES (1, 'ADMIN', '系统管理员', '系统预置管理员角色', 1, 1774483200000, 1774483200000),
+       (2, 'OPERATOR', '教务运营', '系统预置教务运营角色', 1, 1774483200000, 1774483200000);
+
+INSERT INTO sys_permission (id, code, name, type, parent_id, path, sort, status, user_type, created_at, updated_at)
+VALUES
+       (1, 'admin:role', '教务端入口权限', 1, NULL, NULL, 0, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (2, 'teacher:role', '教师端入口权限', 1, NULL, NULL, 0, 1, 'TEACHER', 1774483200000, 1774483200000),
+       (3, 'student:role', '学员端入口权限', 1, NULL, NULL, 0, 1, 'STUDENT', 1774483200000, 1774483200000),
+
+       (100, 'admin:auth:menu', '认证管理菜单', 1, NULL, '/admin/auth', 10, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (101, 'admin:auth:logout', '强制登出', 2, 100, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
+
+       (110, 'admin:user:menu', '用户管理菜单', 1, NULL, '/admin/internal-users', 20, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (111, 'admin:user:view', '查看用户', 2, 110, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (112, 'admin:user:create', '创建用户', 2, 110, NULL, 2, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (113, 'admin:user:update', '编辑用户', 2, 110, NULL, 3, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (114, 'admin:user:delete', '删除用户', 2, 110, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (115, 'admin:user:enable', '启用/禁用用户', 2, 110, NULL, 5, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (116, 'admin:user:reset_password', '密码重置', 2, 110, NULL, 6, 1, 'ADMIN', 1774483200000, 1774483200000),
+
+       (120, 'admin:role:menu', '角色管理菜单', 1, NULL, '/admin/roles', 30, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (121, 'admin:role:view', '查看角色', 2, 120, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (122, 'admin:role:create', '创建角色', 2, 120, NULL, 2, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (123, 'admin:role:update', '编辑角色', 2, 120, NULL, 3, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (124, 'admin:role:delete', '删除角色', 2, 120, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (125, 'admin:role:assign_permission', '分配权限', 2, 120, NULL, 5, 1, 'ADMIN', 1774483200000, 1774483200000),
+
+       (130, 'admin:campus:menu', '校区管理菜单', 1, NULL, '/admin/campuses', 40, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (131, 'admin:campus:view', '查看校区', 2, 130, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (132, 'admin:campus:create', '创建校区', 2, 130, NULL, 2, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (133, 'admin:campus:update', '编辑校区', 2, 130, NULL, 3, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (134, 'admin:campus:delete', '删除校区', 2, 130, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (135, 'admin:campus:assign_user', '分配用户', 2, 130, NULL, 5, 1, 'ADMIN', 1774483200000, 1774483200000),
+
+       (140, 'admin:log:menu', '审计日志菜单', 1, NULL, '/admin/logs', 50, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (141, 'admin:log:view', '查看日志列表', 2, 140, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (142, 'admin:log:detail', '查看日志详情', 2, 140, NULL, 2, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (143, 'admin:log:export', '导出日志', 2, 140, NULL, 3, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (144, 'admin:log:sensitive', '查看敏感日志', 2, 140, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000);
+
+INSERT INTO sys_user_role (user_id, role_id, created_at, updated_at)
+VALUES (1001, 1, 1774483200000, 1774483200000);
+
+INSERT INTO sys_role_permission (role_id, permission_id, created_at, updated_at)
+VALUES
+       (1, 1, 1774483200000, 1774483200000),
+       (1, 100, 1774483200000, 1774483200000),
+       (1, 101, 1774483200000, 1774483200000),
+       (1, 110, 1774483200000, 1774483200000),
+       (1, 111, 1774483200000, 1774483200000),
+       (1, 112, 1774483200000, 1774483200000),
+       (1, 113, 1774483200000, 1774483200000),
+       (1, 114, 1774483200000, 1774483200000),
+       (1, 115, 1774483200000, 1774483200000),
+       (1, 116, 1774483200000, 1774483200000),
+       (1, 120, 1774483200000, 1774483200000),
+       (1, 121, 1774483200000, 1774483200000),
+       (1, 122, 1774483200000, 1774483200000),
+       (1, 123, 1774483200000, 1774483200000),
+       (1, 124, 1774483200000, 1774483200000),
+       (1, 125, 1774483200000, 1774483200000),
+       (1, 130, 1774483200000, 1774483200000),
+       (1, 131, 1774483200000, 1774483200000),
+       (1, 132, 1774483200000, 1774483200000),
+       (1, 133, 1774483200000, 1774483200000),
+       (1, 134, 1774483200000, 1774483200000),
+       (1, 135, 1774483200000, 1774483200000),
+       (1, 140, 1774483200000, 1774483200000),
+       (1, 141, 1774483200000, 1774483200000),
+       (1, 142, 1774483200000, 1774483200000),
+       (1, 143, 1774483200000, 1774483200000),
+       (1, 144, 1774483200000, 1774483200000),
+
+       (2, 1, 1774483200000, 1774483200000),
+       (2, 110, 1774483200000, 1774483200000),
+       (2, 111, 1774483200000, 1774483200000),
+       (2, 113, 1774483200000, 1774483200000),
+       (2, 115, 1774483200000, 1774483200000),
+       (2, 120, 1774483200000, 1774483200000),
+       (2, 121, 1774483200000, 1774483200000),
+       (2, 130, 1774483200000, 1774483200000),
+       (2, 131, 1774483200000, 1774483200000),
+       (2, 140, 1774483200000, 1774483200000),
+       (2, 141, 1774483200000, 1774483200000),
+       (2, 142, 1774483200000, 1774483200000);
+
+INSERT INTO sys_user_campus (user_id, campus_id, is_primary, created_at, updated_at)
+VALUES (1001, 1, 1, 1774483200000, 1774483200000);
+
+INSERT INTO sys_data_scope (target_type, target_id, scope_type, campus_ids, created_at, updated_at)
+VALUES (2, 1001, 1, NULL, 1774483200000, 1774483200000);
