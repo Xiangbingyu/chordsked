@@ -102,6 +102,13 @@ class SecurityCacheServiceImplTest {
     }
 
     @Test
+    void shouldEvictUserSnapshotCache() {
+        securityCacheService.clearUserSnapshot("ADMIN", 1001L);
+
+        verify(stringRedisTemplate).delete("chordsked:security:user:ADMIN:1001");
+    }
+
+    @Test
     void shouldReturnEmptyListWhenAuthorityNegativeCacheExists() {
         when(valueOperations.get("chordsked:security:authority:ADMIN:1001")).thenReturn("__EMPTY__");
 
@@ -119,6 +126,13 @@ class SecurityCacheServiceImplTest {
                 eq("__EMPTY__"),
                 eq(Duration.ofSeconds(300))
         );
+    }
+
+    @Test
+    void shouldEvictAuthorityCache() {
+        securityCacheService.clearAuthorityCodes("ADMIN", 1001L);
+
+        verify(stringRedisTemplate).delete("chordsked:security:authority:ADMIN:1001");
     }
 
     @Test

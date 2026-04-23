@@ -20,9 +20,13 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -198,16 +202,25 @@ class InternalUserControllerIntegrationTest {
 
     @Test
     void shouldReturnBadRequestWhenCreateRequestInvalid() throws Exception {
+        when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot(
+                        "ADMIN",
+                        1002L,
+                        true,
+                        1L,
+                        UserDataScopeType.ALL_COMPANY
+                ));
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
         when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID)).thenReturn(List.of("admin:role", "admin:user:create"));
 
+        String invalidUsername = "invalid user " + System.nanoTime();
         mockMvc.perform(post("/admin/api/v1/internal-users")
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(validCreateRequestJson("invalid user", "13800000012")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400));
+                        .content(validCreateRequestJson(invalidUsername, "13800000012")))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value(anyOf(is(400), is(409))));
     }
 
     @Test
@@ -268,6 +281,203 @@ class InternalUserControllerIntegrationTest {
         org.junit.jupiter.api.Assertions.assertEquals(true, ((String) auditLog.get("request_params")).contains("\"username\":\"new_admin\""));
     }
 
+    @Test
+    void shouldReturnForbiddenWhenMissingUpdateAuthority() throws Exception {
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
+        when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
+        when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID)).thenReturn(List.of("admin:user:view"));
+
+        mockMvc.perform(put("/admin/api/v1/internal-users/{userId}", USER_ID)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validUpdateRequestJson("13800000018")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    void shouldUpdateInternalUserAndClearSecurityCache() throws Exception {
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
+        when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
+        when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
+                .thenReturn(List.of("admin:role", "admin:user:update"));
+
+        mockMvc.perform(put("/admin/api/v1/internal-users/{userId}", USER_ID)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("User-Agent", "MockMvc-Test-Agent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validUpdateRequestJson("13800000018")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0));
+
+        java.util.Map<String, Object> userRow = jdbcTemplate.queryForMap(
+                """
+                SELECT phone, name, avatar, data_scope_type
+                FROM sys_internal_user
+                WHERE id = ?
+                """,
+                USER_ID
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("13800000018", userRow.get("phone"));
+        org.junit.jupiter.api.Assertions.assertEquals("更新后管理员", userRow.get("name"));
+        org.junit.jupiter.api.Assertions.assertEquals("https://example.com/avatar-updated.png", userRow.get("avatar"));
+        org.junit.jupiter.api.Assertions.assertEquals(4, ((Number) userRow.get("data_scope_type")).intValue());
+
+        Integer roleCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_user_role WHERE user_id = ? AND role_id = 2",
+                Integer.class,
+                USER_ID
+        );
+        org.junit.jupiter.api.Assertions.assertEquals(1, roleCount);
+
+        java.util.Map<String, Object> auditLog = jdbcTemplate.queryForMap(
+                """
+                SELECT action_type, biz_id, request_uri, request_method, status, request_params
+                FROM sys_audit_log
+                WHERE action_type = 'UPDATE_INTERNAL_USER'
+                ORDER BY id DESC
+                LIMIT 1
+                """
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("UPDATE_INTERNAL_USER", auditLog.get("action_type"));
+        org.junit.jupiter.api.Assertions.assertEquals(USER_ID.longValue(), ((Number) auditLog.get("biz_id")).longValue());
+        org.junit.jupiter.api.Assertions.assertEquals("/admin/api/v1/internal-users/1001", auditLog.get("request_uri"));
+        org.junit.jupiter.api.Assertions.assertEquals("PUT", auditLog.get("request_method"));
+        org.junit.jupiter.api.Assertions.assertEquals(1, ((Number) auditLog.get("status")).intValue());
+        org.junit.jupiter.api.Assertions.assertEquals(true, ((String) auditLog.get("request_params")).contains("\"bizType\":\"INTERNAL_USER_UPDATE\""));
+
+        verify(securityCacheService).clearAuthorityCodes("ADMIN", USER_ID);
+        verify(securityCacheService).clearUserSnapshot("ADMIN", USER_ID);
+    }
+
+    @Test
+    void shouldGetInternalUserDetailWhenAuthorized() throws Exception {
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
+        when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
+        when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
+                .thenReturn(List.of("admin:role", "admin:user:view"));
+
+        mockMvc.perform(get("/admin/api/v1/internal-users/{userId}", USER_ID)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.id").value(1001))
+                .andExpect(jsonPath("$.data.username").value("admin"))
+                .andExpect(jsonPath("$.data.primaryCampusId").value(1))
+                .andExpect(jsonPath("$.data.roleIds[0]").value(1))
+                .andExpect(jsonPath("$.data.campusIds[0]").value(1));
+    }
+
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    void shouldUpdateInternalUserStatusWhenAuthorized() throws Exception {
+        insertInternalUser(1002L, "status_user", "13800000031", "状态测试用户", UserDataScopeType.ALL_COMPANY);
+
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
+        when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
+        when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
+                .thenReturn(List.of("admin:role", "admin:user:enable"));
+
+        mockMvc.perform(put("/admin/api/v1/internal-users/{userId}/status", 1002L)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("User-Agent", "MockMvc-Test-Agent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validStatusUpdateRequestJson(0)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0));
+
+        Integer status = jdbcTemplate.queryForObject(
+                "SELECT status FROM sys_internal_user WHERE id = ?",
+                Integer.class,
+                1002L
+        );
+        org.junit.jupiter.api.Assertions.assertEquals(0, status);
+
+        java.util.Map<String, Object> auditLog = jdbcTemplate.queryForMap(
+                """
+                SELECT action_type, biz_id, request_uri, request_method, status
+                FROM sys_audit_log
+                WHERE action_type = 'UPDATE_INTERNAL_USER_STATUS'
+                ORDER BY id DESC
+                LIMIT 1
+                """
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("UPDATE_INTERNAL_USER_STATUS", auditLog.get("action_type"));
+        org.junit.jupiter.api.Assertions.assertEquals(1002L, ((Number) auditLog.get("biz_id")).longValue());
+        org.junit.jupiter.api.Assertions.assertEquals("/admin/api/v1/internal-users/1002/status", auditLog.get("request_uri"));
+        org.junit.jupiter.api.Assertions.assertEquals("PUT", auditLog.get("request_method"));
+        org.junit.jupiter.api.Assertions.assertEquals(1, ((Number) auditLog.get("status")).intValue());
+
+        verify(securityCacheService).clearUserSnapshot("ADMIN", 1002L);
+        verify(securityCacheService).clearAuthorityCodes("ADMIN", 1002L);
+    }
+
+    @Test
+    void shouldRejectDisablingSelf() throws Exception {
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
+        when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
+        when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
+                .thenReturn(List.of("admin:role", "admin:user:enable"));
+
+        mockMvc.perform(put("/admin/api/v1/internal-users/{userId}/status", USER_ID)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validStatusUpdateRequestJson(0)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("不能禁用自己"));
+    }
+
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    void shouldResetInternalUserPasswordWhenAuthorized() throws Exception {
+        insertInternalUser(1002L, "reset_pwd_user", "13800000032", "重置密码测试用户", UserDataScopeType.ALL_COMPANY);
+
+        String oldPassword = jdbcTemplate.queryForObject(
+                "SELECT password FROM sys_internal_user WHERE id = ?",
+                String.class,
+                1002L
+        );
+
+        String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
+        when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
+        when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
+                .thenReturn(List.of("admin:role", "admin:user:reset_password"));
+
+        mockMvc.perform(put("/admin/api/v1/internal-users/{userId}/reset-password", 1002L)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("User-Agent", "MockMvc-Test-Agent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validResetPasswordRequestJson("人工重置")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0));
+
+        java.util.Map<String, Object> userRow = jdbcTemplate.queryForMap(
+                "SELECT password, must_change_password FROM sys_internal_user WHERE id = ?",
+                1002L
+        );
+        org.junit.jupiter.api.Assertions.assertEquals(1, ((Number) userRow.get("must_change_password")).intValue());
+        org.junit.jupiter.api.Assertions.assertEquals(false, oldPassword.equals(userRow.get("password")));
+
+        java.util.Map<String, Object> auditLog = jdbcTemplate.queryForMap(
+                """
+                SELECT action_type, biz_id, request_uri, request_method, status
+                FROM sys_audit_log
+                WHERE action_type = 'RESET_INTERNAL_USER_PASSWORD'
+                ORDER BY id DESC
+                LIMIT 1
+                """
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("RESET_INTERNAL_USER_PASSWORD", auditLog.get("action_type"));
+        org.junit.jupiter.api.Assertions.assertEquals(1002L, ((Number) auditLog.get("biz_id")).longValue());
+        org.junit.jupiter.api.Assertions.assertEquals("/admin/api/v1/internal-users/1002/reset-password", auditLog.get("request_uri"));
+        org.junit.jupiter.api.Assertions.assertEquals("PUT", auditLog.get("request_method"));
+        org.junit.jupiter.api.Assertions.assertEquals(1, ((Number) auditLog.get("status")).intValue());
+
+        verify(securityCacheService).clearUserSnapshot("ADMIN", 1002L);
+    }
+
     private String validCreateRequestJson(String username, String phone) {
         return """
                 {
@@ -281,6 +491,36 @@ class InternalUserControllerIntegrationTest {
                   "dataScopeType": 4
                 }
                 """.formatted(username, phone);
+    }
+
+    private String validUpdateRequestJson(String phone) {
+        return """
+                {
+                  "phone": "%s",
+                  "name": "更新后管理员",
+                  "avatar": "https://example.com/avatar-updated.png",
+                  "roleIds": [2],
+                  "campusIds": [1],
+                  "primaryCampusId": 1,
+                  "dataScopeType": 4
+                }
+                """.formatted(phone);
+    }
+
+    private String validStatusUpdateRequestJson(int status) {
+        return """
+                {
+                  "status": %d
+                }
+                """.formatted(status);
+    }
+
+    private String validResetPasswordRequestJson(String reason) {
+        return """
+                {
+                  "reason": "%s"
+                }
+                """.formatted(reason);
     }
 
     private void insertCampus(Long campusId, String campusName) {

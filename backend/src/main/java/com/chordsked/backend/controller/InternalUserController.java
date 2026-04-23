@@ -5,11 +5,20 @@ import com.chordsked.backend.common.PageResult;
 import com.chordsked.backend.config.properties.AppProperties;
 import com.chordsked.backend.idempotent.annotation.Idempotent;
 import com.chordsked.backend.model.dto.internaluser.InternalUserCreateRequest;
+import com.chordsked.backend.model.dto.internaluser.InternalUserDetailQueryRequest;
 import com.chordsked.backend.model.dto.internaluser.InternalUserQueryRequest;
+import com.chordsked.backend.model.dto.internaluser.InternalUserResetPasswordRequest;
+import com.chordsked.backend.model.dto.internaluser.InternalUserStatusUpdateRequest;
+import com.chordsked.backend.model.dto.internaluser.InternalUserUpdateRequest;
 import com.chordsked.backend.model.enums.InternalUserStatus;
+import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.model.vo.internaluser.InternalUserQueryResultVO;
 import com.chordsked.backend.service.internaluser.InternalUserCreateService;
+import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
 import com.chordsked.backend.service.internaluser.InternalUserQueryService;
+import com.chordsked.backend.service.internaluser.InternalUserResetPasswordService;
+import com.chordsked.backend.service.internaluser.InternalUserStatusUpdateService;
+import com.chordsked.backend.service.internaluser.InternalUserUpdateService;
 import com.chordsked.backend.utils.audit.AuditLogRequestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,7 +30,9 @@ import jakarta.validation.constraints.Min;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,6 +51,18 @@ public class InternalUserController {
 
     @Resource(name = "internalUserCreateService")
     private InternalUserCreateService internalUserCreateService;
+
+    @Resource(name = "internalUserUpdateService")
+    private InternalUserUpdateService internalUserUpdateService;
+
+    @Resource(name = "internalUserDetailQueryService")
+    private InternalUserDetailQueryService internalUserDetailQueryService;
+
+    @Resource(name = "internalUserStatusUpdateService")
+    private InternalUserStatusUpdateService internalUserStatusUpdateService;
+
+    @Resource(name = "internalUserResetPasswordService")
+    private InternalUserResetPasswordService internalUserResetPasswordService;
 
     @GetMapping("/internal-users")
     @PreAuthorize("hasAuthority('admin:user:view')")
@@ -120,6 +143,103 @@ public class InternalUserController {
         request.setCampusIds(source.getCampusIds());
         request.setPrimaryCampusId(source.getPrimaryCampusId());
         request.setDataScopeType(source.getDataScopeType());
+        request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
+        return request;
+    }
+
+    @PutMapping("/internal-users/{userId}")
+    @PreAuthorize("hasAuthority('admin:user:update')")
+    @Operation(summary = "编辑教务端账号", description = "更新教务端账号基础信息、角色绑定、校区绑定和数据范围")
+    public ApiResponse<Void> updateInternalUser(
+            @Parameter(description = "用户ID")
+            @PathVariable("userId") @Min(1) Long userId,
+            @Valid @RequestBody InternalUserUpdateRequest request,
+            HttpServletRequest httpServletRequest
+    ) {
+        internalUserUpdateService.update(buildInternalUserUpdateRequest(userId, request, httpServletRequest));
+        return ApiResponse.success(null);
+    }
+
+    @GetMapping("/internal-users/{userId}")
+    @PreAuthorize("hasAuthority('admin:user:view')")
+    @Operation(summary = "查询教务端账号详情", description = "查询指定教务端账号详情（自动按数据权限过滤）")
+    public ApiResponse<InternalUserDetailResultVO> getInternalUserDetail(
+            @Parameter(description = "用户ID")
+            @PathVariable("userId") @Min(1) Long userId
+    ) {
+        InternalUserDetailQueryRequest request = new InternalUserDetailQueryRequest();
+        request.setUserId(userId);
+        return ApiResponse.success(internalUserDetailQueryService.getDetail(request));
+    }
+
+    @PutMapping("/internal-users/{userId}/status")
+    @PreAuthorize("hasAuthority('admin:user:enable')")
+    @Operation(summary = "更新教务端账号状态", description = "启用或禁用指定教务端账号")
+    public ApiResponse<Void> updateInternalUserStatus(
+            @Parameter(description = "用户ID")
+            @PathVariable("userId") @Min(1) Long userId,
+            @Valid @RequestBody InternalUserStatusUpdateRequest request,
+            HttpServletRequest httpServletRequest
+    ) {
+        internalUserStatusUpdateService.updateStatus(
+                buildInternalUserStatusUpdateRequest(userId, request, httpServletRequest)
+        );
+        return ApiResponse.success(null);
+    }
+
+    @PutMapping("/internal-users/{userId}/reset-password")
+    @PreAuthorize("hasAuthority('admin:user:reset_password')")
+    @Operation(summary = "重置教务端账号密码", description = "将指定教务端账号密码重置为系统默认密码并标记强制改密")
+    public ApiResponse<Void> resetInternalUserPassword(
+            @Parameter(description = "用户ID")
+            @PathVariable("userId") @Min(1) Long userId,
+            @Valid @RequestBody InternalUserResetPasswordRequest request,
+            HttpServletRequest httpServletRequest
+    ) {
+        internalUserResetPasswordService.resetPassword(
+                buildInternalUserResetPasswordRequest(userId, request, httpServletRequest)
+        );
+        return ApiResponse.success(null);
+    }
+
+    private InternalUserUpdateRequest buildInternalUserUpdateRequest(
+            Long userId,
+            InternalUserUpdateRequest source,
+            HttpServletRequest httpServletRequest
+    ) {
+        InternalUserUpdateRequest request = new InternalUserUpdateRequest();
+        request.setUserId(userId);
+        request.setPhone(source.getPhone());
+        request.setName(source.getName());
+        request.setAvatar(source.getAvatar());
+        request.setRoleIds(source.getRoleIds());
+        request.setCampusIds(source.getCampusIds());
+        request.setPrimaryCampusId(source.getPrimaryCampusId());
+        request.setDataScopeType(source.getDataScopeType());
+        request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
+        return request;
+    }
+
+    private InternalUserStatusUpdateRequest buildInternalUserStatusUpdateRequest(
+            Long userId,
+            InternalUserStatusUpdateRequest source,
+            HttpServletRequest httpServletRequest
+    ) {
+        InternalUserStatusUpdateRequest request = new InternalUserStatusUpdateRequest();
+        request.setUserId(userId);
+        request.setStatus(source.getStatus());
+        request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
+        return request;
+    }
+
+    private InternalUserResetPasswordRequest buildInternalUserResetPasswordRequest(
+            Long userId,
+            InternalUserResetPasswordRequest source,
+            HttpServletRequest httpServletRequest
+    ) {
+        InternalUserResetPasswordRequest request = new InternalUserResetPasswordRequest();
+        request.setUserId(userId);
+        request.setReason(source.getReason());
         request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
         return request;
     }

@@ -14,6 +14,10 @@ public interface SecurityCacheService {
 
     void cacheAuthorityCodes(String userType, Long userId, List<String> codes);
 
+    void clearUserSnapshot(String userType, Long userId);
+
+    void clearAuthorityCodes(String userType, Long userId);
+
     boolean isTokenRevoked(String token);
 
     boolean isTokenActive(String token);

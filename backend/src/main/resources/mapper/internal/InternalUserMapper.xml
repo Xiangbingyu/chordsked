@@ -93,4 +93,82 @@
         VALUES (#{user.username}, #{user.password}, #{user.phone}, #{user.name}, #{user.avatar}, #{user.status}, #{user.mustChangePassword}, #{user.dataScopeType}, #{user.createdAt}, #{user.updatedAt})
     </insert>
 
+    <update id="updateById">
+        UPDATE sys_internal_user
+        SET phone = #{user.phone},
+            name = #{user.name},
+            avatar = #{user.avatar},
+            data_scope_type = #{user.dataScopeType},
+            updated_at = #{user.updatedAt}
+        WHERE id = #{user.id}
+          AND status != 2
+    </update>
+
+    <select id="countAccessibleById" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM sys_internal_user u
+        <where>
+            AND u.id = #{userId}
+            AND u.status != 2
+            /*DATA_SCOPE*/
+        </where>
+    </select>
+
+    <select id="getAccessibleDetailById" resultType="com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO">
+        SELECT u.id,
+               u.username,
+               u.phone,
+               u.name,
+               u.avatar,
+               u.status,
+               u.must_change_password,
+               u.data_scope_type,
+               uc.campus_id AS primary_campus_id,
+               u.created_at,
+               u.updated_at
+        FROM sys_internal_user u
+                 LEFT JOIN sys_user_campus uc ON uc.user_id = u.id AND uc.is_primary = 1
+        <where>
+            AND u.id = #{userId}
+            AND u.status != 2
+            /*DATA_SCOPE*/
+        </where>
+    </select>
+
+    <update id="updateStatus">
+        UPDATE sys_internal_user
+        SET status = #{status},
+            updated_at = #{updatedAt}
+        WHERE id = #{userId}
+          AND status != 2
+    </update>
+
+    <update id="updatePassword">
+        UPDATE sys_internal_user
+        SET password = #{password},
+            must_change_password = #{mustChangePassword},
+            updated_at = #{updatedAt}
+        WHERE id = #{userId}
+          AND status != 2
+    </update>
+
+    <select id="countRoleCodeByUserId" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM sys_user_role ur
+                 INNER JOIN sys_role r ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+          AND r.code = #{roleCode}
+          AND r.status = 1
+    </select>
+
+    <select id="countEnabledUsersByRoleCode" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT u.id)
+        FROM sys_internal_user u
+                 INNER JOIN sys_user_role ur ON ur.user_id = u.id
+                 INNER JOIN sys_role r ON r.id = ur.role_id
+        WHERE u.status = 1
+          AND r.code = #{roleCode}
+          AND r.status = 1
+    </select>
+
 </mapper>
