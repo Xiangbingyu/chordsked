@@ -97,6 +97,18 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
     }
 
     @Override
+    public void clearUserSnapshot(String userType, Long userId) {
+        if (!redisProperties.isEnabled() || hasInvalidAuthorityCacheParameters(userType, userId)) {
+            return;
+        }
+        try {
+            stringRedisTemplate.delete(buildUserSnapshotKey(userType, userId));
+        } catch (RuntimeException exception) {
+            logger.warn("Clear user snapshot cache failed", exception);
+        }
+    }
+
+    @Override
     /**
      * 读取权限码缓存。
      * 若缓存中记录的是空权限标记，则返回空列表，避免反复回源查询无权限用户。
@@ -138,6 +150,18 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
             stringRedisTemplate.opsForValue().set(buildAuthorityKey(userType, userId), value, ttl);
         } catch (RuntimeException exception) {
             logger.warn("Write authority cache failed", exception);
+        }
+    }
+
+    @Override
+    public void clearAuthorityCodes(String userType, Long userId) {
+        if (!redisProperties.isEnabled() || hasInvalidAuthorityCacheParameters(userType, userId)) {
+            return;
+        }
+        try {
+            stringRedisTemplate.delete(buildAuthorityKey(userType, userId));
+        } catch (RuntimeException exception) {
+            logger.warn("Clear authority cache failed", exception);
         }
     }
 
