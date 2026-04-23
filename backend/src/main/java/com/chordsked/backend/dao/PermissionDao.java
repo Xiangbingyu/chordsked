@@ -7,6 +7,8 @@ import java.util.List;
 public interface PermissionDao {
     PermissionEntity getById(Long id);
 
+    List<PermissionEntity> listByIds(List<Long> ids);
+
     List<PermissionEntity> listByUserType(String userType);
 
     List<PermissionEntity> listByRoleId(Long roleId);

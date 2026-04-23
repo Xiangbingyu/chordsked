@@ -59,6 +59,7 @@ public class InternalUsernamePasswordLoginSnapshotLoadProvider implements LoginS
         snapshot.setName(internalUser.getName());
         snapshot.setEnabled(InternalUserStatus.ENABLED.equals(internalUser.getStatusEnum()));
         snapshot.setMustChangePassword(MustChangePasswordFlag.YES.equals(internalUser.getMustChangePasswordEnum()));
+        snapshot.setDataScopeType(internalUser.getDataScopeTypeEnum());
         snapshot.setPassword(internalUser.getPassword());
         snapshot.setPhone(internalUser.getPhone());
         usernamePasswordLoginSnapshotCacheProvider.cacheLoginSnapshot(snapshot);

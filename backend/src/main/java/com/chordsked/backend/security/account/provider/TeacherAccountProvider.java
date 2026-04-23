@@ -5,6 +5,7 @@ import com.chordsked.backend.dao.TeacherUserDao;
 import com.chordsked.backend.model.entity.TeacherUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.TeacherUserStatus;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Component("teacherAccountProvider")
 public class TeacherAccountProvider implements AccountProvider {
     private static final AccountUserType USER_TYPE = AccountUserType.TEACHER;
+    private static final UserDataScopeType DEFAULT_DATA_SCOPE_TYPE = UserDataScopeType.SPECIFIED_CAMPUS;
 
     @Resource(name = "teacherUserDao")
     private TeacherUserDao teacherUserDao;
@@ -71,13 +73,22 @@ public class TeacherAccountProvider implements AccountProvider {
             enabled = TeacherUserStatus.ON_DUTY.equals(teacherUser.getStatusEnum());
             currentCampusId = teacherUser.getCampusId();
             securityCacheService.cacheUserSnapshot(
-                    new SecurityCacheService.SecurityUserSnapshot(USER_TYPE.getCode(), userId, enabled, currentCampusId)
+                    new SecurityCacheService.SecurityUserSnapshot(
+                            USER_TYPE.getCode(),
+                            userId,
+                            enabled,
+                            currentCampusId,
+                            DEFAULT_DATA_SCOPE_TYPE
+                    )
             );
         }
         return new ChordSkedUserDetails(
                 userId,
                 USER_TYPE,
                 currentCampusId,
+                userSnapshot == null || userSnapshot.dataScopeType() == null
+                        ? DEFAULT_DATA_SCOPE_TYPE
+                        : userSnapshot.dataScopeType(),
                 enabled,
                 authorities
         );

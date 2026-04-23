@@ -4,6 +4,39 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.chordsked.backend.dao.mapper.InternalUserMapper">
 
+    <sql id="internalUserWhere">
+        <where>
+            AND u.status != 2
+            /*DATA_SCOPE*/
+            <if test="request != null and request.keyword != null and request.keyword != ''">
+                AND (
+                    u.username LIKE CONCAT('%', #{request.keyword}, '%')
+                    OR u.name LIKE CONCAT('%', #{request.keyword}, '%')
+                    OR u.phone LIKE CONCAT('%', #{request.keyword}, '%')
+                )
+            </if>
+            <if test="request != null and request.status != null">
+                AND u.status = #{request.status}
+            </if>
+            <if test="request != null and request.roleId != null">
+                AND EXISTS (
+                    SELECT 1
+                    FROM sys_user_role ur_filter
+                    WHERE ur_filter.user_id = u.id
+                      AND ur_filter.role_id = #{request.roleId}
+                )
+            </if>
+            <if test="request != null and request.campusId != null">
+                AND EXISTS (
+                    SELECT 1
+                    FROM sys_user_campus uc_filter
+                    WHERE uc_filter.user_id = u.id
+                      AND uc_filter.campus_id = #{request.campusId}
+                )
+            </if>
+        </where>
+    </sql>
+
     <select id="getById" resultType="com.chordsked.backend.model.entity.InternalUserEntity">
         SELECT id, username, password, phone, name, avatar, status, must_change_password,
                data_scope_type, created_at, updated_at
@@ -20,5 +53,44 @@
           AND status != 2
         LIMIT 1
     </select>
+
+    <select id="getByPhone" resultType="com.chordsked.backend.model.entity.InternalUserEntity">
+        SELECT id, username, password, phone, name, avatar, status, must_change_password,
+               data_scope_type, created_at, updated_at
+        FROM sys_internal_user
+        WHERE phone = #{phone}
+          AND status != 2
+        LIMIT 1
+    </select>
+
+    <select id="listByQuery" resultType="com.chordsked.backend.model.vo.internaluser.InternalUserQueryResultVO">
+        SELECT u.id,
+               u.username,
+               u.phone,
+               u.name,
+               u.status,
+               u.data_scope_type,
+               uc.campus_id AS primary_campus_id,
+               c.name AS primary_campus_name,
+               u.created_at,
+               u.updated_at
+        FROM sys_internal_user u
+                 LEFT JOIN sys_user_campus uc ON uc.user_id = u.id AND uc.is_primary = 1
+                 LEFT JOIN sys_campus c ON c.id = uc.campus_id
+        <include refid="internalUserWhere"/>
+        ORDER BY u.id ASC
+        LIMIT #{request.pageSize} OFFSET #{request.offset}
+    </select>
+
+    <select id="countByQuery" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM sys_internal_user u
+        <include refid="internalUserWhere"/>
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="user.id">
+        INSERT INTO sys_internal_user (username, password, phone, name, avatar, status, must_change_password, data_scope_type, created_at, updated_at)
+        VALUES (#{user.username}, #{user.password}, #{user.phone}, #{user.name}, #{user.avatar}, #{user.status}, #{user.mustChangePassword}, #{user.dataScopeType}, #{user.createdAt}, #{user.updatedAt})
+    </insert>
 
 </mapper>

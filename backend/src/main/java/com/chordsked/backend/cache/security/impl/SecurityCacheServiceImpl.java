@@ -2,6 +2,7 @@ package com.chordsked.backend.cache.security.impl;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.config.properties.RedisProperties;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
     @Override
     /**
      * 读取安全用户快照缓存。
-     * 当前仅缓存 enabled 状态与 currentCampusId，用于鉴权链路中的快速判定。
+     * 当前缓存 enabled 状态、currentCampusId 与 dataScopeType，用于鉴权链路中的快速判定。
      */
     public SecurityUserSnapshot getUserSnapshot(String userType, Long userId) {
         if (!redisProperties.isEnabled() || hasInvalidAuthorityCacheParameters(userType, userId)) {
@@ -54,12 +55,16 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
                 return null;
             }
             String[] values = value.split("\\|", -1);
-            if (values.length != 2) {
+            if (values.length < 2) {
                 return null;
             }
             boolean enabled = "1".equals(values[0]);
             Long currentCampusId = values[1].isBlank() ? null : Long.parseLong(values[1]);
-            return new SecurityUserSnapshot(userType.trim(), userId, enabled, currentCampusId);
+            UserDataScopeType dataScopeType = null;
+            if (values.length >= 3 && !values[2].isBlank()) {
+                dataScopeType = UserDataScopeType.fromCode(Integer.parseInt(values[2]));
+            }
+            return new SecurityUserSnapshot(userType.trim(), userId, enabled, currentCampusId, dataScopeType);
         } catch (RuntimeException exception) {
             logger.warn("Read user snapshot cache failed", exception);
             return null;
@@ -77,7 +82,9 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
         try {
             String value = (userSnapshot.enabled() ? "1" : "0")
                     + "|"
-                    + (userSnapshot.currentCampusId() == null ? "" : userSnapshot.currentCampusId());
+                    + (userSnapshot.currentCampusId() == null ? "" : userSnapshot.currentCampusId())
+                    + "|"
+                    + (userSnapshot.dataScopeType() == null ? "" : userSnapshot.dataScopeType().getCode());
             Duration ttl = Duration.ofSeconds(Math.max(redisProperties.getUserSnapshotCacheTtlSeconds(), 1L));
             stringRedisTemplate.opsForValue().set(
                     buildUserSnapshotKey(userSnapshot.userType(), userSnapshot.userId()),

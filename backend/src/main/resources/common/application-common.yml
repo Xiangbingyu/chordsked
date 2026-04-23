@@ -1,6 +1,6 @@
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [requestId=%X{requestId}] - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [traceId=%X{traceId} requestId=%X{requestId}] - %msg%n"
 
 spring:
   sql:
@@ -17,6 +17,14 @@ mybatis:
     map-underscore-to-camel-case: true
 
 chordsked:
+  role:
+    preset-role-codes:
+      - ADMIN
+      - OPERATOR
+  internal-user:
+    default-password: "123456"
+    password-min-length: 6
+    password-max-length: 50
   student:
     max-page-size: 100
     default-page-size: 20
@@ -37,3 +45,18 @@ chordsked:
       token-session-enabled: ${chordsked.redis.token-session-enabled:${chordsked.redis.tokenSessionEnabled:${CHORDSKED_SECURITY_TOKEN_SESSION_ENABLED:${CHORDSKED_REDIS_TOKEN_SESSION_ENABLED:true}}}}
       login-fail-count-max: ${chordsked.redis.login-fail-count-max:${chordsked.redis.loginFailCountMax:${CHORDSKED_SECURITY_LOGIN_FAIL_COUNT_MAX:${CHORDSKED_REDIS_LOGIN_FAIL_COUNT_MAX:255}}}}
       login-state-min-ttl-minutes: ${chordsked.redis.login-state-min-ttl-minutes:${chordsked.redis.loginStateMinTtlMinutes:${CHORDSKED_SECURITY_LOGIN_STATE_MIN_TTL_MINUTES:${CHORDSKED_REDIS_LOGIN_STATE_MIN_TTL_MINUTES:60}}}}
+    idempotent:
+      enabled: ${chordsked.idempotent.enabled:${CHORDSKED_SECURITY_IDEMPOTENT_ENABLED:true}}
+      expire-seconds: ${chordsked.idempotent.expire-seconds:${chordsked.idempotent.expireSeconds:${CHORDSKED_SECURITY_IDEMPOTENT_EXPIRE_SECONDS:3}}}
+      key-prefix: ${chordsked.idempotent.key-prefix:${chordsked.idempotent.keyPrefix:${CHORDSKED_SECURITY_IDEMPOTENT_KEY_PREFIX:chordsked:idempotent:}}}
+    datascope:
+      enabled: ${chordsked.datascope.enabled:${CHORDSKED_SECURITY_DATASCOPE_ENABLED:true}}
+      strict-placeholder: ${chordsked.datascope.strict-placeholder:${chordsked.datascope.strictPlaceholder:true}}
+      sql-placeholder: ${chordsked.datascope.sql-placeholder:${chordsked.datascope.sqlPlaceholder:/*DATA_SCOPE*/}}
+    audit:
+      async:
+        core-pool-size: ${chordsked.audit.async.core-pool-size:${chordsked.audit.async.corePoolSize:2}}
+        max-pool-size: ${chordsked.audit.async.max-pool-size:${chordsked.audit.async.maxPoolSize:8}}
+        queue-capacity: ${chordsked.audit.async.queue-capacity:${chordsked.audit.async.queueCapacity:1000}}
+        keep-alive-seconds: ${chordsked.audit.async.keep-alive-seconds:${chordsked.audit.async.keepAliveSeconds:60}}
+        thread-name-prefix: ${chordsked.audit.async.thread-name-prefix:${chordsked.audit.async.threadNamePrefix:audit-log-}}

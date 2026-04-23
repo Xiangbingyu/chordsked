@@ -1,6 +1,7 @@
 package com.chordsked.backend.security.account.service;
 
 import com.chordsked.backend.security.account.provider.AccountProvider;
+import com.chordsked.backend.utils.string.StringNormalizeUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service("multiAccountUserDetailsService")
@@ -21,7 +21,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
         // 启动时将全部 Provider 注册到内存路由表，避免每次请求遍历查找
         // 如后续新增账号体系，仅需新增一个 AccountProvider 实现即可自动接入
         for (AccountProvider accountProvider : accountProviders) {
-            providerMap.put(normalizeUserType(accountProvider.getUserType()), accountProvider);
+            providerMap.put(StringNormalizeUtils.trimToUpperCaseOrEmpty(accountProvider.getUserType()), accountProvider);
         }
         this.providers = providerMap;
     }
@@ -34,7 +34,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
         if (userId == null || userId <= 0) {
             throw new UsernameNotFoundException("Invalid user id");
         }
-        AccountProvider accountProvider = providers.get(normalizeUserType(userType));
+        AccountProvider accountProvider = providers.get(StringNormalizeUtils.trimToUpperCaseOrEmpty(userType));
         if (accountProvider == null) {
             throw new UsernameNotFoundException("Unsupported user type: " + userType);
         }
@@ -45,10 +45,5 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 当前系统统一走 JWT 上下文路由，不支持 username 直连查询
         throw new UsernameNotFoundException("Username based lookup is not supported");
-    }
-
-    private String normalizeUserType(String userType) {
-        // 统一处理大小写与空白，确保路由 key 稳定
-        return Objects.requireNonNullElse(userType, "").trim().toUpperCase();
     }
 }

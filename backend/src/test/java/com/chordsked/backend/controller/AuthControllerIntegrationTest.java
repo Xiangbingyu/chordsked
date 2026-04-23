@@ -8,6 +8,7 @@ import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.auth.UsernamePasswordLoginSnapshot;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.verification.userstatus.UserStatusVerificationService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -353,7 +354,7 @@ class AuthControllerIntegrationTest {
         internalUser.setPassword(encoder.encode(RAW_PASSWORD));
         internalUser.setStatus(1);
         internalUser.setMustChangePassword(0);
-        internalUser.setDataScopeType(1);
+        internalUser.setDataScopeType(UserDataScopeType.ALL_COMPANY.getCode());
         internalUser.setName("系统管理员");
         return internalUser;
     }
@@ -375,6 +376,7 @@ class AuthControllerIntegrationTest {
         snapshot.setEnabled(true);
         snapshot.setMustChangePassword(false);
         snapshot.setName("系统管理员");
+        snapshot.setDataScopeType(UserDataScopeType.ALL_COMPANY);
         return snapshot;
     }
 }

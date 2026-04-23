@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,6 +31,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(resolveBusinessStatus(e.getCode()))
                 .body(ApiResponse.error(e.getCode(), e.getMessage()));
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<?> handleAccessDenied(Exception e) {
+        logger.warn("Access denied", e);
+        return ApiResponse.error(ErrorCode.FORBIDDEN.getCode(), ErrorCode.FORBIDDEN.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

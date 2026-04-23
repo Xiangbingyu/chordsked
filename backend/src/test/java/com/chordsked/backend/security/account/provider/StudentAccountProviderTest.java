@@ -2,6 +2,7 @@ package com.chordsked.backend.security.account.provider;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.StudentUserDao;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,12 +40,13 @@ class StudentAccountProviderTest {
     void shouldLoadStudentDetailsFromSecuritySnapshotCache() {
         when(securityCacheService.getAuthorityCodes("STUDENT", 3001L)).thenReturn(List.of("student:role"));
         when(securityCacheService.getUserSnapshot("STUDENT", 3001L))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("STUDENT", 3001L, true, 4001L));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("STUDENT", 3001L, true, 4001L, null));
 
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) studentAccountProvider.loadUserDetails(3001L);
 
         assertEquals(3001L, userDetails.getUserId());
         assertEquals(4001L, userDetails.getCurrentCampusId());
+        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
         verify(studentUserDao, never()).getById(3001L);
     }

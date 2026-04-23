@@ -22,6 +22,14 @@ public class PermissionDaoMBImpl implements PermissionDao {
     }
 
     @Override
+    public List<PermissionEntity> listByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return permissionMapper.listByIds(ids);
+    }
+
+    @Override
     public List<PermissionEntity> listByUserType(String userType) {
         if (userType == null || userType.isBlank()) {
             return List.of();

@@ -1,5 +1,7 @@
 package com.chordsked.backend.cache.security;
 
+import com.chordsked.backend.model.enums.UserDataScopeType;
+
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +26,8 @@ public interface SecurityCacheService {
             String userType,
             Long userId,
             boolean enabled,
-            Long currentCampusId
+            Long currentCampusId,
+            UserDataScopeType dataScopeType
     ) {
     }
 }

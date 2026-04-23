@@ -36,4 +36,20 @@ public class RolePermissionDaoMBImpl implements RolePermissionDao {
         }
         return rolePermissionMapper.listByPermissionId(permissionId);
     }
+
+    @Override
+    public int deleteByRoleId(Long roleId) {
+        if (roleId == null || roleId <= 0) {
+            return 0;
+        }
+        return rolePermissionMapper.deleteByRoleId(roleId);
+    }
+
+    @Override
+    public int saveBatch(List<RolePermissionEntity> rolePermissions) {
+        if (rolePermissions == null || rolePermissions.isEmpty()) {
+            return 0;
+        }
+        return rolePermissionMapper.saveBatch(rolePermissions);
+    }
 }

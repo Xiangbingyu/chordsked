@@ -33,4 +33,17 @@
         ORDER BY id ASC
     </select>
 
+    <delete id="deleteByRoleId">
+        DELETE FROM sys_role_permission
+        WHERE role_id = #{roleId}
+    </delete>
+
+    <insert id="saveBatch">
+        INSERT INTO sys_role_permission (role_id, permission_id, created_at, updated_at)
+        VALUES
+        <foreach collection="rolePermissions" item="item" separator=",">
+            (#{item.roleId}, #{item.permissionId}, #{item.createdAt}, #{item.updatedAt})
+        </foreach>
+    </insert>
+
 </mapper>

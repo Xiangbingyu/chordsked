@@ -1,6 +1,7 @@
 package com.chordsked.backend.security.account.model;
 
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -10,6 +11,7 @@ public class ChordSkedUserDetails implements UserDetails {
     private final Long userId;
     private final AccountUserType userType;
     private final Long currentCampusId;
+    private final UserDataScopeType dataScopeType;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
 
@@ -17,12 +19,14 @@ public class ChordSkedUserDetails implements UserDetails {
             Long userId,
             AccountUserType userType,
             Long currentCampusId,
+            UserDataScopeType dataScopeType,
             boolean enabled,
             Collection<? extends GrantedAuthority> authorities
     ) {
         this.userId = userId;
         this.userType = userType;
         this.currentCampusId = currentCampusId;
+        this.dataScopeType = dataScopeType;
         this.enabled = enabled;
         this.authorities = authorities;
     }
@@ -41,6 +45,10 @@ public class ChordSkedUserDetails implements UserDetails {
 
     public Long getCurrentCampusId() {
         return currentCampusId;
+    }
+
+    public UserDataScopeType getDataScopeTypeEnum() {
+        return dataScopeType;
     }
 
     @Override
