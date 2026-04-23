@@ -12,6 +12,8 @@ import java.util.List;
 public interface PermissionMapper {
     PermissionEntity getById(@Param("id") Long id);
 
+    List<PermissionEntity> listByIds(@Param("ids") List<Long> ids);
+
     List<PermissionEntity> listByUserType(@Param("userType") String userType);
 
     List<PermissionEntity> listByRoleId(@Param("roleId") Long roleId);

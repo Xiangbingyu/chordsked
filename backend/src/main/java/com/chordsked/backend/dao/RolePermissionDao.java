@@ -10,4 +10,8 @@ public interface RolePermissionDao {
     List<RolePermissionEntity> listByRoleId(Long roleId);
 
     List<RolePermissionEntity> listByPermissionId(Long permissionId);
+
+    int deleteByRoleId(Long roleId);
+
+    int saveBatch(List<RolePermissionEntity> rolePermissions);
 }

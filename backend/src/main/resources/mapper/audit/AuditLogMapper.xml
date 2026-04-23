@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.AuditLogMapper">
+
+    <insert id="save" parameterType="com.chordsked.backend.model.entity.AuditLogEntity">
+        INSERT INTO sys_audit_log (
+            user_id,
+            user_name,
+            user_type,
+            module_name,
+            action_type,
+            biz_id,
+            request_uri,
+            request_method,
+            request_ip,
+            user_agent,
+            request_params,
+            response_result,
+            status,
+            error_msg,
+            created_at
+        ) VALUES (
+            #{auditLog.userId},
+            #{auditLog.userName},
+            #{auditLog.userType},
+            #{auditLog.moduleName},
+            #{auditLog.actionType},
+            #{auditLog.bizId},
+            #{auditLog.requestUri},
+            #{auditLog.requestMethod},
+            #{auditLog.requestIp},
+            #{auditLog.userAgent},
+            #{auditLog.requestParams},
+            #{auditLog.responseResult},
+            #{auditLog.status},
+            #{auditLog.errorMsg},
+            #{auditLog.createdAt}
+        )
+    </insert>
+
+</mapper>

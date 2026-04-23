@@ -5,6 +5,7 @@ import com.chordsked.backend.model.auth.AuthLoginSnapshot;
 import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.auth.UsernamePasswordLoginSnapshot;
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class UsernamePasswordLoginSnapshotCacheProvider implements AuthLoginSnap
                 return null;
             }
             String[] values = value.split("\\|", -1);
-            if (values.length != 6) {
+            if (values.length != 6 && values.length != 7) {
                 return null;
             }
             UsernamePasswordLoginSnapshot snapshot = new UsernamePasswordLoginSnapshot();
@@ -64,6 +65,9 @@ public class UsernamePasswordLoginSnapshotCacheProvider implements AuthLoginSnap
             snapshot.setMustChangePassword(Boolean.parseBoolean(values[3]));
             snapshot.setPassword(values[4]);
             snapshot.setPhone(emptyToNull(values[5]));
+            if (values.length == 7 && !values[6].isBlank()) {
+                snapshot.setDataScopeType(UserDataScopeType.fromCode(Integer.parseInt(values[6])));
+            }
             return snapshot;
         } catch (RuntimeException exception) {
             logger.warn("Read username password login snapshot failed", exception);
@@ -89,7 +93,10 @@ public class UsernamePasswordLoginSnapshotCacheProvider implements AuthLoginSnap
                     String.valueOf(Boolean.TRUE.equals(usernamePasswordSnapshot.getEnabled())),
                     String.valueOf(Boolean.TRUE.equals(usernamePasswordSnapshot.getMustChangePassword())),
                     usernamePasswordSnapshot.getPassword(),
-                    usernamePasswordSnapshot.getPhone() == null ? "" : usernamePasswordSnapshot.getPhone()
+                    usernamePasswordSnapshot.getPhone() == null ? "" : usernamePasswordSnapshot.getPhone(),
+                    usernamePasswordSnapshot.getDataScopeType() == null
+                            ? ""
+                            : String.valueOf(usernamePasswordSnapshot.getDataScopeType().getCode())
             );
             Duration ttl = Duration.ofSeconds(Math.max(redisProperties.getUserSnapshotCacheTtlSeconds(), 1L));
             stringRedisTemplate.opsForValue().set(

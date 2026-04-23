@@ -1,6 +1,6 @@
 package com.chordsked.backend.model.auth;
 
-import java.util.Locale;
+import com.chordsked.backend.utils.string.StringNormalizeUtils;
 
 public enum AuthLoginMethod {
     USERNAME_PASSWORD("USERNAME_PASSWORD"),
@@ -21,7 +21,7 @@ public enum AuthLoginMethod {
         if (code == null || code.isBlank()) {
             return null;
         }
-        String normalizedCode = code.trim().toUpperCase(Locale.ROOT);
+        String normalizedCode = StringNormalizeUtils.trimToUpperCaseOrEmpty(code);
         for (AuthLoginMethod method : values()) {
             if (method.code.equals(normalizedCode)) {
                 return method;

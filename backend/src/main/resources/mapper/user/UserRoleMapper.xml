@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.UserRoleMapper">
+
+    <select id="listByUserIds" resultType="com.chordsked.backend.model.entity.UserRoleEntity">
+        SELECT id, user_id, role_id, created_at, updated_at
+        FROM sys_user_role
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        ORDER BY user_id ASC, role_id ASC
+    </select>
+
+    <delete id="deleteByUserId">
+        DELETE FROM sys_user_role
+        WHERE user_id = #{userId}
+    </delete>
+
+    <insert id="saveBatch">
+        INSERT INTO sys_user_role (user_id, role_id, created_at, updated_at)
+        VALUES
+        <foreach collection="userRoles" item="userRole" separator=",">
+            (#{userRole.userId}, #{userRole.roleId}, #{userRole.createdAt}, #{userRole.updatedAt})
+        </foreach>
+    </insert>
+
+</mapper>

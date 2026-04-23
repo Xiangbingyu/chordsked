@@ -2,6 +2,7 @@ package com.chordsked.backend.cache.security.impl;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.config.properties.RedisProperties;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -44,6 +45,19 @@ class SecurityCacheServiceImplTest {
 
     @Test
     void shouldReadUserSnapshotFromCache() {
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|4");
+
+        SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
+
+        assertEquals("ADMIN", userSnapshot.userType());
+        assertEquals(1001L, userSnapshot.userId());
+        assertEquals(true, userSnapshot.enabled());
+        assertEquals(2001L, userSnapshot.currentCampusId());
+        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userSnapshot.dataScopeType());
+    }
+
+    @Test
+    void shouldReadLegacyUserSnapshotWithoutDataScopeType() {
         when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001");
 
         SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
@@ -52,15 +66,37 @@ class SecurityCacheServiceImplTest {
         assertEquals(1001L, userSnapshot.userId());
         assertEquals(true, userSnapshot.enabled());
         assertEquals(2001L, userSnapshot.currentCampusId());
+        assertEquals(null, userSnapshot.dataScopeType());
+    }
+
+    @Test
+    void shouldReadExtendedUserSnapshotByUsingFirstThreeFields() {
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|4|extra");
+
+        SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
+
+        assertEquals("ADMIN", userSnapshot.userType());
+        assertEquals(1001L, userSnapshot.userId());
+        assertEquals(true, userSnapshot.enabled());
+        assertEquals(2001L, userSnapshot.currentCampusId());
+        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userSnapshot.dataScopeType());
     }
 
     @Test
     void shouldWriteUserSnapshotToCache() {
-        securityCacheService.cacheUserSnapshot(new SecurityCacheService.SecurityUserSnapshot("ADMIN", 1001L, true, 2001L));
+        securityCacheService.cacheUserSnapshot(
+                new SecurityCacheService.SecurityUserSnapshot(
+                        "ADMIN",
+                        1001L,
+                        true,
+                        2001L,
+                        UserDataScopeType.SPECIFIED_CAMPUS
+                )
+        );
 
         verify(valueOperations).set(
                 eq("chordsked:security:user:ADMIN:1001"),
-                eq("1|2001"),
+                eq("1|2001|4"),
                 eq(Duration.ofSeconds(300))
         );
     }

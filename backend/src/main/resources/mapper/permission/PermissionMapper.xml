@@ -25,6 +25,15 @@
         LIMIT 1
     </select>
 
+    <select id="listByIds" resultType="com.chordsked.backend.model.entity.PermissionEntity">
+        SELECT <include refid="permissionColumns"/>
+        FROM sys_permission
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
     <select id="listByUserType" resultType="com.chordsked.backend.model.entity.PermissionEntity">
         SELECT <include refid="permissionColumns"/>
         FROM sys_permission

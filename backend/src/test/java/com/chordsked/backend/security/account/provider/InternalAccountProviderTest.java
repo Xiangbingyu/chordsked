@@ -4,6 +4,7 @@ import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
 import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +45,19 @@ class InternalAccountProviderTest {
     void shouldLoadUserDetailsFromSecuritySnapshotCache() {
         when(securityCacheService.getAuthorityCodes("ADMIN", 1001L)).thenReturn(List.of("admin:role"));
         when(securityCacheService.getUserSnapshot("ADMIN", 1001L))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", 1001L, true, 2001L));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot(
+                        "ADMIN",
+                        1001L,
+                        true,
+                        2001L,
+                        UserDataScopeType.SPECIFIED_CAMPUS
+                ));
 
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
         assertEquals(2001L, userDetails.getCurrentCampusId());
+        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
         verify(internalUserDao, never()).getById(1001L);
         verify(userCampusDao, never()).getPrimaryCampusIdByUserId(1001L);
@@ -60,6 +68,7 @@ class InternalAccountProviderTest {
         InternalUserEntity internalUser = new InternalUserEntity();
         internalUser.setId(1001L);
         internalUser.setStatus(1);
+        internalUser.setDataScopeType(UserDataScopeType.SELF_ONLY.getCode());
 
         when(securityCacheService.getAuthorityCodes("ADMIN", 1001L)).thenReturn(List.of("admin:role"));
         when(securityCacheService.getUserSnapshot("ADMIN", 1001L)).thenReturn(null);
@@ -70,7 +79,16 @@ class InternalAccountProviderTest {
 
         assertEquals(1001L, userDetails.getUserId());
         assertEquals(2001L, userDetails.getCurrentCampusId());
+        assertEquals(UserDataScopeType.SELF_ONLY, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
-        verify(securityCacheService).cacheUserSnapshot(new SecurityCacheService.SecurityUserSnapshot("ADMIN", 1001L, true, 2001L));
+        verify(securityCacheService).cacheUserSnapshot(
+                new SecurityCacheService.SecurityUserSnapshot(
+                        "ADMIN",
+                        1001L,
+                        true,
+                        2001L,
+                        UserDataScopeType.SELF_ONLY
+                )
+        );
     }
 }

@@ -1,8 +1,8 @@
 package com.chordsked.backend.model.entity;
 
-import com.chordsked.backend.model.enums.InternalUserDataScopeType;
 import com.chordsked.backend.model.enums.InternalUserStatus;
 import com.chordsked.backend.model.enums.MustChangePasswordFlag;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 
 public class InternalUserEntity {
     private Long id;
@@ -13,7 +13,7 @@ public class InternalUserEntity {
     private String avatar;
     private InternalUserStatus status;
     private MustChangePasswordFlag mustChangePassword;
-    private InternalUserDataScopeType dataScopeType;
+    private UserDataScopeType dataScopeType;
     private Long createdAt;
     private Long updatedAt;
 
@@ -102,14 +102,14 @@ public class InternalUserEntity {
     }
 
     public void setDataScopeType(Integer dataScopeType) {
-        this.dataScopeType = InternalUserDataScopeType.fromCode(dataScopeType);
+        this.dataScopeType = UserDataScopeType.fromCode(dataScopeType);
     }
 
-    public InternalUserDataScopeType getDataScopeTypeEnum() {
+    public UserDataScopeType getDataScopeTypeEnum() {
         return dataScopeType;
     }
 
-    public void setDataScopeTypeEnum(InternalUserDataScopeType dataScopeType) {
+    public void setDataScopeTypeEnum(UserDataScopeType dataScopeType) {
         this.dataScopeType = dataScopeType;
     }
 

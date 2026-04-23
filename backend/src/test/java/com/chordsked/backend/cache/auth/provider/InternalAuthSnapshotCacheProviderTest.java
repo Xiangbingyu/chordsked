@@ -4,6 +4,7 @@ import com.chordsked.backend.config.properties.RedisProperties;
 import com.chordsked.backend.model.auth.AuthLoginMethod;
 import com.chordsked.backend.model.auth.UsernamePasswordLoginSnapshot;
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -69,13 +70,14 @@ class InternalAuthSnapshotCacheProviderTest {
         loginSnapshot.setMustChangePassword(false);
         loginSnapshot.setPassword("encodedPassword");
         loginSnapshot.setPhone("13800138000");
+        loginSnapshot.setDataScopeType(UserDataScopeType.SPECIFIED_CAMPUS);
         when(redisProperties.getUserSnapshotCacheTtlSeconds()).thenReturn(123L);
 
         usernamePasswordLoginSnapshotCacheProvider.cacheLoginSnapshot(loginSnapshot);
 
         verify(valueOperations).set(
                 "chordsked:auth:admin:username-password:admin",
-                "1001|管理员|true|false|encodedPassword|13800138000",
+                "1001|管理员|true|false|encodedPassword|13800138000|4",
                 Duration.ofSeconds(123L)
         );
     }
@@ -83,7 +85,7 @@ class InternalAuthSnapshotCacheProviderTest {
     @Test
     void shouldReturnSnapshotWhenCacheHit() {
         when(valueOperations.get("chordsked:auth:admin:username-password:admin"))
-                .thenReturn("1001|管理员|true|false|encodedPassword|13800138000");
+                .thenReturn("1001|管理员|true|false|encodedPassword|13800138000|4");
 
         UsernamePasswordLoginSnapshot snapshot = (UsernamePasswordLoginSnapshot) usernamePasswordLoginSnapshotCacheProvider
                 .getLoginSnapshot(AccountUserType.ADMIN, "admin");
@@ -98,6 +100,19 @@ class InternalAuthSnapshotCacheProviderTest {
         assertFalse(snapshot.getMustChangePassword());
         assertEquals("encodedPassword", snapshot.getPassword());
         assertEquals("13800138000", snapshot.getPhone());
+        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, snapshot.getDataScopeType());
+    }
+
+    @Test
+    void shouldReadOldSnapshotPayloadWithoutDataScopeType() {
+        when(valueOperations.get("chordsked:auth:admin:username-password:admin"))
+                .thenReturn("1001|管理员|true|false|encodedPassword|13800138000");
+
+        UsernamePasswordLoginSnapshot snapshot = (UsernamePasswordLoginSnapshot) usernamePasswordLoginSnapshotCacheProvider
+                .getLoginSnapshot(AccountUserType.ADMIN, "admin");
+
+        assertNotNull(snapshot);
+        assertNull(snapshot.getDataScopeType());
     }
 
     @Test

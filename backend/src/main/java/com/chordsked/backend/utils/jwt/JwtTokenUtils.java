@@ -1,6 +1,7 @@
 package com.chordsked.backend.utils.jwt;
 
 import com.chordsked.backend.config.properties.JwtProperties;
+import com.chordsked.backend.utils.string.StringNormalizeUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -88,7 +89,7 @@ public class JwtTokenUtils {
      */
     public boolean isClaimsValid(Claims claims, String expectedTokenType) {
         Long userId = claims.get(CLAIM_USER_ID, Long.class);
-        String userType = normalizeUserType(claims.get(CLAIM_USER_TYPE, String.class));
+        String userType = StringNormalizeUtils.trimToUpperCaseOrEmpty(claims.get(CLAIM_USER_TYPE, String.class));
         String tokenType = claims.get(CLAIM_TOKEN_TYPE, String.class);
         String issuer = claims.getIssuer();
         Date expiration = claims.getExpiration();
@@ -107,7 +108,7 @@ public class JwtTokenUtils {
      */
     public String generateToken(Long userId, String userType, long expirationSeconds, String tokenType) {
         Instant now = Instant.now();
-        String normalizedUserType = normalizeUserType(userType);
+        String normalizedUserType = StringNormalizeUtils.trimToUpperCaseOrEmpty(userType);
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim(CLAIM_USER_ID, userId)
@@ -134,10 +135,5 @@ public class JwtTokenUtils {
         // 基于配置密钥生成 HMAC key，密钥长度由 JwtProperties 在启动时校验
         byte[] secretBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(secretBytes);
-    }
-
-    private String normalizeUserType(String userType) {
-        // 统一 userType 规范，避免大小写差异导致鉴权与路由不一致
-        return userType == null ? "" : userType.trim().toUpperCase();
     }
 }

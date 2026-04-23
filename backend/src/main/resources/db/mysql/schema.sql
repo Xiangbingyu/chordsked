@@ -163,6 +163,32 @@ CREATE TABLE IF NOT EXISTS sys_login_log (
     INDEX idx_sys_login_log_result (result)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '登录日志表';
 
+CREATE TABLE IF NOT EXISTS sys_audit_log (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '审计日志ID',
+    user_id BIGINT NULL COMMENT '操作人ID',
+    user_name VARCHAR(50) NULL COMMENT '操作人名称',
+    user_type VARCHAR(20) NULL COMMENT '账号体系(ADMIN/TEACHER/STUDENT)',
+    module_name VARCHAR(50) NOT NULL COMMENT '业务模块名称',
+    action_type VARCHAR(50) NOT NULL COMMENT '业务动作类型',
+    biz_id BIGINT NULL COMMENT '关联业务主键ID',
+    request_uri VARCHAR(255) NULL COMMENT '请求URI',
+    request_method VARCHAR(10) NULL COMMENT '请求方法(GET/POST/PUT/DELETE)',
+    request_ip VARCHAR(50) NULL COMMENT '请求IP',
+    user_agent VARCHAR(200) NULL COMMENT '请求User-Agent',
+    request_params TEXT NULL COMMENT '核心请求参数(JSON)',
+    response_result TEXT NULL COMMENT '核心响应结果(JSON/文本摘要)',
+    status TINYINT NOT NULL COMMENT '执行状态(0:失败 1:成功)',
+    error_msg VARCHAR(500) NULL COMMENT '失败原因摘要',
+    created_at BIGINT NOT NULL COMMENT '创建时间(毫秒时间戳)',
+    PRIMARY KEY (id),
+    INDEX idx_sys_audit_log_user_id (user_id),
+    INDEX idx_sys_audit_log_user_type (user_type),
+    INDEX idx_sys_audit_log_module_action (module_name, action_type),
+    INDEX idx_sys_audit_log_biz_id (biz_id),
+    INDEX idx_sys_audit_log_status (status),
+    INDEX idx_sys_audit_log_created_at (created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '核心审计日志表';
+
 CREATE TABLE IF NOT EXISTS sys_operation_log (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '日志ID',
     module VARCHAR(50) NOT NULL COMMENT '模块名称',

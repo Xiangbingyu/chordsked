@@ -1,6 +1,7 @@
 package com.chordsked.backend.model.auth;
 
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 
 public abstract class AuthLoginSnapshot {
     private Long userId;
@@ -10,6 +11,7 @@ public abstract class AuthLoginSnapshot {
     private String name;
     private Boolean enabled;
     private Boolean mustChangePassword;
+    private UserDataScopeType dataScopeType;
 
     public Long getUserId() {
         return userId;
@@ -65,5 +67,13 @@ public abstract class AuthLoginSnapshot {
 
     public void setMustChangePassword(Boolean mustChangePassword) {
         this.mustChangePassword = mustChangePassword;
+    }
+
+    public UserDataScopeType getDataScopeType() {
+        return dataScopeType;
+    }
+
+    public void setDataScopeType(UserDataScopeType dataScopeType) {
+        this.dataScopeType = dataScopeType;
     }
 }

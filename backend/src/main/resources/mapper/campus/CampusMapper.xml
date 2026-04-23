@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.CampusMapper">
+
+    <select id="getById" resultType="com.chordsked.backend.model.entity.CampusEntity">
+        SELECT id,
+               name,
+               address,
+               phone,
+               leader_id,
+               leader_name,
+               sort,
+               status,
+               remark,
+               created_at,
+               updated_at
+        FROM sys_campus
+        WHERE id = #{campusId}
+          AND status != 2
+        LIMIT 1
+    </select>
+
+</mapper>

@@ -6,6 +6,7 @@ import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.InternalUserStatus;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -65,9 +66,11 @@ public class InternalAccountProvider implements AccountProvider {
                 securityCacheService.getUserSnapshot(USER_TYPE.getCode(), userId);
         boolean enabled;
         Long currentCampusId;
-        if (userSnapshot != null) {
+        UserDataScopeType dataScopeType;
+        if (userSnapshot != null && userSnapshot.dataScopeType() != null) {
             enabled = userSnapshot.enabled();
             currentCampusId = userSnapshot.currentCampusId();
+            dataScopeType = userSnapshot.dataScopeType();
         } else {
             InternalUserEntity internalUser = internalUserDao.getById(userId);
             if (internalUser == null) {
@@ -75,8 +78,15 @@ public class InternalAccountProvider implements AccountProvider {
             }
             enabled = InternalUserStatus.ENABLED.equals(internalUser.getStatusEnum());
             currentCampusId = userCampusDao.getPrimaryCampusIdByUserId(userId);
+            dataScopeType = internalUser.getDataScopeTypeEnum();
             securityCacheService.cacheUserSnapshot(
-                    new SecurityCacheService.SecurityUserSnapshot(USER_TYPE.getCode(), userId, enabled, currentCampusId)
+                    new SecurityCacheService.SecurityUserSnapshot(
+                            USER_TYPE.getCode(),
+                            userId,
+                            enabled,
+                            currentCampusId,
+                            dataScopeType
+                    )
             );
         }
 
@@ -84,6 +94,7 @@ public class InternalAccountProvider implements AccountProvider {
                 userId,
                 USER_TYPE,
                 currentCampusId,
+                dataScopeType,
                 enabled,
                 authorities
         );
