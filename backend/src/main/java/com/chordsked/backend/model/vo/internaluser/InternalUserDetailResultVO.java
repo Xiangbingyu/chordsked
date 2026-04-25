@@ -42,6 +42,9 @@ public class InternalUserDetailResultVO {
     @Schema(description = "绑定角色ID列表")
     private List<Long> roleIds;
 
+    @Schema(description = "权限代码列表")
+    private List<String> permissionCodes;
+
     @Schema(description = "创建时间", example = "1774483200000")
     private Long createdAt;
 
@@ -158,6 +161,14 @@ public class InternalUserDetailResultVO {
 
     public void setRoleIds(List<Long> roleIds) {
         this.roleIds = roleIds;
+    }
+
+    public List<String> getPermissionCodes() {
+        return permissionCodes;
+    }
+
+    public void setPermissionCodes(List<String> permissionCodes) {
+        this.permissionCodes = permissionCodes;
     }
 
     public Long getCreatedAt() {

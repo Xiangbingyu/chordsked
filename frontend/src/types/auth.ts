@@ -1,9 +1,3 @@
-export type ApiResponse<T> = {
-  code: number
-  message: string
-  data: T
-}
-
 export type AuthLoginMethod =
   | 'USERNAME_PASSWORD'
   | 'PHONE_SMS_CODE'

@@ -6,9 +6,11 @@ import com.chordsked.backend.dao.UserRoleDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.internaluser.InternalUserDetailQueryRequest;
+import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
+import com.chordsked.backend.service.security.AuthorityCodeService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,9 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
 
     @Resource(name = "userCampusDao")
     private UserCampusDao userCampusDao;
+
+    @Resource(name = "authorityCodeService")
+    private AuthorityCodeService authorityCodeService;
 
     @Override
     public InternalUserDetailResultVO getDetail(InternalUserDetailQueryRequest request) {
@@ -42,6 +47,7 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
         detail.setRoleIds(userRoles.stream().map(UserRoleEntity::getRoleId).toList());
         detail.setCampusIds(userCampusDao.listCampusIdsByUserId(userId));
         detail.setPrimaryCampusId(userCampusDao.getPrimaryCampusIdByUserId(userId));
+        detail.setPermissionCodes(authorityCodeService.getAuthorityCodes(AccountUserType.ADMIN, userId));
         return detail;
     }
 }

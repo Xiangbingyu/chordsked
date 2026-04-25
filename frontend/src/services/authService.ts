@@ -1,10 +1,10 @@
 import http from './http'
 import type {
-  ApiResponse,
   AuthLoginRequest,
   AuthLoginResultVO,
   AuthRefreshResultVO,
 } from '../types/auth'
+import type { ApiResponse } from '../types/common'
 
 export async function login(data: AuthLoginRequest) {
   const response = await http.post<ApiResponse<AuthLoginResultVO>>('/admin/api/v1/login', data)

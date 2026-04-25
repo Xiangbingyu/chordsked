@@ -2,6 +2,7 @@ package com.chordsked.backend.security.jwt;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.security.account.service.MultiAccountUserDetailsService;
+import com.chordsked.backend.utils.cookie.CookieUtils;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -26,9 +27,6 @@ import java.io.IOException;
 @Component("jwtAuthenticationFilter")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-    // Authorization: Bearer <token>
-    private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_USER_TYPE = "userType";
 
@@ -44,12 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String authorization = request.getHeader(AUTHORIZATION_HEADER);
-        // 仅在：依赖可用、上下文未认证、且请求带 Bearer Token 时执行鉴权
+        String token = CookieUtils.readCookieValue(request, CookieUtils.ACCESS_TOKEN_COOKIE_NAME);
+        // 当前后台链路统一采用 HttpOnly Cookie 鉴权；仅在上下文未认证且请求携带 access_token 时执行认证。
         if (SecurityContextHolder.getContext().getAuthentication() == null
-                && authorization != null
-                && authorization.startsWith(BEARER_PREFIX)) {
-            String token = authorization.substring(BEARER_PREFIX.length());
+                && token != null
+                && !token.isBlank()) {
             try {
                 // 先解析 claims，再做 claims 校验，避免 isTokenValid 与 parseClaims 的重复解析
                 Claims claims = jwtTokenUtils.parseClaims(token);

@@ -34,7 +34,7 @@ function LoginPage() {
         loginMethod: 'USERNAME_PASSWORD',
       }
       await login(loginData)
-      navigate('/dashboard')
+      navigate('/admin/workbench')
     } catch (error) {
       const loginError = error instanceof Error ? error.message : '登录失败，请检查账号密码'
       setErrorMessage(loginError)

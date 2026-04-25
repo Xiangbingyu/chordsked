@@ -1,5 +1,8 @@
 INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, created_at, updated_at)
-VALUES (1001, 'admin', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000000', '系统管理员', NULL, 1, 0, 1, 1774483200000, 1774483200000);
+VALUES (1001, 'admin', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000000', '系统管理员', NULL, 1, 0, 1, 1774483200000, 1774483200000),
+       (1002, 'operator_hz_01', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000001', '杭州教务一', NULL, 1, 0, 4, 1774483200000, 1774483200000),
+       (1003, 'operator_hz_02', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000002', '杭州教务二', NULL, 1, 0, 3, 1774483200000, 1774483200000),
+       (1004, 'operator_hz_03', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000003', '杭州教务三', NULL, 0, 1, 4, 1774483200000, 1774483200000);
 
 INSERT INTO sys_campus (id, name, address, phone, leader_id, leader_name, sort, status, remark, created_at, updated_at)
 VALUES (1, '默认校区', '杭州', '0571-00000000', 1001, '系统管理员', 1, 1, '初始化校区', 1774483200000, 1774483200000);
@@ -52,7 +55,10 @@ VALUES
        (144, 'admin:log:sensitive', '查看敏感日志', 2, 140, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000);
 
 INSERT INTO sys_user_role (user_id, role_id, created_at, updated_at)
-VALUES (1001, 1, 1774483200000, 1774483200000);
+VALUES (1001, 1, 1774483200000, 1774483200000),
+       (1002, 2, 1774483200000, 1774483200000),
+       (1003, 2, 1774483200000, 1774483200000),
+       (1004, 2, 1774483200000, 1774483200000);
 
 INSERT INTO sys_role_permission (role_id, permission_id, created_at, updated_at)
 VALUES
@@ -98,7 +104,13 @@ VALUES
        (2, 142, 1774483200000, 1774483200000);
 
 INSERT INTO sys_user_campus (user_id, campus_id, is_primary, created_at, updated_at)
-VALUES (1001, 1, 1, 1774483200000, 1774483200000);
+VALUES (1001, 1, 1, 1774483200000, 1774483200000),
+       (1002, 1, 1, 1774483200000, 1774483200000),
+       (1003, 1, 1, 1774483200000, 1774483200000),
+       (1004, 1, 1, 1774483200000, 1774483200000);
 
 INSERT INTO sys_data_scope (target_type, target_id, scope_type, campus_ids, created_at, updated_at)
-VALUES (2, 1001, 1, NULL, 1774483200000, 1774483200000);
+VALUES (2, 1001, 1, NULL, 1774483200000, 1774483200000),
+       (2, 1002, 4, '1', 1774483200000, 1774483200000),
+       (2, 1003, 3, NULL, 1774483200000, 1774483200000),
+       (2, 1004, 4, '1', 1774483200000, 1774483200000);

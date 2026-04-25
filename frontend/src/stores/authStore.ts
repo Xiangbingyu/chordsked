@@ -1,7 +1,8 @@
 import { isAxiosError } from 'axios'
 import { create } from 'zustand'
 import { login as apiLogin, logout as apiLogout } from '../services/authService'
-import type { ApiResponse, AuthLoginRequest, AuthLoginResultVO } from '../types/auth'
+import type { AuthLoginRequest, AuthLoginResultVO } from '../types/auth'
+import type { ApiResponse } from '../types/common'
 
 type AuthState = {
   loggedIn: boolean
