@@ -1,6 +1,6 @@
-package com.chordsked.backend.model.auth;
+﻿package com.chordsked.backend.model.auth;
 
-import com.chordsked.backend.utils.string.StringNormalizeUtils;
+import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
 
 public enum AuthLoginMethod {
     USERNAME_PASSWORD("USERNAME_PASSWORD"),
@@ -21,7 +21,7 @@ public enum AuthLoginMethod {
         if (code == null || code.isBlank()) {
             return null;
         }
-        String normalizedCode = StringNormalizeUtils.trimToUpperCaseOrEmpty(code);
+        String normalizedCode = StringNormalizeUtils.normalizeOrEmpty(code);
         for (AuthLoginMethod method : values()) {
             if (method.code.equals(normalizedCode)) {
                 return method;
@@ -30,3 +30,4 @@ public enum AuthLoginMethod {
         return null;
     }
 }
+

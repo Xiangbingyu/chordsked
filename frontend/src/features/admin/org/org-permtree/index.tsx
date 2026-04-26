@@ -1,4 +1,4 @@
-import OrgPageShell from './OrgPageShell'
+import OrgPageShell from '../shared/OrgPageShell'
 
 function PermissionTreePage() {
   return (

@@ -35,6 +35,12 @@ public class InternalUserQueryResultVO {
     @Schema(description = "绑定角色ID列表")
     private List<Long> roleIds;
 
+    @Schema(description = "是否系统管理员受保护账号", example = "true")
+    private Boolean systemAccount;
+
+    @Schema(description = "是否当前登录人本人", example = "false")
+    private Boolean currentUser;
+
     @Schema(description = "创建时间", example = "1774483200000")
     private Long createdAt;
 
@@ -127,6 +133,22 @@ public class InternalUserQueryResultVO {
 
     public void setRoleIds(List<Long> roleIds) {
         this.roleIds = roleIds;
+    }
+
+    public Boolean getSystemAccount() {
+        return systemAccount;
+    }
+
+    public void setSystemAccount(Boolean systemAccount) {
+        this.systemAccount = systemAccount;
+    }
+
+    public Boolean getCurrentUser() {
+        return currentUser;
+    }
+
+    public void setCurrentUser(Boolean currentUser) {
+        this.currentUser = currentUser;
     }
 
     public Long getCreatedAt() {

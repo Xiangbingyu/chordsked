@@ -1,4 +1,4 @@
-package com.chordsked.backend.utils.string;
+package com.chordsked.backend.utils.normalize;
 
 import java.util.Locale;
 
@@ -8,9 +8,10 @@ public final class StringNormalizeUtils {
     }
 
     /**
-     * 将字符串标准化为去除首尾空白后的大写形式；null 输入返回空字符串。
+     * Normalize a string by trimming and converting to upper case; null returns an empty string.
      */
-    public static String trimToUpperCaseOrEmpty(String value) {
+    public static String normalizeOrEmpty(String value) {
         return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
 }
+

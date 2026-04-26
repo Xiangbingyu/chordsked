@@ -10,7 +10,9 @@ import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
+import com.chordsked.backend.service.internaluser.InternalUserOperationGuardService;
 import com.chordsked.backend.service.security.AuthorityCodeService;
+import com.chordsked.backend.utils.security.SecurityPrincipalUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,9 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
     @Resource(name = "authorityCodeService")
     private AuthorityCodeService authorityCodeService;
 
+    @Resource(name = "internalUserOperationGuardService")
+    private InternalUserOperationGuardService internalUserOperationGuardService;
+
     @Override
     public InternalUserDetailResultVO getDetail(InternalUserDetailQueryRequest request) {
         if (request == null) {
@@ -48,6 +53,9 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
         detail.setCampusIds(userCampusDao.listCampusIdsByUserId(userId));
         detail.setPrimaryCampusId(userCampusDao.getPrimaryCampusIdByUserId(userId));
         detail.setPermissionCodes(authorityCodeService.getAuthorityCodes(AccountUserType.ADMIN, userId));
+        Long currentUserId = SecurityPrincipalUtils.getCurrentUserId();
+        detail.setCurrentUser(currentUserId != null && currentUserId.equals(userId));
+        detail.setSystemAccount(internalUserOperationGuardService.isProtectedUser(userId));
         return detail;
     }
 }

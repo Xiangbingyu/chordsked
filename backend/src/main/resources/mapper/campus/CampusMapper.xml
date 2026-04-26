@@ -22,4 +22,21 @@
         LIMIT 1
     </select>
 
+    <select id="listNotDeleted" resultType="com.chordsked.backend.model.entity.CampusEntity">
+        SELECT id,
+               name,
+               address,
+               phone,
+               leader_id,
+               leader_name,
+               sort,
+               status,
+               remark,
+               created_at,
+               updated_at
+        FROM sys_campus
+        WHERE status != 2
+        ORDER BY sort ASC, id ASC
+    </select>
+
 </mapper>

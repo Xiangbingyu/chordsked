@@ -3,12 +3,16 @@ package com.chordsked.backend.service.internaluser.impl;
 import com.chordsked.backend.common.PageResult;
 import com.chordsked.backend.config.properties.AppProperties;
 import com.chordsked.backend.dao.InternalUserDao;
+import com.chordsked.backend.exception.BusinessException;
+import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.dao.UserRoleDao;
 import com.chordsked.backend.model.dto.internaluser.InternalUserQueryRequest;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.enums.InternalUserStatus;
 import com.chordsked.backend.model.vo.internaluser.InternalUserQueryResultVO;
+import com.chordsked.backend.service.internaluser.InternalUserOperationGuardService;
 import com.chordsked.backend.service.internaluser.InternalUserQueryService;
+import com.chordsked.backend.utils.security.SecurityPrincipalUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +32,9 @@ public class InternalUserQueryServiceImpl implements InternalUserQueryService {
     @Resource(name = "appProperties")
     private AppProperties appProperties;
 
+    @Resource(name = "internalUserOperationGuardService")
+    private InternalUserOperationGuardService internalUserOperationGuardService;
+
     @Override
     public PageResult<InternalUserQueryResultVO> list(InternalUserQueryRequest request) {
         if (request == null) {
@@ -45,7 +52,7 @@ public class InternalUserQueryServiceImpl implements InternalUserQueryService {
             throw new IllegalArgumentException("pageSize too large");
         }
         if (request.getStatus() != null && InternalUserStatus.fromCode(request.getStatus()) == null) {
-            throw new IllegalArgumentException("status is invalid");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "状态值无效");
         }
         request.setPage(page);
         request.setPageSize(pageSize);
@@ -59,6 +66,7 @@ public class InternalUserQueryServiceImpl implements InternalUserQueryService {
             return PageResult.of(total, items);
         }
         fillRoleIds(items);
+        fillOperationFlags(items);
         return PageResult.of(total, items);
     }
 
@@ -75,6 +83,15 @@ public class InternalUserQueryServiceImpl implements InternalUserQueryService {
                 ));
         for (InternalUserQueryResultVO item : items) {
             item.setRoleIds(roleIdsByUserId.getOrDefault(item.getId(), List.of()));
+        }
+    }
+
+    private void fillOperationFlags(List<InternalUserQueryResultVO> items) {
+        Long currentUserId = SecurityPrincipalUtils.getCurrentUserId();
+        for (InternalUserQueryResultVO item : items) {
+            Long userId = item.getId();
+            item.setCurrentUser(currentUserId != null && currentUserId.equals(userId));
+            item.setSystemAccount(internalUserOperationGuardService.isProtectedUser(userId));
         }
     }
 }

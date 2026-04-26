@@ -1,6 +1,7 @@
 package com.chordsked.backend.service.internaluser.impl;
 
 import com.chordsked.backend.audit.annotation.AuditLog;
+import com.chordsked.backend.config.properties.RoleProperties;
 import com.chordsked.backend.dao.CampusDao;
 import com.chordsked.backend.dao.InternalUserDao;
 import com.chordsked.backend.dao.RoleDao;
@@ -15,7 +16,9 @@ import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.enums.RoleStatus;
 import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.internaluser.InternalUserCacheCleanupService;
+import com.chordsked.backend.service.internaluser.InternalUserOperationGuardService;
 import com.chordsked.backend.service.internaluser.InternalUserUpdateService;
+import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +47,12 @@ public class InternalUserUpdateServiceImpl implements InternalUserUpdateService 
     @Resource(name = "internalUserCacheCleanupService")
     private InternalUserCacheCleanupService internalUserCacheCleanupService;
 
+    @Resource(name = "internalUserOperationGuardService")
+    private InternalUserOperationGuardService internalUserOperationGuardService;
+
+    @Resource(name = "roleProperties")
+    private RoleProperties roleProperties;
+
     @Override
     @AuditLog(module = "INTERNAL_USER_MANAGEMENT", action = "UPDATE_INTERNAL_USER")
     @Transactional(rollbackFor = Exception.class)
@@ -52,16 +61,7 @@ public class InternalUserUpdateServiceImpl implements InternalUserUpdateService 
             throw new IllegalArgumentException("request must not be null");
         }
         Long userId = request.getUserId();
-        if (userId == null || userId <= 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "userId必须大于0");
-        }
-        InternalUserEntity existingUser = internalUserDao.getById(userId);
-        if (existingUser == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "用户不存在");
-        }
-        if (!internalUserDao.existsAccessibleById(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "无权限操作该账号");
-        }
+        InternalUserEntity existingUser = internalUserOperationGuardService.validateOperationTarget(userId, "修改");
 
         String phone = request.getPhone();
         if (phone == null || phone.isBlank()) {
@@ -73,7 +73,7 @@ public class InternalUserUpdateServiceImpl implements InternalUserUpdateService 
         }
         Integer dataScopeType = request.getDataScopeType();
         if (UserDataScopeType.fromCode(dataScopeType) == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "dataScopeType is invalid");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "数据范围类型无效");
         }
         Long primaryCampusId = request.getPrimaryCampusId();
         if (primaryCampusId == null || primaryCampusId <= 0) {
@@ -106,6 +106,7 @@ public class InternalUserUpdateServiceImpl implements InternalUserUpdateService 
         if (distinctRoleIds.isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "roleIds不能为空");
         }
+        String systemAdminRoleCode = resolveSystemAdminRoleCode();
         for (Long roleId : distinctRoleIds) {
             RoleEntity role = roleDao.getById(roleId);
             if (role == null) {
@@ -113,6 +114,9 @@ public class InternalUserUpdateServiceImpl implements InternalUserUpdateService 
             }
             if (role.getStatusEnum() != RoleStatus.ENABLED) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "角色未启用: " + roleId);
+            }
+            if (systemAdminRoleCode.equals(StringNormalizeUtils.normalizeOrEmpty(role.getCode()))) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "系统管理员角色为固定系统角色，不能分配给普通账号");
             }
         }
 
@@ -171,5 +175,12 @@ public class InternalUserUpdateServiceImpl implements InternalUserUpdateService 
         userRole.setCreatedAt(now);
         userRole.setUpdatedAt(now);
         return userRole;
+    }
+
+    private String resolveSystemAdminRoleCode() {
+        String systemAdminRoleCode = StringNormalizeUtils.normalizeOrEmpty(
+                roleProperties.getSystemAdminRoleCode()
+        );
+        return systemAdminRoleCode.isEmpty() ? "SYSTEM_ADMIN" : systemAdminRoleCode;
     }
 }

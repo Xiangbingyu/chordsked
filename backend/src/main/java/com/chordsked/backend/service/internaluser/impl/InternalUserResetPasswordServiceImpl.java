@@ -9,6 +9,7 @@ import com.chordsked.backend.model.dto.internaluser.InternalUserResetPasswordReq
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.MustChangePasswordFlag;
 import com.chordsked.backend.service.internaluser.InternalUserCacheCleanupService;
+import com.chordsked.backend.service.internaluser.InternalUserOperationGuardService;
 import com.chordsked.backend.service.internaluser.InternalUserResetPasswordService;
 import jakarta.annotation.Resource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,6 +30,9 @@ public class InternalUserResetPasswordServiceImpl implements InternalUserResetPa
     @Resource(name = "internalUserCacheCleanupService")
     private InternalUserCacheCleanupService internalUserCacheCleanupService;
 
+    @Resource(name = "internalUserOperationGuardService")
+    private InternalUserOperationGuardService internalUserOperationGuardService;
+
     @Override
     @AuditLog(module = "INTERNAL_USER_MANAGEMENT", action = "RESET_INTERNAL_USER_PASSWORD")
     @Transactional(rollbackFor = Exception.class)
@@ -37,16 +41,7 @@ public class InternalUserResetPasswordServiceImpl implements InternalUserResetPa
             throw new IllegalArgumentException("request must not be null");
         }
         Long userId = request.getUserId();
-        if (userId == null || userId <= 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "userId必须大于0");
-        }
-        InternalUserEntity targetUser = internalUserDao.getById(userId);
-        if (targetUser == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "用户不存在");
-        }
-        if (!internalUserDao.existsAccessibleById(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "无权限操作该账号");
-        }
+        InternalUserEntity targetUser = internalUserOperationGuardService.validateOperationTarget(userId, "重置密码");
 
         String encodedPassword = bCryptPasswordEncoder.encode(internalUserProperties.getDefaultPassword());
         int affectedRows = internalUserDao.updatePassword(

@@ -1,4 +1,4 @@
-package com.chordsked.backend.service.role.impl;
+﻿package com.chordsked.backend.service.role.impl;
 
 import com.chordsked.backend.audit.annotation.AuditLog;
 import com.chordsked.backend.config.properties.RoleProperties;
@@ -9,7 +9,7 @@ import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.role.RoleDeleteRequest;
 import com.chordsked.backend.model.entity.RoleEntity;
 import com.chordsked.backend.service.role.RoleDeleteService;
-import com.chordsked.backend.utils.string.StringNormalizeUtils;
+import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,10 +56,11 @@ public class RoleDeleteServiceImpl implements RoleDeleteService {
         if (role == null || role.getCode() == null) {
             return false;
         }
-        String roleCode = StringNormalizeUtils.trimToUpperCaseOrEmpty(role.getCode());
+        String roleCode = StringNormalizeUtils.normalizeOrEmpty(role.getCode());
         return roleProperties.getPresetRoleCodes().stream()
                 .filter(Objects::nonNull)
-                .map(StringNormalizeUtils::trimToUpperCaseOrEmpty)
+                .map(StringNormalizeUtils::normalizeOrEmpty)
                 .anyMatch(roleCode::equals);
     }
 }
+

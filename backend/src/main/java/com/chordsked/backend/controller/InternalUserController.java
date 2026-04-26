@@ -3,6 +3,8 @@ package com.chordsked.backend.controller;
 import com.chordsked.backend.common.ApiResponse;
 import com.chordsked.backend.common.PageResult;
 import com.chordsked.backend.config.properties.AppProperties;
+import com.chordsked.backend.exception.BusinessException;
+import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.idempotent.annotation.Idempotent;
 import com.chordsked.backend.model.dto.internaluser.InternalUserCreateRequest;
 import com.chordsked.backend.model.dto.internaluser.InternalUserDetailQueryRequest;
@@ -11,8 +13,10 @@ import com.chordsked.backend.model.dto.internaluser.InternalUserResetPasswordReq
 import com.chordsked.backend.model.dto.internaluser.InternalUserStatusUpdateRequest;
 import com.chordsked.backend.model.dto.internaluser.InternalUserUpdateRequest;
 import com.chordsked.backend.model.enums.InternalUserStatus;
+import com.chordsked.backend.model.vo.internaluser.InternalUserCampusOptionVO;
 import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.model.vo.internaluser.InternalUserQueryResultVO;
+import com.chordsked.backend.service.internaluser.InternalUserCampusOptionQueryService;
 import com.chordsked.backend.service.internaluser.InternalUserCreateService;
 import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
 import com.chordsked.backend.service.internaluser.InternalUserQueryService;
@@ -38,6 +42,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/admin/api/v1")
 @Validated
@@ -57,6 +63,9 @@ public class InternalUserController {
 
     @Resource(name = "internalUserDetailQueryService")
     private InternalUserDetailQueryService internalUserDetailQueryService;
+
+    @Resource(name = "internalUserCampusOptionQueryService")
+    private InternalUserCampusOptionQueryService internalUserCampusOptionQueryService;
 
     @Resource(name = "internalUserStatusUpdateService")
     private InternalUserStatusUpdateService internalUserStatusUpdateService;
@@ -93,7 +102,7 @@ public class InternalUserController {
             throw new IllegalArgumentException("pageSize too large");
         }
         if (status != null && InternalUserStatus.fromCode(status) == null) {
-            throw new IllegalArgumentException("status is invalid");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "状态值无效");
         }
         return ApiResponse.success(internalUserQueryService.list(
                 buildInternalUserQueryRequest(currentPage, currentPageSize, keyword, status, roleId, campusId)
@@ -170,6 +179,13 @@ public class InternalUserController {
         InternalUserDetailQueryRequest request = new InternalUserDetailQueryRequest();
         request.setUserId(userId);
         return ApiResponse.success(internalUserDetailQueryService.getDetail(request));
+    }
+
+    @GetMapping("/internal-users/campus-options")
+    @PreAuthorize("hasAuthority('admin:user:update') or hasAuthority('admin:user:create')")
+    @Operation(summary = "查询账号可选校区", description = "返回教务端账号创建或编辑时可选的未删除校区列表")
+    public ApiResponse<List<InternalUserCampusOptionVO>> listInternalUserCampusOptions() {
+        return ApiResponse.success(internalUserCampusOptionQueryService.list());
     }
 
     @PutMapping("/internal-users/{userId}/status")

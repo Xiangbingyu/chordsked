@@ -76,7 +76,7 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
             }
             Integer dataScopeType = request.getDataScopeType();
             if (UserDataScopeType.fromCode(dataScopeType) == null) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "dataScopeType is invalid");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "数据范围类型无效");
             }
             Long primaryCampusId = request.getPrimaryCampusId();
             if (primaryCampusId == null || primaryCampusId <= 0) {
