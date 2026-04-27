@@ -1,6 +1,7 @@
 package com.chordsked.backend.service.role.impl;
 
 import com.chordsked.backend.audit.annotation.AuditLog;
+import com.chordsked.backend.config.properties.RoleProperties;
 import com.chordsked.backend.dao.PermissionDao;
 import com.chordsked.backend.dao.RoleDao;
 import com.chordsked.backend.dao.RolePermissionDao;
@@ -12,6 +13,7 @@ import com.chordsked.backend.model.entity.RoleEntity;
 import com.chordsked.backend.model.entity.RolePermissionEntity;
 import com.chordsked.backend.model.enums.RoleStatus;
 import com.chordsked.backend.service.role.RoleCreateService;
+import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,9 @@ public class RoleCreateServiceImpl implements RoleCreateService {
 
     @Resource(name = "rolePermissionDao")
     private RolePermissionDao rolePermissionDao;
+
+    @Resource(name = "roleProperties")
+    private RoleProperties roleProperties;
 
     @Override
     @AuditLog(module = "ROLE_MANAGEMENT", action = "CREATE_ROLE")
@@ -59,6 +64,9 @@ public class RoleCreateServiceImpl implements RoleCreateService {
         String description = request.getDescription();
         if (description != null && description.length() > 200) {
             throw new IllegalArgumentException("description length must be <= 200");
+        }
+        if (isProtectedRole(code)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "系统保护角色编码不允许创建");
         }
         List<Long> permissionIds = request.getPermissionIds();
         if (permissionIds == null || permissionIds.isEmpty()) {
@@ -106,5 +114,14 @@ public class RoleCreateServiceImpl implements RoleCreateService {
         rolePermission.setCreatedAt(now);
         rolePermission.setUpdatedAt(now);
         return rolePermission;
+    }
+
+    private boolean isProtectedRole(String roleCode) {
+        String normalizedRoleCode = StringNormalizeUtils.normalizeOrEmpty(roleCode);
+        return roleProperties.getProtectedRoleCodes().stream()
+                .filter(Objects::nonNull)
+                .map(StringNormalizeUtils::normalizeOrEmpty)
+                .filter(code -> !code.isEmpty())
+                .anyMatch(normalizedRoleCode::equals);
     }
 }

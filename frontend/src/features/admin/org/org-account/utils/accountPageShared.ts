@@ -8,6 +8,7 @@ import type {
 
 export const PAGE_SIZE = 10
 export const PHONE_PATTERN = /^1[3-9]\d{9}$/
+export const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/
 export const TABLE_LOADING_OVERLAY_DELAY_MS = 180
 export const SYSTEM_ADMIN_ROLE_CODE = 'SYSTEM_ADMIN'
 export const DATA_SCOPE_OPTIONS: Array<{ value: UserDataScopeType; label: string }> = [
@@ -28,10 +29,23 @@ export type AccountEditFormState = {
   dataScopeType: UserDataScopeType | null
 }
 
+export type AccountCreateFormState = {
+  username: string
+  name: string
+  avatar: string
+  phone: string
+  campusIds: number[]
+  primaryCampusId: number | null
+  roleIds: number[]
+  dataScopeType: UserDataScopeType | null
+}
+
 export type ApiErrorContext =
   | 'list'
   | 'detail'
   | 'editLoad'
+  | 'createLoad'
+  | 'create'
   | 'permissionTree'
   | 'update'
   | 'status'
@@ -49,6 +63,10 @@ function getForbiddenErrorMessage(context: ApiErrorContext) {
       return '当前账号没有查看该账号详情的权限'
     case 'editLoad':
       return '当前账号没有加载该账号编辑信息的权限'
+    case 'createLoad':
+      return '当前账号没有加载创建账号所需数据的权限'
+    case 'create':
+      return '当前账号没有创建教务账号的权限'
     case 'permissionTree':
       return '当前账号没有查看权限树的权限'
     case 'update':
@@ -98,10 +116,6 @@ export function getDataScopeLabel(dataScopeType: UserDataScopeType | null) {
     default:
       return '未设置'
   }
-}
-
-export function resolveRoleNames(roleIds: number[], roleNameMap: Map<number, string>) {
-  return roleIds.map((roleId) => roleNameMap.get(roleId) || `角色#${roleId}`)
 }
 
 export function getAccountOperationBlockReason(row: InternalUserQueryResultVO) {

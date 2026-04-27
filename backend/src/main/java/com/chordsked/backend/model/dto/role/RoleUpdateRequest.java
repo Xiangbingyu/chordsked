@@ -16,6 +16,11 @@ public class RoleUpdateRequest {
     @Min(1)
     private Long roleId;
 
+    @Schema(description = "角色编码", example = "SYSTEM_ADMIN")
+    @NotBlank
+    @Size(max = 50)
+    private String code;
+
     @Schema(description = "角色名称", example = "系统管理员")
     @NotBlank
     @Size(max = 50)
@@ -46,6 +51,14 @@ public class RoleUpdateRequest {
 
     public void setRoleId(Long roleId) {
         this.roleId = roleId;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public void setName(String name) {

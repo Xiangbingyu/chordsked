@@ -7,12 +7,10 @@ import type {
   InternalUserQueryResultVO,
 } from '../../../../../types/internalUser'
 import type { InternalPermissionTreeQueryResultVO } from '../../../../../types/permission'
-import type { RoleQueryResultVO } from '../../../../../types/role'
 import {
   getDataScopeLabel,
   getStatusMeta,
   resolveApiErrorMessage,
-  resolveRoleNames,
 } from '../utils/accountPageShared'
 
 type PermissionTreeNode = {
@@ -23,8 +21,8 @@ type PermissionTreeNode = {
 
 type AccountVisibilityPreviewProps = {
   rows: InternalUserQueryResultVO[]
-  roles: RoleQueryResultVO[]
   permissionDenied: boolean
+  refreshKey: number
 }
 
 function collectExpandableCodes(nodes: InternalPermissionTreeQueryResultVO[]): string[] {
@@ -73,8 +71,8 @@ function buildPermissionTreeData(nodes: InternalPermissionTreeQueryResultVO[]): 
 
 function AccountVisibilityPreview({
   rows,
-  roles,
   permissionDenied,
+  refreshKey,
 }: AccountVisibilityPreviewProps) {
   const [permissionTree, setPermissionTree] = useState<InternalPermissionTreeQueryResultVO[]>([])
   const [permissionTreeErrorMessage, setPermissionTreeErrorMessage] = useState('')
@@ -134,7 +132,7 @@ function AccountVisibilityPreview({
     return () => {
       isMounted = false
     }
-  }, [selectedUserId])
+  }, [refreshKey, selectedUserId])
 
   useEffect(() => {
     let isMounted = true
@@ -173,14 +171,9 @@ function AccountVisibilityPreview({
     }
   }, [])
 
-  const roleNameMap = useMemo(
-    () => new Map(roles.map((role) => [role.id, role.name])),
-    [roles],
-  )
   const selectedUser = rows.find((item) => item.id === selectedUserId) ?? rows[0] ?? null
   const activeSelectedUserDetail = selectedUserDetail?.id === selectedUserId ? selectedUserDetail : null
-  const selectedRoleIds = activeSelectedUserDetail?.roleIds ?? selectedUser?.roleIds ?? []
-  const selectedUserRoleNames = resolveRoleNames(selectedRoleIds, roleNameMap)
+  const selectedUserRoleNames = activeSelectedUserDetail?.roleNames ?? selectedUser?.roleNames ?? []
   const selectedUserStatusMeta = getStatusMeta(activeSelectedUserDetail?.status ?? selectedUser?.status ?? null)
   const selectedUserDataScopeLabel = getDataScopeLabel(
     activeSelectedUserDetail?.dataScopeType ?? selectedUser?.dataScopeType ?? null,

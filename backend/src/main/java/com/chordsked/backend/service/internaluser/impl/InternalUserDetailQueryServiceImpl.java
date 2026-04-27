@@ -1,12 +1,14 @@
 package com.chordsked.backend.service.internaluser.impl;
 
 import com.chordsked.backend.dao.InternalUserDao;
+import com.chordsked.backend.dao.RoleDao;
 import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.dao.UserRoleDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.internaluser.InternalUserDetailQueryRequest;
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.entity.RoleEntity;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
@@ -25,6 +27,9 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
 
     @Resource(name = "userRoleDao")
     private UserRoleDao userRoleDao;
+
+    @Resource(name = "roleDao")
+    private RoleDao roleDao;
 
     @Resource(name = "userCampusDao")
     private UserCampusDao userCampusDao;
@@ -50,6 +55,11 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
         }
         List<UserRoleEntity> userRoles = userRoleDao.listByUserIds(List.of(userId));
         detail.setRoleIds(userRoles.stream().map(UserRoleEntity::getRoleId).toList());
+        detail.setRoleNames(userRoles.stream()
+                .map(UserRoleEntity::getRoleId)
+                .map(this::resolveRoleName)
+                .filter(roleName -> roleName != null && !roleName.isBlank())
+                .toList());
         detail.setCampusIds(userCampusDao.listCampusIdsByUserId(userId));
         detail.setPrimaryCampusId(userCampusDao.getPrimaryCampusIdByUserId(userId));
         detail.setPermissionCodes(authorityCodeService.getAuthorityCodes(AccountUserType.ADMIN, userId));
@@ -57,5 +67,10 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
         detail.setCurrentUser(currentUserId != null && currentUserId.equals(userId));
         detail.setSystemAccount(internalUserOperationGuardService.isProtectedUser(userId));
         return detail;
+    }
+
+    private String resolveRoleName(Long roleId) {
+        RoleEntity role = roleDao.getById(roleId);
+        return role == null ? null : role.getName();
     }
 }

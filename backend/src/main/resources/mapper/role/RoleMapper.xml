@@ -80,7 +80,8 @@
 
     <update id="updateById">
         UPDATE sys_role
-        SET name = #{role.name},
+        SET code = #{role.code},
+            name = #{role.name},
             description = #{role.description},
             status = #{role.status},
             updated_at = #{role.updatedAt}

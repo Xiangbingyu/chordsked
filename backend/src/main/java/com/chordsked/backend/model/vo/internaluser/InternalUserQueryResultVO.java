@@ -35,6 +35,9 @@ public class InternalUserQueryResultVO {
     @Schema(description = "绑定角色ID列表")
     private List<Long> roleIds;
 
+    @Schema(description = "绑定角色名称列表")
+    private List<String> roleNames;
+
     @Schema(description = "是否系统管理员受保护账号", example = "true")
     private Boolean systemAccount;
 
@@ -133,6 +136,14 @@ public class InternalUserQueryResultVO {
 
     public void setRoleIds(List<Long> roleIds) {
         this.roleIds = roleIds;
+    }
+
+    public List<String> getRoleNames() {
+        return roleNames;
+    }
+
+    public void setRoleNames(List<String> roleNames) {
+        this.roleNames = roleNames;
     }
 
     public Boolean getSystemAccount() {

@@ -52,6 +52,7 @@ export type InternalUserQueryResultVO = {
   primaryCampusId: number | null
   primaryCampusName: string | null
   roleIds: number[]
+  roleNames: string[]
   systemAccount: boolean
   currentUser: boolean
   createdAt: number | null
@@ -70,6 +71,7 @@ export type InternalUserDetailResultVO = {
   primaryCampusId: number | null
   campusIds: number[]
   roleIds: number[]
+  roleNames: string[]
   permissionCodes: string[]
   systemAccount: boolean
   currentUser: boolean

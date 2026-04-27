@@ -42,6 +42,9 @@ public class InternalUserDetailResultVO {
     @Schema(description = "绑定角色ID列表")
     private List<Long> roleIds;
 
+    @Schema(description = "绑定角色名称列表")
+    private List<String> roleNames;
+
     @Schema(description = "权限代码列表")
     private List<String> permissionCodes;
 
@@ -167,6 +170,14 @@ public class InternalUserDetailResultVO {
 
     public void setRoleIds(List<Long> roleIds) {
         this.roleIds = roleIds;
+    }
+
+    public List<String> getRoleNames() {
+        return roleNames;
+    }
+
+    public void setRoleNames(List<String> roleNames) {
+        this.roleNames = roleNames;
     }
 
     public List<String> getPermissionCodes() {

@@ -41,6 +41,19 @@ public class InternalUserCacheCleanupServiceImpl implements InternalUserCacheCle
         clearSecurityAndAuthCaches(userId, username, phone, false);
     }
 
+    @Override
+    public void cleanupAuthorityByUserIds(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return;
+        }
+        String userType = AccountUserType.ADMIN.getCode();
+        userIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(userId -> userId > 0)
+                .distinct()
+                .forEach(userId -> securityCacheService.clearAuthorityCodes(userType, userId));
+    }
+
     private void clearSecurityAndAuthCaches(Long userId, String username, String phone, boolean clearAuthority) {
         String userType = AccountUserType.ADMIN.getCode();
         securityCacheService.clearUserSnapshot(userType, userId);

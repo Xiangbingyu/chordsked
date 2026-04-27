@@ -3,16 +3,31 @@ import { Button } from 'antd'
 type AccountOverviewProps = {
   visibleCount: number
   total: number
+  createDisabled: boolean
+  createLoading: boolean
+  onOpenCreateModal: () => void
 }
 
-function AccountOverview({ visibleCount, total }: AccountOverviewProps) {
+function AccountOverview({
+  visibleCount,
+  total,
+  createDisabled,
+  createLoading,
+  onOpenCreateModal,
+}: AccountOverviewProps) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center' }}>
         <div style={{ fontSize: 14, color: '#7d7267', lineHeight: 1.8 }}>
           当前列表会自动按登录账号的权限范围过滤教务账号。权限不足时接口不会返回可见账号，或直接返回无权限错误。
         </div>
-        <Button disabled type="default" style={{ whiteSpace: 'nowrap' }}>
+        <Button
+          type="default"
+          disabled={createDisabled}
+          loading={createLoading}
+          style={{ whiteSpace: 'nowrap' }}
+          onClick={onOpenCreateModal}
+        >
           创建账号
         </Button>
       </div>

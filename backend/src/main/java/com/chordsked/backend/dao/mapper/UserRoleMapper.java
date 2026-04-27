@@ -12,6 +12,8 @@ import java.util.List;
 public interface UserRoleMapper {
     List<UserRoleEntity> listByUserIds(@Param("userIds") List<Long> userIds);
 
+    List<Long> listUserIdsByRoleId(@Param("roleId") Long roleId);
+
     int deleteByUserId(@Param("userId") Long userId);
 
     int saveBatch(@Param("userRoles") List<UserRoleEntity> userRoles);

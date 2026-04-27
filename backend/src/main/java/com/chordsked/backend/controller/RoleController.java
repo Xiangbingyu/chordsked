@@ -160,6 +160,7 @@ public class RoleController {
     private RoleUpdateRequest buildRoleUpdateRequest(Long roleId, RoleUpdateRequest source, HttpServletRequest httpServletRequest) {
         RoleUpdateRequest request = new RoleUpdateRequest();
         request.setRoleId(roleId);
+        request.setCode(source.getCode());
         request.setName(source.getName());
         request.setDescription(source.getDescription());
         request.setStatus(source.getStatus());

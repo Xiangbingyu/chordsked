@@ -3,9 +3,11 @@ package com.chordsked.backend.service.internaluser.impl;
 import com.chordsked.backend.common.PageResult;
 import com.chordsked.backend.config.properties.AppProperties;
 import com.chordsked.backend.dao.InternalUserDao;
+import com.chordsked.backend.dao.RoleDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.dao.UserRoleDao;
+import com.chordsked.backend.model.entity.RoleEntity;
 import com.chordsked.backend.model.dto.internaluser.InternalUserQueryRequest;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.enums.InternalUserStatus;
@@ -16,10 +18,11 @@ import com.chordsked.backend.utils.security.SecurityPrincipalUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service("internalUserQueryService")
 public class InternalUserQueryServiceImpl implements InternalUserQueryService {
@@ -28,6 +31,9 @@ public class InternalUserQueryServiceImpl implements InternalUserQueryService {
 
     @Resource(name = "userRoleDao")
     private UserRoleDao userRoleDao;
+
+    @Resource(name = "roleDao")
+    private RoleDao roleDao;
 
     @Resource(name = "appProperties")
     private AppProperties appProperties;
@@ -65,25 +71,40 @@ public class InternalUserQueryServiceImpl implements InternalUserQueryService {
         if (items.isEmpty()) {
             return PageResult.of(total, items);
         }
-        fillRoleIds(items);
+        fillRoles(items);
         fillOperationFlags(items);
         return PageResult.of(total, items);
     }
 
-    private void fillRoleIds(List<InternalUserQueryResultVO> items) {
+    private void fillRoles(List<InternalUserQueryResultVO> items) {
         List<Long> userIds = items.stream()
                 .map(InternalUserQueryResultVO::getId)
                 .toList();
         List<UserRoleEntity> userRoles = userRoleDao.listByUserIds(userIds);
-        Map<Long, List<Long>> roleIdsByUserId = userRoles.stream()
-                .collect(Collectors.groupingBy(
-                        UserRoleEntity::getUserId,
-                        LinkedHashMap::new,
-                        Collectors.mapping(UserRoleEntity::getRoleId, Collectors.toList())
-                ));
+        Map<Long, List<Long>> roleIdsByUserId = new LinkedHashMap<>();
+        Map<Long, List<String>> roleNamesByUserId = new LinkedHashMap<>();
+        Map<Long, String> roleNameCache = new HashMap<>();
+
+        for (UserRoleEntity userRole : userRoles) {
+            Long userId = userRole.getUserId();
+            Long roleId = userRole.getRoleId();
+            roleIdsByUserId.computeIfAbsent(userId, key -> new ArrayList<>()).add(roleId);
+
+            String roleName = roleNameCache.computeIfAbsent(roleId, this::resolveRoleName);
+            if (roleName != null && !roleName.isBlank()) {
+                roleNamesByUserId.computeIfAbsent(userId, key -> new ArrayList<>()).add(roleName);
+            }
+        }
+
         for (InternalUserQueryResultVO item : items) {
             item.setRoleIds(roleIdsByUserId.getOrDefault(item.getId(), List.of()));
+            item.setRoleNames(roleNamesByUserId.getOrDefault(item.getId(), List.of()));
         }
+    }
+
+    private String resolveRoleName(Long roleId) {
+        RoleEntity role = roleDao.getById(roleId);
+        return role == null ? null : role.getName();
     }
 
     private void fillOperationFlags(List<InternalUserQueryResultVO> items) {

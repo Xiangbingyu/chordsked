@@ -22,6 +22,14 @@ public class UserRoleDaoMBImpl implements UserRoleDao {
     }
 
     @Override
+    public List<Long> listUserIdsByRoleId(Long roleId) {
+        if (roleId == null || roleId <= 0) {
+            return List.of();
+        }
+        return userRoleMapper.listUserIdsByRoleId(roleId);
+    }
+
+    @Override
     public int deleteByUserId(Long userId) {
         if (userId == null || userId <= 0) {
             return 0;

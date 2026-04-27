@@ -1,17 +1,13 @@
 import { Button, Pagination, Popconfirm, Spin } from 'antd'
-import { useMemo } from 'react'
 import type { InternalUserQueryResultVO } from '../../../../../types/internalUser'
-import type { RoleQueryResultVO } from '../../../../../types/role'
 import {
   getAccountOperationBlockReason,
   getDataScopeLabel,
   getStatusMeta,
-  resolveRoleNames,
 } from '../utils/accountPageShared'
 
 type AccountTableCardProps = {
   rows: InternalUserQueryResultVO[]
-  roles: RoleQueryResultVO[]
   total: number
   page: number
   pageSize: number
@@ -29,7 +25,6 @@ type AccountTableCardProps = {
 
 function AccountTableCard({
   rows,
-  roles,
   total,
   page,
   pageSize,
@@ -44,11 +39,6 @@ function AccountTableCard({
   onToggleUserStatus,
   onOpenResetPasswordModal,
 }: AccountTableCardProps) {
-  const roleNameMap = useMemo(
-    () => new Map(roles.map((role) => [role.id, role.name])),
-    [roles],
-  )
-
   return (
     <div
       style={{
@@ -96,7 +86,7 @@ function AccountTableCard({
             </tr>
           ) : (
             rows.map((row) => {
-              const roleNames = resolveRoleNames(row.roleIds, roleNameMap)
+              const roleNames = row.roleNames || []
               const statusMeta = getStatusMeta(row.status)
               const updateLoading = actionLoadingKey === `${row.id}:update`
               const statusToggleLoading = actionLoadingKey === `${row.id}:status-toggle`

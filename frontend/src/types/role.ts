@@ -19,6 +19,7 @@ export type RoleCreateRequest = {
 }
 
 export type RoleUpdateRequest = {
+  code: string
   name: string
   description?: string
   status: RoleStatus
