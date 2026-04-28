@@ -1,4 +1,4 @@
-﻿package com.chordsked.backend.utils.normalize;
+package com.chordsked.backend.utils.normalize;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,4 +30,3 @@ public final class CodeNormalizeUtils {
                 .toList();
     }
 }
-

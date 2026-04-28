@@ -45,24 +45,24 @@ class RoleDeleteServiceImplTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void shouldThrowWhenDeletingPresetRole() {
+    void shouldThrowWhenDeletingProtectedRole() {
         RoleDeleteRequest request = new RoleDeleteRequest();
-        request.setRoleId(1L);
+        request.setRoleId(3L);
 
         BusinessException exception = assertThrows(BusinessException.class, () -> roleDeleteService.delete(request));
 
         assertEquals(400, exception.getCode());
-        assertEquals("系统预置角色不能删除", exception.getMessage());
+        assertEquals("系统保护角色不能删除", exception.getMessage());
 
         Map<String, Object> auditLog = waitForAuditLog(
                 "SELECT action_type, biz_id, status, error_msg, request_params, response_result FROM sys_audit_log WHERE action_type = 'DELETE_ROLE' AND status = 0 ORDER BY id DESC LIMIT 1"
         );
         assertEquals("DELETE_ROLE", auditLog.get("action_type"));
-        assertEquals(1L, ((Number) auditLog.get("biz_id")).longValue());
+        assertEquals(3L, ((Number) auditLog.get("biz_id")).longValue());
         assertEquals(0, ((Number) auditLog.get("status")).intValue());
-        assertEquals("系统预置角色不能删除", auditLog.get("error_msg"));
+        assertEquals("系统保护角色不能删除", auditLog.get("error_msg"));
         assertEquals(true, ((String) auditLog.get("request_params")).contains("\"bizType\":\"ROLE_DELETE\""));
-        assertEquals(true, ((String) auditLog.get("request_params")).contains("\"roleId\":1"));
+        assertEquals(true, ((String) auditLog.get("request_params")).contains("\"roleId\":3"));
         assertEquals(true, ((String) auditLog.get("response_result")).contains("\"success\":false"));
     }
 

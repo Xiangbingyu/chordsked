@@ -1,4 +1,4 @@
-﻿package com.chordsked.backend.security.account.service;
+package com.chordsked.backend.security.account.service;
 
 import com.chordsked.backend.security.account.provider.AccountProvider;
 import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
@@ -13,13 +13,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service("multiAccountUserDetailsService")
 public class MultiAccountUserDetailsService implements UserDetailsService {
-    // key: 鏍囧噯鍖栧悗鐨?userType锛堝ぇ鍐欙級锛寁alue: 瀵瑰簲璐﹀彿浣撶郴鐨勬潈闄愯杞藉疄鐜?
+    // key: normalized uppercase userType, value: matching account provider
     private final Map<String, AccountProvider> providers;
 
     public MultiAccountUserDetailsService(List<AccountProvider> accountProviders) {
         Map<String, AccountProvider> providerMap = new ConcurrentHashMap<>();
-        // 鍚姩鏃跺皢鍏ㄩ儴 Provider 娉ㄥ唽鍒板唴瀛樿矾鐢辫〃锛岄伩鍏嶆瘡娆¤姹傞亶鍘嗘煡鎵?
-        // 濡傚悗缁柊澧炶处鍙蜂綋绯伙紝浠呴渶鏂板涓€涓?AccountProvider 瀹炵幇鍗冲彲鑷姩鎺ュ叆
+        // Register all providers once at startup to avoid scanning the list on every request.
+        // New account systems only need to add another AccountProvider implementation.
         for (AccountProvider accountProvider : accountProviders) {
             providerMap.put(StringNormalizeUtils.normalizeOrEmpty(accountProvider.getUserType()), accountProvider);
         }
@@ -27,8 +27,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
     }
 
     /**
-     * 鍩轰簬 JWT 涓殑 userType + userId 杩涜璐﹀彿浣撶郴璺敱骞惰杞?UserDetails銆?
-     * 鍚庣画鎺ュ叆鏁版嵁搴?缂撳瓨鏃讹紝浠呴渶鏀归€犲叿浣?Provider 瀹炵幇銆?
+     * Load user details from JWT token context by userType and userId.
      */
     public UserDetails loadUserDetailsByTokenContext(String userType, Long userId) {
         if (userId == null || userId <= 0) {
@@ -43,8 +42,7 @@ public class MultiAccountUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 褰撳墠绯荤粺缁熶竴璧?JWT 涓婁笅鏂囪矾鐢憋紝涓嶆敮鎸?username 鐩磋繛鏌ヨ
+        // The current system only supports lookup through JWT token context.
         throw new UsernameNotFoundException("Username based lookup is not supported");
     }
 }
-

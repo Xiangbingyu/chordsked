@@ -56,7 +56,7 @@ class RoleDetailQueryServiceImplTest {
 
     @Test
     void shouldThrowWhenRequestIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> roleDetailQueryService.getDetail(null));
+        assertThrows(BusinessException.class, () -> roleDetailQueryService.getDetail(null));
     }
 
     @Test
@@ -64,6 +64,6 @@ class RoleDetailQueryServiceImplTest {
         RoleDetailQueryRequest request = new RoleDetailQueryRequest();
         request.setRoleId(0L);
 
-        assertThrows(IllegalArgumentException.class, () -> roleDetailQueryService.getDetail(request));
+        assertThrows(BusinessException.class, () -> roleDetailQueryService.getDetail(request));
     }
 }

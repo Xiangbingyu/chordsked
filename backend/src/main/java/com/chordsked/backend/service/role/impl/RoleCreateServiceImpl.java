@@ -1,94 +1,49 @@
 package com.chordsked.backend.service.role.impl;
 
 import com.chordsked.backend.audit.annotation.AuditLog;
-import com.chordsked.backend.config.properties.RoleProperties;
-import com.chordsked.backend.dao.PermissionDao;
 import com.chordsked.backend.dao.RoleDao;
 import com.chordsked.backend.dao.RolePermissionDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.role.RoleCreateRequest;
-import com.chordsked.backend.model.entity.PermissionEntity;
 import com.chordsked.backend.model.entity.RoleEntity;
 import com.chordsked.backend.model.entity.RolePermissionEntity;
-import com.chordsked.backend.model.enums.RoleStatus;
 import com.chordsked.backend.service.role.RoleCreateService;
-import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
+import com.chordsked.backend.service.role.RoleWriteValidator;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 
 @Service("roleCreateService")
 public class RoleCreateServiceImpl implements RoleCreateService {
     @Resource(name = "roleDao")
     private RoleDao roleDao;
 
-    @Resource(name = "permissionDao")
-    private PermissionDao permissionDao;
-
     @Resource(name = "rolePermissionDao")
     private RolePermissionDao rolePermissionDao;
 
-    @Resource(name = "roleProperties")
-    private RoleProperties roleProperties;
+    @Resource(name = "roleWriteValidator")
+    private RoleWriteValidator roleWriteValidator;
 
     @Override
     @AuditLog(module = "ROLE_MANAGEMENT", action = "CREATE_ROLE")
     @Transactional(rollbackFor = Exception.class)
     public Long create(RoleCreateRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("request must not be null");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "请求参数不能为空");
         }
-        Integer status = request.getStatus();
-        if (RoleStatus.fromCode(status) == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "status is invalid");
-        }
-        String code = request.getCode() == null ? null : request.getCode().trim();
-        String name = request.getName() == null ? null : request.getName().trim();
-        if (code == null || code.isEmpty()) {
-            throw new IllegalArgumentException("code must not be blank");
-        }
-        if (code.length() > 50) {
-            throw new IllegalArgumentException("code length must be <= 50");
-        }
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("name must not be blank");
-        }
-        if (name.length() > 50) {
-            throw new IllegalArgumentException("name length must be <= 50");
-        }
+        Integer status = roleWriteValidator.validateStatus(request.getStatus());
+        String code = roleWriteValidator.validateAndNormalizeCode(request.getCode());
+        String name = roleWriteValidator.validateAndNormalizeName(request.getName());
         String description = request.getDescription();
-        if (description != null && description.length() > 200) {
-            throw new IllegalArgumentException("description length must be <= 200");
-        }
-        if (isProtectedRole(code)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "系统保护角色编码不允许创建");
-        }
-        List<Long> permissionIds = request.getPermissionIds();
-        if (permissionIds == null || permissionIds.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "permissionIds不能为空");
-        }
+        roleWriteValidator.validateDescription(description);
+        roleWriteValidator.validateRoleCodeForCreate(code);
         if (roleDao.getByCode(code) != null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "角色编码已存在");
         }
-        List<Long> distinctPermissionIds = permissionIds.stream()
-                .filter(Objects::nonNull)
-                .filter(permissionId -> permissionId > 0)
-                .collect(java.util.stream.Collectors.collectingAndThen(
-                        java.util.stream.Collectors.toCollection(LinkedHashSet::new),
-                        List::copyOf
-                ));
-        if (distinctPermissionIds.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "permissionIds不能为空");
-        }
-        List<PermissionEntity> permissions = permissionDao.listByIds(distinctPermissionIds);
-        if (permissions.size() != distinctPermissionIds.size()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "存在无效权限");
-        }
+        List<Long> distinctPermissionIds = roleWriteValidator.validatePermissionIds(request.getPermissionIds());
 
         long now = System.currentTimeMillis();
         RoleEntity role = new RoleEntity();
@@ -114,14 +69,5 @@ public class RoleCreateServiceImpl implements RoleCreateService {
         rolePermission.setCreatedAt(now);
         rolePermission.setUpdatedAt(now);
         return rolePermission;
-    }
-
-    private boolean isProtectedRole(String roleCode) {
-        String normalizedRoleCode = StringNormalizeUtils.normalizeOrEmpty(roleCode);
-        return roleProperties.getProtectedRoleCodes().stream()
-                .filter(Objects::nonNull)
-                .map(StringNormalizeUtils::normalizeOrEmpty)
-                .filter(code -> !code.isEmpty())
-                .anyMatch(normalizedRoleCode::equals);
     }
 }

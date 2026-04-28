@@ -22,7 +22,7 @@ public interface RoleDao {
 
     int deleteById(Long roleId);
 
-    List<RoleQueryResultVO> listByQuery(RoleQueryRequest request);
+    List<RoleQueryResultVO> listByQuery(RoleQueryRequest request, List<String> excludedRoleCodes);
 
-    Long countByQuery(RoleQueryRequest request);
+    Long countByQuery(RoleQueryRequest request, List<String> excludedRoleCodes);
 }

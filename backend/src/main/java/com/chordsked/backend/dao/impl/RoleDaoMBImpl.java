@@ -75,19 +75,19 @@ public class RoleDaoMBImpl implements RoleDao {
     }
 
     @Override
-    public List<RoleQueryResultVO> listByQuery(RoleQueryRequest request) {
+    public List<RoleQueryResultVO> listByQuery(RoleQueryRequest request, List<String> excludedRoleCodes) {
         if (!isValidRoleQueryRequest(request)) {
             return List.of();
         }
-        return roleMapper.listByQuery(request);
+        return roleMapper.listByQuery(request, excludedRoleCodes);
     }
 
     @Override
-    public Long countByQuery(RoleQueryRequest request) {
+    public Long countByQuery(RoleQueryRequest request, List<String> excludedRoleCodes) {
         if (!isValidRoleQueryRequest(request)) {
             return 0L;
         }
-        Long total = roleMapper.countByQuery(request);
+        Long total = roleMapper.countByQuery(request, excludedRoleCodes);
         return total == null ? 0L : total;
     }
 

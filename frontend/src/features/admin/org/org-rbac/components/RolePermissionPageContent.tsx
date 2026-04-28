@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getPermissionTree } from '../../../../../services/permissionService'
 import {
   createRole,
+  deleteRole,
   getRoleDetail,
   listRoles,
   updateRole,
@@ -34,6 +35,7 @@ function RolePermissionPageContent() {
   const [modalLoading, setModalLoading] = useState(false)
   const [modalSubmitting, setModalSubmitting] = useState(false)
   const [modalErrorMessage, setModalErrorMessage] = useState('')
+  const [deletingRoleId, setDeletingRoleId] = useState<number | null>(null)
   const [editorForm, setEditorForm] = useState<RolePermissionEditorFormState | null>(null)
 
   const refreshList = useCallback(() => {
@@ -187,6 +189,25 @@ function RolePermissionPageContent() {
     }
   }, [closeModal, editTarget, editorForm, refreshList, validateEditorForm])
 
+  const handleDeleteRole = useCallback(
+    async (row: RoleQueryResultVO) => {
+      setModalErrorMessage('')
+      setDeletingRoleId(row.id)
+      try {
+        const result = await deleteRole(row.id)
+        if (result.code !== 0) {
+          throw new Error(result.message || '删除角色失败')
+        }
+        refreshList()
+      } catch (error) {
+        setModalErrorMessage(resolveApiErrorMessage(error, '删除角色失败'))
+      } finally {
+        setDeletingRoleId(null)
+      }
+    },
+    [refreshList],
+  )
+
   useEffect(() => {
     let isMounted = true
 
@@ -264,10 +285,12 @@ function RolePermissionPageContent() {
         pageSize={PAGE_SIZE}
         loading={loading}
         errorMessage={errorMessage}
+        deletingRoleId={deletingRoleId}
         onPageChange={setPage}
         onEdit={(row) => {
           void openEditModal(row)
         }}
+        onDelete={handleDeleteRole}
       />
       <RolePermissionEditorModal
         open={modalOpen}

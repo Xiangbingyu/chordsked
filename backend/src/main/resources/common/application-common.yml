@@ -18,11 +18,6 @@ mybatis:
 
 chordsked:
   role:
-    system-admin-role-code: SYSTEM_ADMIN
-    preset-role-codes:
-      - ADMIN
-      - OPERATOR
-      - SYSTEM_ADMIN
     protected-role-codes:
       - SYSTEM_ADMIN
   internal-user:

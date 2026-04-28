@@ -27,7 +27,9 @@ public interface RoleMapper {
 
     int deleteById(@Param("roleId") Long roleId);
 
-    List<RoleQueryResultVO> listByQuery(@Param("request") RoleQueryRequest request);
+    List<RoleQueryResultVO> listByQuery(@Param("request") RoleQueryRequest request,
+                                        @Param("excludedRoleCodes") List<String> excludedRoleCodes);
 
-    Long countByQuery(@Param("request") RoleQueryRequest request);
+    Long countByQuery(@Param("request") RoleQueryRequest request,
+                      @Param("excludedRoleCodes") List<String> excludedRoleCodes);
 }

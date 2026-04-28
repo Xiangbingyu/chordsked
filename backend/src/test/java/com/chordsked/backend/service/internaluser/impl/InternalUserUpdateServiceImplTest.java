@@ -51,14 +51,14 @@ class InternalUserUpdateServiceImplTest {
     }
 
     @Test
-    void shouldRejectAssigningSystemAdminRoleWhenUpdatingInternalUser() {
+    void shouldRejectAssigningProtectedRoleWhenUpdatingInternalUser() {
         InternalUserUpdateRequest request = buildValidRequest();
         request.setRoleIds(List.of(3L));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> internalUserUpdateService.update(request));
 
         assertEquals(400, exception.getCode());
-        assertEquals("系统管理员角色为固定系统角色，不能分配给普通账号", exception.getMessage());
+        assertEquals("受保护角色不能分配给普通账号", exception.getMessage());
 
         Integer systemAdminRoleCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(1) FROM sys_user_role WHERE user_id = ? AND role_id = ?",
@@ -81,7 +81,7 @@ class InternalUserUpdateServiceImplTest {
         );
         assertEquals("UPDATE_INTERNAL_USER", auditLog.get("action_type"));
         assertEquals(0, ((Number) auditLog.get("status")).intValue());
-        assertEquals("系统管理员角色为固定系统角色，不能分配给普通账号", auditLog.get("error_msg"));
+        assertEquals("受保护角色不能分配给普通账号", auditLog.get("error_msg"));
         assertEquals(true, ((String) auditLog.get("response_result")).contains("\"success\":false"));
     }
 

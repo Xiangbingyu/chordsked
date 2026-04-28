@@ -24,8 +24,6 @@ class RolePropertiesTest {
     void shouldUseDefaultValuesWhenNoPropertyConfigured() {
         contextRunner.run(context -> {
             RoleProperties properties = context.getBean(RoleProperties.class);
-            assertEquals("SYSTEM_ADMIN", properties.getSystemAdminRoleCode());
-            assertEquals(List.of("ADMIN", "OPERATOR", "SYSTEM_ADMIN"), properties.getPresetRoleCodes());
             assertEquals(List.of("SYSTEM_ADMIN"), properties.getProtectedRoleCodes());
         });
     }
@@ -34,14 +32,10 @@ class RolePropertiesTest {
     void shouldFallbackToDefaultValuesWhenConfiguredValuesAreBlank() {
         contextRunner
                 .withPropertyValues(
-                        "chordsked.role.system-admin-role-code=   ",
-                        "chordsked.role.preset-role-codes[0]=   ",
                         "chordsked.role.protected-role-codes[0]=   "
                 )
                 .run(context -> {
                     RoleProperties properties = context.getBean(RoleProperties.class);
-                    assertEquals("SYSTEM_ADMIN", properties.getSystemAdminRoleCode());
-                    assertEquals(List.of("ADMIN", "OPERATOR", "SYSTEM_ADMIN"), properties.getPresetRoleCodes());
                     assertEquals(List.of("SYSTEM_ADMIN"), properties.getProtectedRoleCodes());
                 });
     }
@@ -52,8 +46,6 @@ class RolePropertiesTest {
                 .withInitializer(context -> loadCommonApplicationConfig(context.getEnvironment().getPropertySources()))
                 .run(context -> {
                     RoleProperties properties = context.getBean(RoleProperties.class);
-                    assertEquals("SYSTEM_ADMIN", properties.getSystemAdminRoleCode());
-                    assertEquals(List.of("ADMIN", "OPERATOR", "SYSTEM_ADMIN"), properties.getPresetRoleCodes());
                     assertEquals(List.of("SYSTEM_ADMIN"), properties.getProtectedRoleCodes());
                 });
     }
@@ -62,16 +54,11 @@ class RolePropertiesTest {
     void shouldBindExplicitRoleConfiguration() {
         contextRunner
                 .withPropertyValues(
-                        "chordsked.role.system-admin-role-code=super_admin",
-                        "chordsked.role.preset-role-codes[0]=operator",
-                        "chordsked.role.preset-role-codes[1]=system_admin",
                         "chordsked.role.protected-role-codes[0]=system_admin",
                         "chordsked.role.protected-role-codes[1]=root_admin"
                 )
                 .run(context -> {
                     RoleProperties properties = context.getBean(RoleProperties.class);
-                    assertEquals("SUPER_ADMIN", properties.getSystemAdminRoleCode());
-                    assertEquals(List.of("OPERATOR", "SYSTEM_ADMIN"), properties.getPresetRoleCodes());
                     assertEquals(List.of("SYSTEM_ADMIN", "ROOT_ADMIN"), properties.getProtectedRoleCodes());
                 });
     }

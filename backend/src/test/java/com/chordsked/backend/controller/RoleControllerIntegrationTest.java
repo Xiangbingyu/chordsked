@@ -271,17 +271,17 @@ class RoleControllerIntegrationTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenDeletingPresetRole() throws Exception {
+    void shouldReturnBadRequestWhenDeletingProtectedRole() throws Exception {
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
         when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
                 .thenReturn(List.of("admin:role", "admin:role:delete"));
 
-        mockMvc.perform(delete("/admin/api/v1/roles/1")
+        mockMvc.perform(delete("/admin/api/v1/roles/3")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("系统预置角色不能删除"));
+                .andExpect(jsonPath("$.message").value("系统保护角色不能删除"));
     }
 
     @Test
@@ -369,7 +369,7 @@ class RoleControllerIntegrationTest {
                         .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":999,\"permissionIds\":[1,120]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("status is invalid"));
+                .andExpect(jsonPath("$.message").value("状态值无效"));
     }
 
     @Test

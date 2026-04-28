@@ -71,7 +71,7 @@ class RoleUpdateServiceImplTest {
 
     @Test
     void shouldThrowWhenRequestIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> roleUpdateService.update(null));
+        assertThrows(BusinessException.class, () -> roleUpdateService.update(null));
     }
 
     @Test
@@ -90,7 +90,7 @@ class RoleUpdateServiceImplTest {
         RoleUpdateRequest request = buildValidRequest();
         request.setName("   ");
 
-        assertThrows(IllegalArgumentException.class, () -> roleUpdateService.update(request));
+        assertThrows(BusinessException.class, () -> roleUpdateService.update(request));
     }
 
     @Test
@@ -101,7 +101,7 @@ class RoleUpdateServiceImplTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> roleUpdateService.update(request));
 
         assertEquals(400, exception.getCode());
-        assertEquals("status is invalid", exception.getMessage());
+        assertEquals("状态值无效", exception.getMessage());
 
         Map<String, Object> auditLog = waitForAuditLog(
                 "SELECT action_type, biz_id, status, error_msg, request_params, response_result FROM sys_audit_log WHERE action_type = 'UPDATE_ROLE' AND status = 0 ORDER BY id DESC LIMIT 1"
@@ -109,7 +109,7 @@ class RoleUpdateServiceImplTest {
         assertEquals("UPDATE_ROLE", auditLog.get("action_type"));
         assertEquals(1L, ((Number) auditLog.get("biz_id")).longValue());
         assertEquals(0, ((Number) auditLog.get("status")).intValue());
-        assertEquals("status is invalid", auditLog.get("error_msg"));
+        assertEquals("状态值无效", auditLog.get("error_msg"));
         assertEquals(true, ((String) auditLog.get("request_params")).contains("\"bizType\":\"ROLE_UPDATE\""));
         assertEquals(true, ((String) auditLog.get("request_params")).contains("\"status\":999"));
         assertEquals(true, ((String) auditLog.get("response_result")).contains("\"success\":false"));

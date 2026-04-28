@@ -100,7 +100,7 @@ class RoleCreateServiceImplTest {
 
     @Test
     void shouldThrowWhenRequestIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> roleCreateService.create(null));
+        assertThrows(BusinessException.class, () -> roleCreateService.create(null));
     }
 
     @Test
@@ -108,7 +108,7 @@ class RoleCreateServiceImplTest {
         RoleCreateRequest request = buildValidRequest();
         request.setCode("   ");
 
-        assertThrows(IllegalArgumentException.class, () -> roleCreateService.create(request));
+        assertThrows(BusinessException.class, () -> roleCreateService.create(request));
     }
 
     @Test

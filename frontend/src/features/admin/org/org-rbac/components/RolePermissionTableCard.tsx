@@ -1,4 +1,4 @@
-import { Button, Pagination } from 'antd'
+import { Button, Pagination, Popconfirm } from 'antd'
 import type { RoleQueryResultVO } from '../../../../../types/role'
 import { formatRoleUpdatedAt, getRoleStatusMeta } from '../utils/rolePermissionShared'
 
@@ -11,6 +11,8 @@ type RolePermissionTableCardProps = {
   errorMessage: string
   onPageChange: (nextPage: number) => void
   onEdit: (row: RoleQueryResultVO) => void
+  onDelete: (row: RoleQueryResultVO) => Promise<void>
+  deletingRoleId: number | null
 }
 
 function RolePermissionTableCard({
@@ -22,6 +24,8 @@ function RolePermissionTableCard({
   errorMessage,
   onPageChange,
   onEdit,
+  onDelete,
+  deletingRoleId,
 }: RolePermissionTableCardProps) {
   return (
     <div
@@ -66,6 +70,8 @@ function RolePermissionTableCard({
           ) : (
             rows.map((row) => {
               const statusMeta = getRoleStatusMeta(row.status)
+              const deleteLoading = deletingRoleId === row.id
+              const actionDisabled = loading || deletingRoleId !== null
 
               return (
                 <tr
@@ -103,14 +109,35 @@ function RolePermissionTableCard({
                     {formatRoleUpdatedAt(row.updatedAt)}
                   </td>
                   <td style={{ padding: '12px 16px', color: '#3a352f' }}>
-                    <Button
-                      type="link"
-                      size="small"
-                      style={{ paddingInline: 0 }}
-                      onClick={() => onEdit(row)}
-                    >
-                      修改
-                    </Button>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <Button
+                        type="link"
+                        size="small"
+                        style={{ paddingInline: 0 }}
+                        disabled={actionDisabled}
+                        onClick={() => onEdit(row)}
+                      >
+                        修改
+                      </Button>
+                      <Popconfirm
+                        title="确认删除角色"
+                        description={`角色：${row.name}`}
+                        okText="确认删除"
+                        cancelText="取消"
+                        disabled={actionDisabled}
+                        onConfirm={() => onDelete(row)}
+                      >
+                        <Button
+                          type="link"
+                          size="small"
+                          danger
+                          disabled={actionDisabled}
+                          style={{ paddingInline: 0 }}
+                        >
+                          {deleteLoading ? '删除中...' : '删除'}
+                        </Button>
+                      </Popconfirm>
+                    </div>
                   </td>
                 </tr>
               )

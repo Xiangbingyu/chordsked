@@ -1,6 +1,7 @@
 package com.chordsked.backend.service.role.impl;
 
 import com.chordsked.backend.common.PageResult;
+import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.model.dto.role.RoleQueryRequest;
 import com.chordsked.backend.model.vo.role.RoleQueryResultVO;
 import com.chordsked.backend.service.role.RoleQueryService;
@@ -42,7 +43,7 @@ class RoleQueryServiceImplTest {
         assertEquals(27, result.getItems().get(0).getPermissionCount());
         assertEquals(1, result.getItems().get(0).getUserCount());
         assertEquals(12, result.getItems().get(1).getPermissionCount());
-        assertEquals(0, result.getItems().get(1).getUserCount());
+        assertEquals(3, result.getItems().get(1).getUserCount());
     }
 
     @Test
@@ -81,7 +82,7 @@ class RoleQueryServiceImplTest {
         request.setPage(0);
         request.setPageSize(20);
 
-        assertThrows(IllegalArgumentException.class, () -> roleQueryService.list(request));
+        assertThrows(BusinessException.class, () -> roleQueryService.list(request));
     }
 
     @Test
@@ -90,7 +91,7 @@ class RoleQueryServiceImplTest {
         request.setPage(1);
         request.setPageSize(101);
 
-        assertThrows(IllegalArgumentException.class, () -> roleQueryService.list(request));
+        assertThrows(BusinessException.class, () -> roleQueryService.list(request));
     }
 
     @Test
@@ -100,7 +101,7 @@ class RoleQueryServiceImplTest {
         request.setPageSize(20);
         request.setStatus(999);
 
-        assertThrows(IllegalArgumentException.class, () -> roleQueryService.list(request));
+        assertThrows(BusinessException.class, () -> roleQueryService.list(request));
     }
 
 }

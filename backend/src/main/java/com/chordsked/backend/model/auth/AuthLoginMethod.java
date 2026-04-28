@@ -1,4 +1,4 @@
-﻿package com.chordsked.backend.model.auth;
+package com.chordsked.backend.model.auth;
 
 import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
 
@@ -30,4 +30,3 @@ public enum AuthLoginMethod {
         return null;
     }
 }
-

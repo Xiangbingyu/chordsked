@@ -155,6 +155,17 @@ class InternalUserCreateServiceImplTest {
         assertEquals("校区不存在: 999", exception.getMessage());
     }
 
+    @Test
+    void shouldThrowWhenAssigningProtectedRole() {
+        InternalUserCreateRequest request = buildValidRequest();
+        request.setRoleIds(List.of(3L));
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> internalUserCreateService.create(request));
+
+        assertEquals(400, exception.getCode());
+        assertEquals("受保护角色不能分配给普通账号", exception.getMessage());
+    }
+
     private InternalUserCreateRequest buildValidRequest() {
         InternalUserCreateRequest request = new InternalUserCreateRequest();
         request.setUsername("new_internal_user");

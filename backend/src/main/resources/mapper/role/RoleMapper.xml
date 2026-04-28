@@ -25,6 +25,12 @@
             <if test="request != null and request.status != null">
                 AND status = #{request.status}
             </if>
+            <if test="excludedRoleCodes != null and excludedRoleCodes.size() > 0">
+                AND code NOT IN
+                <foreach collection="excludedRoleCodes" item="roleCode" open="(" separator="," close=")">
+                    #{roleCode}
+                </foreach>
+            </if>
         </where>
     </sql>
 

@@ -84,7 +84,7 @@ class AuditLogServiceImplTest {
                     "{\"roleId\":1,\"status\":999}",
                     null,
                     AuditLogStatus.FAILED.getCode(),
-                    "status is invalid",
+                    "状态值无效",
                     "/admin/api/v1/roles/1",
                     "PUT",
                     1001L,
@@ -98,7 +98,7 @@ class AuditLogServiceImplTest {
         assertEquals("UPDATE_ROLE", auditLog.get("action_type"));
         assertEquals(1L, ((Number) auditLog.get("biz_id")).longValue());
         assertEquals(0, ((Number) auditLog.get("status")).intValue());
-        assertEquals("status is invalid", auditLog.get("error_msg"));
+        assertEquals("状态值无效", auditLog.get("error_msg"));
         assertEquals("/admin/api/v1/roles/1", auditLog.get("request_uri"));
     }
 
