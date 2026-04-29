@@ -18,4 +18,12 @@ public class TeacherUserDaoMBImpl implements TeacherUserDao {
         }
         return teacherUserMapper.getById(userId);
     }
+
+    @Override
+    public int countByCampusId(Long campusId) {
+        if (campusId == null || campusId <= 0) {
+            return 0;
+        }
+        return teacherUserMapper.countByCampusId(campusId);
+    }
 }

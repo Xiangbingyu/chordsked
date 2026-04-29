@@ -4,12 +4,12 @@ VALUES (1001, 'admin', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCB
        (1003, 'operator_hz_02', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000002', '杭州教务二', NULL, 1, 0, 3, 1774483200000, 1774483200000),
        (1004, 'operator_hz_03', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000003', '杭州教务三', NULL, 0, 1, 4, 1774483200000, 1774483200000);
 
-INSERT INTO sys_campus (id, name, address, phone, leader_id, leader_name, sort, status, remark, created_at, updated_at)
-VALUES (1, '默认校区', '杭州', '0571-00000000', 1001, '系统管理员', 1, 1, '初始化校区', 1774483200000, 1774483200000),
-       (2, '西湖校区', '杭州西湖区', '0571-00000001', 1001, '系统管理员', 2, 1, '联调用测试校区', 1774483200000, 1774483200000),
-       (3, '滨江校区', '杭州滨江区', '0571-00000002', 1001, '系统管理员', 3, 1, '联调用测试校区', 1774483200000, 1774483200000),
-       (4, '拱墅校区', '杭州拱墅区', '0571-00000003', 1001, '系统管理员', 4, 1, '联调用测试校区', 1774483200000, 1774483200000),
-       (5, '余杭校区', '杭州余杭区', '0571-00000004', 1001, '系统管理员', 5, 1, '联调用测试校区', 1774483200000, 1774483200000);
+INSERT INTO sys_campus (id, code, name, address, phone, leader_id, leader_name, sort, status, remark, created_at, updated_at)
+VALUES (1, 'CAMPUS-DEFAULT', '默认校区', '杭州', '0571-00000000', 1001, '系统管理员', 1, 1, '初始化校区', 1774483200000, 1774483200000),
+       (2, 'CAMPUS-XH', '西湖校区', '杭州西湖区', '0571-00000001', 1001, '系统管理员', 2, 1, '联调用测试校区', 1774483200000, 1774483200000),
+       (3, 'CAMPUS-BJ', '滨江校区', '杭州滨江区', '0571-00000002', 1001, '系统管理员', 3, 1, '联调用测试校区', 1774483200000, 1774483200000),
+       (4, 'CAMPUS-GS', '拱墅校区', '杭州拱墅区', '0571-00000003', 1001, '系统管理员', 4, 1, '联调用测试校区', 1774483200000, 1774483200000),
+       (5, 'CAMPUS-YH', '余杭校区', '杭州余杭区', '0571-00000004', 1001, '系统管理员', 5, 1, '联调用测试校区', 1774483200000, 1774483200000);
 
 INSERT INTO sys_teacher_user (id, teacher_no, name, phone, password, avatar, teacher_level, campus_id, status, must_change_password, last_login_at, experience, good_at, created_at, updated_at)
 VALUES (1001, 'T0001', '王老师', '13900000000', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', NULL, 3, 1, 1, 0, NULL, '5年教学经验', '钢琴基础', 1774483200000, 1774483200000);

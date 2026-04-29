@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository("teacherUserMapper")
 public interface TeacherUserMapper {
     TeacherUserEntity getById(@Param("userId") Long userId);
+
+    int countByCampusId(@Param("campusId") Long campusId);
 }

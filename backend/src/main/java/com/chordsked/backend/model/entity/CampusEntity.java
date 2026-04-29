@@ -4,6 +4,7 @@ import com.chordsked.backend.model.enums.CampusStatus;
 
 public class CampusEntity {
     private Long id;
+    private String code;
     private String name;
     private String address;
     private String phone;
@@ -21,6 +22,14 @@ public class CampusEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getName() {

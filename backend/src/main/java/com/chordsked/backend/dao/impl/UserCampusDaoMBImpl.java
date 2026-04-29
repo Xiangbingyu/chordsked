@@ -43,4 +43,12 @@ public class UserCampusDaoMBImpl implements UserCampusDao {
         }
         return userCampusMapper.saveBatch(campusIds, primaryCampusId, userId, now);
     }
+
+    @Override
+    public int countByCampusId(Long campusId) {
+        if (campusId == null || campusId <= 0) {
+            return 0;
+        }
+        return userCampusMapper.countByCampusId(campusId);
+    }
 }

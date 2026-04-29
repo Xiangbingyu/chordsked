@@ -77,7 +77,10 @@ function PermissionTreePanel({
             backgroundColor: 'rgba(255, 253, 249, 0.86)',
           }}
         >
-          <Spin tip="正在加载权限树..." />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <Spin />
+            <Typography.Text style={{ color: '#7d7267' }}>正在加载权限树...</Typography.Text>
+          </div>
         </div>
       ) : null}
     </div>

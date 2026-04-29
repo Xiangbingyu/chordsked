@@ -10,4 +10,6 @@ public interface UserCampusDao {
     int deleteByUserId(Long userId);
 
     int saveBatch(List<Long> campusIds, Long primaryCampusId, Long userId, Long now);
+
+    int countByCampusId(Long campusId);
 }

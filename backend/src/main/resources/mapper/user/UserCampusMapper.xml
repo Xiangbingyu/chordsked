@@ -32,4 +32,10 @@
         </foreach>
     </insert>
 
+    <select id="countByCampusId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_user_campus
+        WHERE campus_id = #{campusId}
+    </select>
+
 </mapper>

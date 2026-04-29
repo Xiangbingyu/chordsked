@@ -20,6 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_sys_internal_user_data_scope_type ON sys_internal
 
 CREATE TABLE IF NOT EXISTS sys_campus (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '校区ID',
+    code VARCHAR(50) NOT NULL COMMENT '校区编码',
     name VARCHAR(100) NOT NULL COMMENT '校区名称',
     address VARCHAR(200) NULL COMMENT '校区地址',
     phone VARCHAR(20) NULL COMMENT '联系电话',
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS sys_campus (
     created_at BIGINT NOT NULL COMMENT '创建时间',
     updated_at BIGINT NOT NULL COMMENT '更新时间',
     PRIMARY KEY (id),
+    UNIQUE (code),
     UNIQUE (name),
     CONSTRAINT fk_sys_campus_leader_id FOREIGN KEY (leader_id) REFERENCES sys_internal_user (id)
 );

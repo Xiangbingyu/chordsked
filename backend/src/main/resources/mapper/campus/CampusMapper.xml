@@ -6,6 +6,7 @@
 
     <select id="getById" resultType="com.chordsked.backend.model.entity.CampusEntity">
         SELECT id,
+               code,
                name,
                address,
                phone,
@@ -24,6 +25,7 @@
 
     <select id="listNotDeleted" resultType="com.chordsked.backend.model.entity.CampusEntity">
         SELECT id,
+               code,
                name,
                address,
                phone,
@@ -37,6 +39,126 @@
         FROM sys_campus
         WHERE status != 2
         ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="listByQuery" resultType="com.chordsked.backend.model.vo.campus.CampusQueryResultVO">
+        SELECT c.id,
+               c.code,
+               c.name,
+               c.leader_name,
+               c.phone,
+               c.status,
+               c.created_at
+        FROM sys_campus c
+        WHERE c.status != 2
+        <if test="request.keyword != null and request.keyword != ''">
+            AND (c.name LIKE CONCAT('%', #{request.keyword}, '%')
+                 OR c.code LIKE CONCAT('%', #{request.keyword}, '%'))
+        </if>
+        <if test="request.status != null">
+            AND c.status = #{request.status}
+        </if>
+        /*DATA_SCOPE*/
+        ORDER BY c.sort ASC, c.id ASC
+        LIMIT #{request.pageSize} OFFSET #{request.offset}
+    </select>
+
+    <select id="countByQuery" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_campus c
+        WHERE c.status != 2
+        <if test="request.keyword != null and request.keyword != ''">
+            AND (c.name LIKE CONCAT('%', #{request.keyword}, '%')
+                 OR c.code LIKE CONCAT('%', #{request.keyword}, '%'))
+        </if>
+        <if test="request.status != null">
+            AND c.status = #{request.status}
+        </if>
+        /*DATA_SCOPE*/
+    </select>
+
+    <select id="getDetailById" resultType="com.chordsked.backend.model.vo.campus.CampusDetailResultVO">
+        SELECT c.id,
+               c.code,
+               c.name,
+               c.address,
+               c.phone,
+               c.leader_id,
+               c.leader_name,
+               c.sort,
+               c.status,
+               c.remark,
+               c.created_at,
+               c.updated_at
+        FROM sys_campus c
+        WHERE c.id = #{campusId}
+          AND c.status != 2
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="entity.id">
+        INSERT INTO sys_campus (
+            code, name, address, phone, leader_id, leader_name,
+            sort, status, remark, created_at, updated_at
+        ) VALUES (
+            #{entity.code}, #{entity.name}, #{entity.address}, #{entity.phone},
+            #{entity.leaderId}, #{entity.leaderName}, #{entity.sort},
+            #{entity.status}, #{entity.remark}, #{entity.createdAt}, #{entity.updatedAt}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE sys_campus
+        <set>
+            <if test="entity.code != null and entity.code != ''">code = #{entity.code},</if>
+            <if test="entity.name != null and entity.name != ''">name = #{entity.name},</if>
+            <if test="entity.address != null">address = #{entity.address},</if>
+            <if test="entity.phone != null">phone = #{entity.phone},</if>
+            <if test="entity.leaderId != null">leader_id = #{entity.leaderId},</if>
+            <if test="entity.leaderName != null">leader_name = #{entity.leaderName},</if>
+            <if test="entity.sort != null">sort = #{entity.sort},</if>
+            <if test="entity.status != null">status = #{entity.status},</if>
+            <if test="entity.remark != null">remark = #{entity.remark},</if>
+            updated_at = #{entity.updatedAt}
+        </set>
+        WHERE id = #{entity.id}
+          AND status != 2
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_campus
+        WHERE id = #{campusId}
+          AND status != 2
+    </delete>
+
+    <select id="existsByName" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_campus
+        WHERE name = #{name}
+          AND status != 2
+    </select>
+
+    <select id="existsByCode" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_campus
+        WHERE code = #{code}
+          AND status != 2
+    </select>
+
+    <select id="existsByNameExcludeId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_campus
+        WHERE name = #{name}
+          AND id != #{campusId}
+          AND status != 2
+    </select>
+
+    <select id="existsByCodeExcludeId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_campus
+        WHERE code = #{code}
+          AND id != #{campusId}
+          AND status != 2
     </select>
 
 </mapper>

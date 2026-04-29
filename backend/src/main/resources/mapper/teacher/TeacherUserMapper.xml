@@ -18,4 +18,11 @@
           AND status != 4
     </select>
 
+    <select id="countByCampusId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_teacher_user
+        WHERE campus_id = #{campusId}
+          AND status != 4
+    </select>
+
 </mapper>

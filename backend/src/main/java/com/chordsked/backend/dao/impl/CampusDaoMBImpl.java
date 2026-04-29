@@ -2,7 +2,10 @@ package com.chordsked.backend.dao.impl;
 
 import com.chordsked.backend.dao.CampusDao;
 import com.chordsked.backend.dao.mapper.CampusMapper;
+import com.chordsked.backend.model.dto.campus.CampusQueryRequest;
 import com.chordsked.backend.model.entity.CampusEntity;
+import com.chordsked.backend.model.vo.campus.CampusDetailResultVO;
+import com.chordsked.backend.model.vo.campus.CampusQueryResultVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Repository;
 
@@ -24,5 +27,85 @@ public class CampusDaoMBImpl implements CampusDao {
     @Override
     public List<CampusEntity> listNotDeleted() {
         return campusMapper.listNotDeleted();
+    }
+
+    @Override
+    public List<CampusQueryResultVO> listByQuery(CampusQueryRequest request) {
+        if (request == null) {
+            return List.of();
+        }
+        return campusMapper.listByQuery(request);
+    }
+
+    @Override
+    public int countByQuery(CampusQueryRequest request) {
+        if (request == null) {
+            return 0;
+        }
+        return campusMapper.countByQuery(request);
+    }
+
+    @Override
+    public CampusDetailResultVO getDetailById(Long campusId) {
+        if (campusId == null || campusId <= 0) {
+            return null;
+        }
+        return campusMapper.getDetailById(campusId);
+    }
+
+    @Override
+    public int insert(CampusEntity campusEntity) {
+        if (campusEntity == null) {
+            return 0;
+        }
+        return campusMapper.insert(campusEntity);
+    }
+
+    @Override
+    public int updateById(CampusEntity campusEntity) {
+        if (campusEntity == null || campusEntity.getId() == null || campusEntity.getId() <= 0) {
+            return 0;
+        }
+        return campusMapper.updateById(campusEntity);
+    }
+
+    @Override
+    public int deleteById(Long campusId) {
+        if (campusId == null || campusId <= 0) {
+            return 0;
+        }
+        return campusMapper.deleteById(campusId);
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        return campusMapper.existsByName(name) > 0;
+    }
+
+    @Override
+    public boolean existsByCode(String code) {
+        if (code == null || code.isBlank()) {
+            return false;
+        }
+        return campusMapper.existsByCode(code) > 0;
+    }
+
+    @Override
+    public boolean existsByNameExcludeId(String name, Long campusId) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        return campusMapper.existsByNameExcludeId(name, campusId) > 0;
+    }
+
+    @Override
+    public boolean existsByCodeExcludeId(String code, Long campusId) {
+        if (code == null || code.isBlank()) {
+            return false;
+        }
+        return campusMapper.existsByCodeExcludeId(code, campusId) > 0;
     }
 }

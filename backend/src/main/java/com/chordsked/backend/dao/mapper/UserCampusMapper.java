@@ -16,4 +16,6 @@ public interface UserCampusMapper {
     int deleteByUserId(@Param("userId") Long userId);
 
     int saveBatch(@Param("campusIds") List<Long> campusIds, @Param("primaryCampusId") Long primaryCampusId, @Param("userId") Long userId, @Param("now") Long now);
+
+    int countByCampusId(@Param("campusId") Long campusId);
 }

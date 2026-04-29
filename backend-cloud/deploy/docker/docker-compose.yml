@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:${MYSQL_VERSION:-8.4}
+    container_name: chordsked-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-chordsked}
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:${REDIS_VERSION:-7.4-alpine}
+    container_name: chordsked-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+  kafka:
+    image: docker.m.daocloud.io/apache/kafka:${KAFKA_VERSION:-4.2.0}
+    container_name: chordsked-kafka
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+
+  nacos:
+    image: nacos/nacos-server:${NACOS_VERSION:-v2.4.3}
+    container_name: chordsked-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+    ports:
+      - "${NACOS_PORT:-8848}:8848"
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:
+  redis_data:
