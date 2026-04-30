@@ -92,9 +92,9 @@ class InternalUserUpdateServiceImplTest {
         request.setName("杭州教务一");
         request.setAvatar("https://example.com/avatar.png");
         request.setRoleIds(List.of(2L));
-        request.setCampusIds(List.of(1L));
-        request.setPrimaryCampusId(1L);
-        request.setDataScopeType(4);
+        request.setPrimaryOrgNodeId(1L);
+        request.setOrgScopeNodeIds(List.of(1L));
+        request.setDataScopeType(2);
         return request;
     }
 
@@ -103,7 +103,8 @@ class InternalUserUpdateServiceImplTest {
                 userId,
                 AccountUserType.ADMIN,
                 1L,
-                UserDataScopeType.ALL_COMPANY,
+                1L,
+                UserDataScopeType.ALL,
                 true,
                 List.of()
         );

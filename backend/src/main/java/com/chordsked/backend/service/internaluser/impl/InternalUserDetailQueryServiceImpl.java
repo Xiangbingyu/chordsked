@@ -1,14 +1,17 @@
 package com.chordsked.backend.service.internaluser.impl;
 
 import com.chordsked.backend.dao.InternalUserDao;
+import com.chordsked.backend.dao.OrgNodeDao;
 import com.chordsked.backend.dao.RoleDao;
-import com.chordsked.backend.dao.UserCampusDao;
+import com.chordsked.backend.dao.UserOrgScopeDao;
 import com.chordsked.backend.dao.UserRoleDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.internaluser.InternalUserDetailQueryRequest;
 import com.chordsked.backend.model.enums.AccountUserType;
+import com.chordsked.backend.model.entity.OrgNodeEntity;
 import com.chordsked.backend.model.entity.RoleEntity;
+import com.chordsked.backend.model.entity.UserOrgScopeEntity;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
@@ -31,8 +34,11 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
     @Resource(name = "roleDao")
     private RoleDao roleDao;
 
-    @Resource(name = "userCampusDao")
-    private UserCampusDao userCampusDao;
+    @Resource(name = "orgNodeDao")
+    private OrgNodeDao orgNodeDao;
+
+    @Resource(name = "userOrgScopeDao")
+    private UserOrgScopeDao userOrgScopeDao;
 
     @Resource(name = "authorityCodeService")
     private AuthorityCodeService authorityCodeService;
@@ -60,8 +66,13 @@ public class InternalUserDetailQueryServiceImpl implements InternalUserDetailQue
                 .map(this::resolveRoleName)
                 .filter(roleName -> roleName != null && !roleName.isBlank())
                 .toList());
-        detail.setCampusIds(userCampusDao.listCampusIdsByUserId(userId));
-        detail.setPrimaryCampusId(userCampusDao.getPrimaryCampusIdByUserId(userId));
+        List<UserOrgScopeEntity> userOrgScopes = userOrgScopeDao.listByUserId(userId);
+        detail.setOrgScopeNodeIds(userOrgScopes.stream().map(UserOrgScopeEntity::getOrgNodeId).toList());
+        OrgNodeEntity orgNode = detail.getOrgNodeId() == null ? null : orgNodeDao.getById(detail.getOrgNodeId());
+        if (orgNode != null) {
+            detail.setOrgNodeName(orgNode.getName());
+            detail.setOrgNodeType(orgNode.getNodeType());
+        }
         detail.setPermissionCodes(authorityCodeService.getAuthorityCodes(AccountUserType.ADMIN, userId));
         Long currentUserId = SecurityPrincipalUtils.getCurrentUserId();
         detail.setCurrentUser(currentUserId != null && currentUserId.equals(userId));

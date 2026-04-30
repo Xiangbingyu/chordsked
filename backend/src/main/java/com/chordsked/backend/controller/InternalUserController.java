@@ -13,10 +13,8 @@ import com.chordsked.backend.model.dto.internaluser.InternalUserResetPasswordReq
 import com.chordsked.backend.model.dto.internaluser.InternalUserStatusUpdateRequest;
 import com.chordsked.backend.model.dto.internaluser.InternalUserUpdateRequest;
 import com.chordsked.backend.model.enums.InternalUserStatus;
-import com.chordsked.backend.model.vo.internaluser.InternalUserCampusOptionVO;
 import com.chordsked.backend.model.vo.internaluser.InternalUserDetailResultVO;
 import com.chordsked.backend.model.vo.internaluser.InternalUserQueryResultVO;
-import com.chordsked.backend.service.internaluser.InternalUserCampusOptionQueryService;
 import com.chordsked.backend.service.internaluser.InternalUserCreateService;
 import com.chordsked.backend.service.internaluser.InternalUserDetailQueryService;
 import com.chordsked.backend.service.internaluser.InternalUserQueryService;
@@ -42,8 +40,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/admin/api/v1")
 @Validated
@@ -63,9 +59,6 @@ public class InternalUserController {
 
     @Resource(name = "internalUserDetailQueryService")
     private InternalUserDetailQueryService internalUserDetailQueryService;
-
-    @Resource(name = "internalUserCampusOptionQueryService")
-    private InternalUserCampusOptionQueryService internalUserCampusOptionQueryService;
 
     @Resource(name = "internalUserStatusUpdateService")
     private InternalUserStatusUpdateService internalUserStatusUpdateService;
@@ -130,7 +123,7 @@ public class InternalUserController {
     @PostMapping("/internal-users")
     @Idempotent(expireSeconds = 5, message = "请勿重复提交创建请求")
     @PreAuthorize("hasAuthority('admin:user:create')")
-    @Operation(summary = "创建教务端账号", description = "创建新的教务端账号，同时绑定角色和校区")
+    @Operation(summary = "创建教务端账号", description = "创建新的教务端账号，同时绑定角色和组织授权")
     public ApiResponse<Long> createInternalUser(
             @Valid @RequestBody InternalUserCreateRequest request,
             HttpServletRequest httpServletRequest
@@ -149,8 +142,8 @@ public class InternalUserController {
         request.setName(source.getName());
         request.setAvatar(source.getAvatar());
         request.setRoleIds(source.getRoleIds());
-        request.setCampusIds(source.getCampusIds());
-        request.setPrimaryCampusId(source.getPrimaryCampusId());
+        request.setPrimaryOrgNodeId(source.getPrimaryOrgNodeId());
+        request.setOrgScopeNodeIds(source.getOrgScopeNodeIds());
         request.setDataScopeType(source.getDataScopeType());
         request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
         return request;
@@ -158,7 +151,7 @@ public class InternalUserController {
 
     @PutMapping("/internal-users/{userId}")
     @PreAuthorize("hasAuthority('admin:user:update')")
-    @Operation(summary = "编辑教务端账号", description = "更新教务端账号基础信息、角色绑定、校区绑定和数据范围")
+    @Operation(summary = "编辑教务端账号", description = "更新教务端账号基础信息、角色绑定、组织授权和数据范围")
     public ApiResponse<Void> updateInternalUser(
             @Parameter(description = "用户ID")
             @PathVariable("userId") @Min(1) Long userId,
@@ -179,13 +172,6 @@ public class InternalUserController {
         InternalUserDetailQueryRequest request = new InternalUserDetailQueryRequest();
         request.setUserId(userId);
         return ApiResponse.success(internalUserDetailQueryService.getDetail(request));
-    }
-
-    @GetMapping("/internal-users/campus-options")
-    @PreAuthorize("hasAuthority('admin:user:update') or hasAuthority('admin:user:create')")
-    @Operation(summary = "查询账号可选校区", description = "返回教务端账号创建或编辑时可选的未删除校区列表")
-    public ApiResponse<List<InternalUserCampusOptionVO>> listInternalUserCampusOptions() {
-        return ApiResponse.success(internalUserCampusOptionQueryService.list());
     }
 
     @PutMapping("/internal-users/{userId}/status")
@@ -229,8 +215,8 @@ public class InternalUserController {
         request.setName(source.getName());
         request.setAvatar(source.getAvatar());
         request.setRoleIds(source.getRoleIds());
-        request.setCampusIds(source.getCampusIds());
-        request.setPrimaryCampusId(source.getPrimaryCampusId());
+        request.setPrimaryOrgNodeId(source.getPrimaryOrgNodeId());
+        request.setOrgScopeNodeIds(source.getOrgScopeNodeIds());
         request.setDataScopeType(source.getDataScopeType());
         request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
         return request;

@@ -1,6 +1,5 @@
 import { Alert } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { listInternalUserCampusOptions } from '../../../../../services/campusService'
 import {
   createInternalUser,
   getInternalUserDetail,
@@ -9,13 +8,14 @@ import {
   updateInternalUser,
   updateInternalUserStatus,
 } from '../../../../../services/internalUserService'
+import { listOrgNodeOptions } from '../../../../../services/orgService'
 import { listRoles } from '../../../../../services/roleService'
-import type { InternalUserCampusOptionVO } from '../../../../../types/campus'
 import type {
   InternalUserQueryResultVO,
   InternalUserStatus,
   UserDataScopeType,
 } from '../../../../../types/internalUser'
+import type { OrgNodeOptionVO } from '../../../../../types/org'
 import type { RoleQueryResultVO } from '../../../../../types/role'
 import AccountCreateModal from './AccountCreateModal'
 import AccountEditModal from './AccountEditModal'
@@ -61,7 +61,7 @@ function AccountPageContent() {
   const [editTargetUsername, setEditTargetUsername] = useState('')
   const [editForm, setEditForm] = useState<AccountEditFormState | null>(null)
   const [visibilityPreviewRefreshKey, setVisibilityPreviewRefreshKey] = useState(0)
-  const [campusOptions, setCampusOptions] = useState<InternalUserCampusOptionVO[]>([])
+  const [orgNodeOptions, setOrgNodeOptions] = useState<OrgNodeOptionVO[]>([])
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false)
   const [resetPasswordReason, setResetPasswordReason] = useState('管理员手动重置')
   const [resetTarget, setResetTarget] = useState<InternalUserQueryResultVO | null>(null)
@@ -126,25 +126,25 @@ function AccountPageContent() {
     }
   }, [loading])
 
-  const availablePrimaryCampuses = useMemo(() => {
+  const availablePrimaryOrgNodes = useMemo(() => {
     if (!editForm) {
       return []
     }
 
-    return campusOptions.filter((option) => editForm.campusIds.includes(option.id))
-  }, [campusOptions, editForm])
+    return orgNodeOptions
+  }, [orgNodeOptions, editForm])
 
-  const availableCreatePrimaryCampuses = useMemo(() => {
+  const availableCreatePrimaryOrgNodes = useMemo(() => {
     if (!createForm) {
       return []
     }
 
-    return campusOptions.filter((option) => createForm.campusIds.includes(option.id))
-  }, [campusOptions, createForm])
+    return orgNodeOptions
+  }, [orgNodeOptions, createForm])
 
-  const campusSelectOptions = useMemo(
-    () => campusOptions.map((option) => ({ label: option.name, value: option.id })),
-    [campusOptions],
+  const orgNodeSelectOptions = useMemo(
+    () => orgNodeOptions.map((option) => ({ label: option.name, value: option.id })),
+    [orgNodeOptions],
   )
 
   const roleSelectOptions = useMemo(
@@ -221,12 +221,12 @@ function AccountPageContent() {
     setActionErrorMessage('')
 
     try {
-      const [campusResult, roleResult] = await Promise.all([
-        listInternalUserCampusOptions(),
+      const [orgNodeResult, roleResult] = await Promise.all([
+        listOrgNodeOptions(),
         roles.length > 0 ? Promise.resolve(null) : listRoles({ page: 1, pageSize: 100 }),
       ])
-      if (campusResult.code !== 0) {
-        throw new Error(campusResult.message || '加载校区选项失败')
+      if (orgNodeResult.code !== 0) {
+        throw new Error(orgNodeResult.message || '加载组织节点选项失败')
       }
       if (roleResult && roleResult.code !== 0) {
         throw new Error(roleResult.message || '加载角色选项失败')
@@ -238,7 +238,7 @@ function AccountPageContent() {
         throw new Error('当前没有可选角色，无法创建账号')
       }
 
-      setCampusOptions(campusResult.data || [])
+      setOrgNodeOptions(orgNodeResult.data || [])
       if (roleResult) {
         setRoles(roleResult.data.items || [])
       }
@@ -247,8 +247,8 @@ function AccountPageContent() {
         name: '',
         avatar: '',
         phone: '',
-        campusIds: [],
-        primaryCampusId: null,
+        orgScopeNodeIds: [],
+        primaryOrgNodeId: null,
         roleIds: [],
         dataScopeType: null,
       })
@@ -281,28 +281,31 @@ function AccountPageContent() {
     setEditForm(null)
 
     try {
-      const [detailResult, campusResult, roleResult] = await Promise.all([
+      const [detailResult, orgNodeResult, roleResult] = await Promise.all([
         getInternalUserDetail(row.id),
-        listInternalUserCampusOptions(),
+        listOrgNodeOptions(),
         roles.length > 0 ? Promise.resolve(null) : listRoles({ page: 1, pageSize: 100 }),
       ])
       if (detailResult.code !== 0) {
         throw new Error(detailResult.message || `加载账号 ${row.username} 详情失败`)
       }
-      if (campusResult.code !== 0) {
-        throw new Error(campusResult.message || '加载校区选项失败')
+      if (orgNodeResult.code !== 0) {
+        throw new Error(orgNodeResult.message || '加载组织节点选项失败')
       }
       if (roleResult && roleResult.code !== 0) {
         throw new Error(roleResult.message || '加载角色选项失败')
       }
 
       const detail = detailResult.data
-      if (
-        detail.primaryCampusId === null ||
-        detail.dataScopeType === null ||
-        detail.campusIds.length === 0
-      ) {
-        throw new Error('当前账号缺少校区或数据范围配置，无法发起修改')
+      const fallbackPrimaryOrgNodeId =
+        detail.orgNodeId ??
+        (detail.orgScopeNodeIds.length > 0 ? detail.orgScopeNodeIds[0] : null)
+
+      if (fallbackPrimaryOrgNodeId === null || detail.dataScopeType === null) {
+        throw new Error('当前账号缺少主归属组织或数据范围配置，无法发起修改')
+      }
+      if (detail.dataScopeType === 2 && detail.orgScopeNodeIds.length === 0) {
+        throw new Error('当前账号缺少组织授权节点配置，无法发起修改')
       }
 
       const nextRoles = roleResult?.data.items || roles
@@ -311,7 +314,7 @@ function AccountPageContent() {
         throw new Error('当前没有可选角色，无法发起修改')
       }
 
-      setCampusOptions(campusResult.data || [])
+      setOrgNodeOptions(orgNodeResult.data || [])
       if (roleResult) {
         setRoles(roleResult.data.items || [])
       }
@@ -321,8 +324,8 @@ function AccountPageContent() {
         name: detail.name,
         avatar: detail.avatar || '',
         phone: detail.phone,
-        campusIds: detail.campusIds,
-        primaryCampusId: detail.primaryCampusId,
+        orgScopeNodeIds: detail.orgScopeNodeIds,
+        primaryOrgNodeId: fallbackPrimaryOrgNodeId,
         roleIds: detail.roleIds,
         dataScopeType: detail.dataScopeType,
       })
@@ -340,21 +343,16 @@ function AccountPageContent() {
     }
   }
 
-  const handleCreateCampusChange = useCallback((nextCampusIds: number[]) => {
+  const handleCreateOrgScopeNodeIdsChange = useCallback((nextOrgNodeIds: number[]) => {
     setCreateErrorMessage('')
     setCreateForm((current) => {
       if (!current) {
         return current
       }
 
-      const primaryCampusId = current.primaryCampusId
       return {
         ...current,
-        campusIds: nextCampusIds,
-        primaryCampusId:
-          primaryCampusId !== null && nextCampusIds.includes(primaryCampusId)
-            ? primaryCampusId
-            : null,
+        orgScopeNodeIds: nextOrgNodeIds,
       }
     })
   }, [])
@@ -387,18 +385,29 @@ function AccountPageContent() {
     }))
   }, [updateCreateForm])
 
-  const handleCreatePrimaryCampusChange = useCallback((value: number | null) => {
+  const handleCreatePrimaryOrgNodeChange = useCallback((value: number | null) => {
     updateCreateForm((current) => ({
       ...current,
-      primaryCampusId: value,
+      primaryOrgNodeId: value,
     }))
   }, [updateCreateForm])
 
   const handleCreateDataScopeTypeChange = useCallback((value: UserDataScopeType | null) => {
-    updateCreateForm((current) => ({
-      ...current,
-      dataScopeType: value,
-    }))
+    updateCreateForm((current) => {
+      if (value !== 2) {
+        return {
+          ...current,
+          dataScopeType: value,
+          orgScopeNodeIds: [],
+        }
+      }
+
+      return {
+        ...current,
+        dataScopeType: value,
+        orgScopeNodeIds: current.orgScopeNodeIds,
+      }
+    })
   }, [updateCreateForm])
 
   const handleCreateRoleIdsChange = useCallback((values: number[]) => {
@@ -408,21 +417,16 @@ function AccountPageContent() {
     }))
   }, [updateCreateForm])
 
-  const handleEditCampusChange = (nextCampusIds: number[]) => {
+  const handleEditOrgScopeNodeIdsChange = (nextOrgNodeIds: number[]) => {
     setEditErrorMessage('')
     setEditForm((current) => {
       if (!current) {
         return current
       }
 
-      const primaryCampusId = current.primaryCampusId
       return {
         ...current,
-        campusIds: nextCampusIds,
-        primaryCampusId:
-          primaryCampusId !== null && nextCampusIds.includes(primaryCampusId)
-            ? primaryCampusId
-            : null,
+        orgScopeNodeIds: nextOrgNodeIds,
       }
     })
   }
@@ -448,18 +452,29 @@ function AccountPageContent() {
     }))
   }, [updateEditForm])
 
-  const handleEditPrimaryCampusChange = useCallback((value: number | null) => {
+  const handleEditPrimaryOrgNodeChange = useCallback((value: number | null) => {
     updateEditForm((current) => ({
       ...current,
-      primaryCampusId: value,
+      primaryOrgNodeId: value,
     }))
   }, [updateEditForm])
 
   const handleEditDataScopeTypeChange = useCallback((value: UserDataScopeType | null) => {
-    updateEditForm((current) => ({
-      ...current,
-      dataScopeType: value,
-    }))
+    updateEditForm((current) => {
+      if (value !== 2) {
+        return {
+          ...current,
+          dataScopeType: value,
+          orgScopeNodeIds: [],
+        }
+      }
+
+      return {
+        ...current,
+        dataScopeType: value,
+        orgScopeNodeIds: current.orgScopeNodeIds,
+      }
+    })
   }, [updateEditForm])
 
   const handleEditRoleIdsChange = useCallback((values: number[]) => {
@@ -527,16 +542,12 @@ function AccountPageContent() {
       setCreateErrorMessage('头像 URL 长度不能超过 500 个字符')
       return
     }
-    if (createForm.campusIds.length === 0) {
-      setCreateErrorMessage('请至少选择一个可分配校区')
+    if (createForm.primaryOrgNodeId === null) {
+      setCreateErrorMessage('请选择主归属组织')
       return
     }
-    if (createForm.primaryCampusId === null) {
-      setCreateErrorMessage('请选择主校区')
-      return
-    }
-    if (!createForm.campusIds.includes(createForm.primaryCampusId)) {
-      setCreateErrorMessage('主校区必须包含在可分配校区中')
+    if (createForm.dataScopeType === 2 && createForm.orgScopeNodeIds.length === 0) {
+      setCreateErrorMessage('请至少选择一个组织授权节点')
       return
     }
     if (createForm.roleIds.length === 0) {
@@ -568,8 +579,8 @@ function AccountPageContent() {
         name,
         avatar: avatar || undefined,
         roleIds: createForm.roleIds,
-        campusIds: createForm.campusIds,
-        primaryCampusId: createForm.primaryCampusId,
+        primaryOrgNodeId: createForm.primaryOrgNodeId,
+        orgScopeNodeIds: createForm.orgScopeNodeIds,
         dataScopeType: createForm.dataScopeType,
       })
       if (createResult.code !== 0) {
@@ -611,16 +622,12 @@ function AccountPageContent() {
       setEditErrorMessage('联系方式格式不正确，请输入 11 位手机号')
       return
     }
-    if (editForm.campusIds.length === 0) {
-      setEditErrorMessage('请至少选择一个可分配校区')
+    if (editForm.primaryOrgNodeId === null) {
+      setEditErrorMessage('请选择主归属组织')
       return
     }
-    if (editForm.primaryCampusId === null) {
-      setEditErrorMessage('请选择主校区')
-      return
-    }
-    if (!editForm.campusIds.includes(editForm.primaryCampusId)) {
-      setEditErrorMessage('主校区必须包含在可分配校区中')
+    if (editForm.dataScopeType === 2 && editForm.orgScopeNodeIds.length === 0) {
+      setEditErrorMessage('请至少选择一个组织授权节点')
       return
     }
     if (editForm.roleIds.length === 0) {
@@ -652,8 +659,8 @@ function AccountPageContent() {
         name,
         avatar: avatar || undefined,
         roleIds: editForm.roleIds,
-        campusIds: editForm.campusIds,
-        primaryCampusId: editForm.primaryCampusId,
+        primaryOrgNodeId: editForm.primaryOrgNodeId,
+        orgScopeNodeIds: editForm.orgScopeNodeIds,
         dataScopeType: editForm.dataScopeType,
       })
       if (updateResult.code !== 0) {
@@ -810,18 +817,18 @@ function AccountPageContent() {
         createSubmitting={createSubmitting}
         createErrorMessage={createErrorMessage}
         createForm={createForm}
-        availablePrimaryCampuses={availableCreatePrimaryCampuses}
-        campusSelectOptions={campusSelectOptions}
+        availablePrimaryOrgNodes={availableCreatePrimaryOrgNodes}
+        orgNodeSelectOptions={orgNodeSelectOptions}
         roleSelectOptions={roleSelectOptions}
         dataScopeSelectOptions={dataScopeSelectOptions}
         onCancel={closeCreateModal}
         onSubmit={handleSubmitCreate}
         onUsernameChange={handleCreateUsernameChange}
-        onCampusIdsChange={handleCreateCampusChange}
+        onOrgScopeNodeIdsChange={handleCreateOrgScopeNodeIdsChange}
         onNameChange={handleCreateNameChange}
         onPhoneChange={handleCreatePhoneChange}
         onAvatarChange={handleCreateAvatarChange}
-        onPrimaryCampusChange={handleCreatePrimaryCampusChange}
+        onPrimaryOrgNodeChange={handleCreatePrimaryOrgNodeChange}
         onDataScopeTypeChange={handleCreateDataScopeTypeChange}
         onRoleIdsChange={handleCreateRoleIdsChange}
       />
@@ -832,17 +839,17 @@ function AccountPageContent() {
         editErrorMessage={editErrorMessage}
         editTargetUsername={editTargetUsername}
         editForm={editForm}
-        availablePrimaryCampuses={availablePrimaryCampuses}
-        campusSelectOptions={campusSelectOptions}
+        availablePrimaryOrgNodes={availablePrimaryOrgNodes}
+        orgNodeSelectOptions={orgNodeSelectOptions}
         roleSelectOptions={roleSelectOptions}
         dataScopeSelectOptions={dataScopeSelectOptions}
         onCancel={closeEditModal}
         onSubmit={handleSubmitEdit}
-        onCampusIdsChange={handleEditCampusChange}
+        onOrgScopeNodeIdsChange={handleEditOrgScopeNodeIdsChange}
         onNameChange={handleEditNameChange}
         onPhoneChange={handleEditPhoneChange}
         onAvatarChange={handleEditAvatarChange}
-        onPrimaryCampusChange={handleEditPrimaryCampusChange}
+        onPrimaryOrgNodeChange={handleEditPrimaryOrgNodeChange}
         onDataScopeTypeChange={handleEditDataScopeTypeChange}
         onRoleIdsChange={handleEditRoleIdsChange}
       />

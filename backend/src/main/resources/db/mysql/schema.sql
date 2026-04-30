@@ -7,14 +7,18 @@ CREATE TABLE IF NOT EXISTS sys_internal_user (
     avatar VARCHAR(200) NULL COMMENT '头像URL(阿里云OSS)',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态(0:禁用 1:启用 2:已删除)',
     must_change_password TINYINT NOT NULL DEFAULT 1 COMMENT '首次登录是否必须修改密码(0:否 1:是)',
-    data_scope_type TINYINT NOT NULL COMMENT '数据权限类型(1:全公司 2:本部门及下属 3:本人 4:指定校区)',
+    data_scope_type TINYINT NOT NULL COMMENT '数据权限类型(1:ALL 2:ASSIGNED 3:SELF)',
+    campus_id BIGINT NULL COMMENT '基础资料所属校区ID，不参与权限过滤',
+    org_node_id BIGINT NULL COMMENT '主归属组织节点ID',
     created_at BIGINT NOT NULL COMMENT '创建时间',
     updated_at BIGINT NOT NULL COMMENT '更新时间',
     PRIMARY KEY (id),
     UNIQUE INDEX uk_sys_internal_user_username (username),
     UNIQUE INDEX uk_sys_internal_user_phone (phone),
     INDEX idx_sys_internal_user_status (status),
-    INDEX idx_sys_internal_user_data_scope_type (data_scope_type)
+    INDEX idx_sys_internal_user_data_scope_type (data_scope_type),
+    INDEX idx_sys_internal_user_campus_id (campus_id),
+    INDEX idx_sys_internal_user_org_node_id (org_node_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '教务端用户表';
 
 CREATE TABLE IF NOT EXISTS sys_campus (
@@ -33,6 +37,30 @@ CREATE TABLE IF NOT EXISTS sys_campus (
     UNIQUE INDEX uk_sys_campus_name (name),
     INDEX idx_sys_campus_status (status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '校区表';
+
+CREATE TABLE IF NOT EXISTS sys_org_node (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '组织节点ID',
+    parent_id BIGINT NOT NULL DEFAULT 0 COMMENT '父节点ID，根节点为0',
+    node_type TINYINT NOT NULL COMMENT '节点类型(1:CAMPUS 2:DEPT 3:GROUP)',
+    code VARCHAR(50) NOT NULL COMMENT '节点编码',
+    name VARCHAR(100) NOT NULL COMMENT '节点名称',
+    campus_id BIGINT NOT NULL COMMENT '所属顶层校区ID',
+    ancestors VARCHAR(500) NOT NULL DEFAULT '' COMMENT '祖先路径，逗号分隔，不含自身ID',
+    level INT NOT NULL DEFAULT 1 COMMENT '层级深度，根节点为1',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序号',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态(0:停用 1:启用 2:已删除)',
+    remark VARCHAR(200) NULL COMMENT '备注',
+    created_at BIGINT NOT NULL COMMENT '创建时间',
+    updated_at BIGINT NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_sys_org_node_parent_id_code (parent_id, code),
+    UNIQUE INDEX uk_sys_org_node_parent_id_name (parent_id, name),
+    INDEX idx_sys_org_node_parent_id (parent_id),
+    INDEX idx_sys_org_node_campus_id (campus_id),
+    INDEX idx_sys_org_node_status (status),
+    INDEX idx_sys_org_node_node_type (node_type),
+    CONSTRAINT fk_sys_org_node_campus_id FOREIGN KEY (campus_id) REFERENCES sys_campus (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '组织树节点表';
 
 CREATE TABLE IF NOT EXISTS sys_teacher_user (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '教师ID',
@@ -145,6 +173,21 @@ CREATE TABLE IF NOT EXISTS sys_user_campus (
     CONSTRAINT fk_sys_user_campus_user_id FOREIGN KEY (user_id) REFERENCES sys_internal_user (id),
     CONSTRAINT fk_sys_user_campus_campus_id FOREIGN KEY (campus_id) REFERENCES sys_campus (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '用户校区关联表';
+
+CREATE TABLE IF NOT EXISTS sys_user_org_scope (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '组织授权ID',
+    user_id BIGINT NOT NULL COMMENT '教务端账号ID',
+    org_node_id BIGINT NOT NULL COMMENT '组织节点ID',
+    is_primary TINYINT NOT NULL DEFAULT 0 COMMENT '是否主归属节点(1:是 0:否)',
+    created_at BIGINT NOT NULL COMMENT '创建时间',
+    updated_at BIGINT NULL COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_sys_user_org_scope_user_id_org_node_id (user_id, org_node_id),
+    INDEX idx_sys_user_org_scope_org_node_id (org_node_id),
+    INDEX idx_sys_user_org_scope_user_id_primary (user_id, is_primary),
+    CONSTRAINT fk_sys_user_org_scope_user_id FOREIGN KEY (user_id) REFERENCES sys_internal_user (id),
+    CONSTRAINT fk_sys_user_org_scope_org_node_id FOREIGN KEY (org_node_id) REFERENCES sys_org_node (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '教务端账号组织授权表';
 
 CREATE TABLE IF NOT EXISTS sys_login_log (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '日志ID',

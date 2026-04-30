@@ -43,7 +43,7 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
     @Override
     /**
      * 读取安全用户快照缓存。
-     * 当前缓存 enabled 状态、currentCampusId 与 dataScopeType，用于鉴权链路中的快速判定。
+     * 当前缓存 enabled 状态、currentCampusId、primaryOrgNodeId 与 dataScopeType，用于鉴权链路中的快速判定。
      */
     public SecurityUserSnapshot getUserSnapshot(String userType, Long userId) {
         if (!redisProperties.isEnabled() || hasInvalidAuthorityCacheParameters(userType, userId)) {
@@ -60,11 +60,12 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
             }
             boolean enabled = "1".equals(values[0]);
             Long currentCampusId = values[1].isBlank() ? null : Long.parseLong(values[1]);
+            Long primaryOrgNodeId = values.length >= 3 && !values[2].isBlank() ? Long.parseLong(values[2]) : null;
             UserDataScopeType dataScopeType = null;
-            if (values.length >= 3 && !values[2].isBlank()) {
-                dataScopeType = UserDataScopeType.fromCode(Integer.parseInt(values[2]));
+            if (values.length >= 4 && !values[3].isBlank()) {
+                dataScopeType = UserDataScopeType.fromCode(Integer.parseInt(values[3]));
             }
-            return new SecurityUserSnapshot(userType.trim(), userId, enabled, currentCampusId, dataScopeType);
+            return new SecurityUserSnapshot(userType.trim(), userId, enabled, currentCampusId, primaryOrgNodeId, dataScopeType);
         } catch (RuntimeException exception) {
             logger.warn("Read user snapshot cache failed", exception);
             return null;
@@ -83,6 +84,8 @@ public class SecurityCacheServiceImpl implements SecurityCacheService {
             String value = (userSnapshot.enabled() ? "1" : "0")
                     + "|"
                     + (userSnapshot.currentCampusId() == null ? "" : userSnapshot.currentCampusId())
+                    + "|"
+                    + (userSnapshot.primaryOrgNodeId() == null ? "" : userSnapshot.primaryOrgNodeId())
                     + "|"
                     + (userSnapshot.dataScopeType() == null ? "" : userSnapshot.dataScopeType().getCode());
             Duration ttl = Duration.ofSeconds(Math.max(redisProperties.getUserSnapshotCacheTtlSeconds(), 1L));

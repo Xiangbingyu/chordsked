@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class AllDataScopeStrategy implements DataScopeStrategy {
     @Override
     public UserDataScopeType getDataScopeType() {
-        return UserDataScopeType.ALL_COMPANY;
+        return UserDataScopeType.ALL;
     }
 
     @Override

@@ -2,10 +2,7 @@ package com.chordsked.backend.dao.impl;
 
 import com.chordsked.backend.dao.CampusDao;
 import com.chordsked.backend.dao.mapper.CampusMapper;
-import com.chordsked.backend.model.dto.campus.CampusQueryRequest;
 import com.chordsked.backend.model.entity.CampusEntity;
-import com.chordsked.backend.model.vo.campus.CampusDetailResultVO;
-import com.chordsked.backend.model.vo.campus.CampusQueryResultVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Repository;
 
@@ -27,30 +24,6 @@ public class CampusDaoMBImpl implements CampusDao {
     @Override
     public List<CampusEntity> listNotDeleted() {
         return campusMapper.listNotDeleted();
-    }
-
-    @Override
-    public List<CampusQueryResultVO> listByQuery(CampusQueryRequest request) {
-        if (request == null) {
-            return List.of();
-        }
-        return campusMapper.listByQuery(request);
-    }
-
-    @Override
-    public int countByQuery(CampusQueryRequest request) {
-        if (request == null) {
-            return 0;
-        }
-        return campusMapper.countByQuery(request);
-    }
-
-    @Override
-    public CampusDetailResultVO getDetailById(Long campusId) {
-        if (campusId == null || campusId <= 0) {
-            return null;
-        }
-        return campusMapper.getDetailById(campusId);
     }
 
     @Override

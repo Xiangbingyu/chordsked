@@ -1,9 +1,9 @@
 package com.chordsked.backend.model.enums;
 
 public enum UserDataScopeType {
-    ALL_COMPANY(1),
-    SELF_ONLY(3),
-    SPECIFIED_CAMPUS(4);
+    ALL(1),
+    ASSIGNED(2),
+    SELF(3);
 
     private final int code;
 
@@ -16,15 +16,15 @@ public enum UserDataScopeType {
     }
 
     public boolean isAllScope() {
-        return this == ALL_COMPANY;
+        return this == ALL;
     }
 
-    public boolean isCampusScope() {
-        return this == SPECIFIED_CAMPUS;
+    public boolean isAssignedScope() {
+        return this == ASSIGNED;
     }
 
     public boolean isSelfScope() {
-        return this == SELF_ONLY;
+        return this == SELF;
     }
 
     public static UserDataScopeType fromCode(Integer code) {

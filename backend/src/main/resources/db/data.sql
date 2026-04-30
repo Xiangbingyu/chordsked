@@ -1,8 +1,8 @@
-INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, created_at, updated_at)
-VALUES (1001, 'admin', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000000', '系统管理员', NULL, 1, 0, 1, 1774483200000, 1774483200000),
-       (1002, 'operator_hz_01', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000001', '杭州教务一', NULL, 1, 0, 4, 1774483200000, 1774483200000),
-       (1003, 'operator_hz_02', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000002', '杭州教务二', NULL, 1, 0, 3, 1774483200000, 1774483200000),
-       (1004, 'operator_hz_03', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000003', '杭州教务三', NULL, 0, 1, 4, 1774483200000, 1774483200000);
+INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, campus_id, org_node_id, created_at, updated_at)
+VALUES (1001, 'admin', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000000', '系统管理员', NULL, 1, 0, 1, 1, 1, 1774483200000, 1774483200000),
+       (1002, 'operator_hz_01', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000001', '杭州教务一', NULL, 1, 0, 2, 1, 1, 1774483200000, 1774483200000),
+       (1003, 'operator_hz_02', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000002', '杭州教务二', NULL, 1, 0, 3, 1, 1, 1774483200000, 1774483200000),
+       (1004, 'operator_hz_03', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', '13800000003', '杭州教务三', NULL, 0, 1, 2, 1, 1, 1774483200000, 1774483200000);
 
 INSERT INTO sys_campus (id, code, name, address, phone, sort, status, remark, created_at, updated_at)
 VALUES (1, 'CAMPUS-DEFAULT', '默认校区', '杭州', '0571-00000000', 1, 1, '初始化校区', 1774483200000, 1774483200000),
@@ -10,6 +10,13 @@ VALUES (1, 'CAMPUS-DEFAULT', '默认校区', '杭州', '0571-00000000', 1, 1, '�
        (3, 'CAMPUS-BJ', '滨江校区', '杭州滨江区', '0571-00000002', 3, 1, '联调用测试校区', 1774483200000, 1774483200000),
        (4, 'CAMPUS-GS', '拱墅校区', '杭州拱墅区', '0571-00000003', 4, 1, '联调用测试校区', 1774483200000, 1774483200000),
        (5, 'CAMPUS-YH', '余杭校区', '杭州余杭区', '0571-00000004', 5, 1, '联调用测试校区', 1774483200000, 1774483200000);
+
+INSERT INTO sys_org_node (id, parent_id, node_type, code, name, campus_id, ancestors, level, sort, status, remark, created_at, updated_at)
+VALUES (1, 0, 1, 'CAMPUS-DEFAULT', '默认校区', 1, '', 1, 1, 1, '初始化根节点', 1774483200000, 1774483200000),
+       (2, 0, 1, 'CAMPUS-XH', '西湖校区', 2, '', 1, 2, 1, '初始化根节点', 1774483200000, 1774483200000),
+       (3, 0, 1, 'CAMPUS-BJ', '滨江校区', 3, '', 1, 3, 1, '初始化根节点', 1774483200000, 1774483200000),
+       (4, 0, 1, 'CAMPUS-GS', '拱墅校区', 4, '', 1, 4, 1, '初始化根节点', 1774483200000, 1774483200000),
+       (5, 0, 1, 'CAMPUS-YH', '余杭校区', 5, '', 1, 5, 1, '初始化根节点', 1774483200000, 1774483200000);
 
 INSERT INTO sys_teacher_user (id, teacher_no, name, phone, password, avatar, teacher_level, campus_id, status, must_change_password, last_login_at, experience, good_at, created_at, updated_at)
 VALUES (1001, 'T0001', '王老师', '13900000000', '$2a$10$5vIb8UziDCbwzXwGXWkA2uyZWG.Pa9QrCrIKU8iS3TznhUFCBaDDW', NULL, 3, 1, 1, 0, NULL, '5年教学经验', '钢琴基础', 1774483200000, 1774483200000);
@@ -46,12 +53,12 @@ VALUES
        (124, 'admin:role:delete', '删除角色', 2, 120, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000),
        (125, 'admin:role:assign_permission', '分配权限', 2, 120, NULL, 5, 1, 'ADMIN', 1774483200000, 1774483200000),
 
-       (130, 'admin:campus:menu', '校区管理菜单', 1, NULL, '/admin/campuses', 40, 1, 'ADMIN', 1774483200000, 1774483200000),
-       (131, 'admin:campus:view', '查看校区', 2, 130, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
-       (132, 'admin:campus:create', '创建校区', 2, 130, NULL, 2, 1, 'ADMIN', 1774483200000, 1774483200000),
-       (133, 'admin:campus:update', '编辑校区', 2, 130, NULL, 3, 1, 'ADMIN', 1774483200000, 1774483200000),
-       (134, 'admin:campus:delete', '删除校区', 2, 130, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000),
-       (135, 'admin:campus:assign_user', '分配用户', 2, 130, NULL, 5, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (130, 'admin:org:menu', '组织管理菜单', 1, NULL, '/admin/org-campus', 40, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (131, 'admin:org:view', '查看组织', 2, 130, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (132, 'admin:org:create', '创建组织节点', 2, 130, NULL, 2, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (133, 'admin:org:update', '编辑组织节点', 2, 130, NULL, 3, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (134, 'admin:org:delete', '删除组织节点', 2, 130, NULL, 4, 1, 'ADMIN', 1774483200000, 1774483200000),
+       (135, 'admin:org:assign_user', '绑定组织账号', 2, 130, NULL, 5, 1, 'ADMIN', 1774483200000, 1774483200000),
 
        (140, 'admin:log:menu', '审计日志菜单', 1, NULL, '/admin/logs', 50, 1, 'ADMIN', 1774483200000, 1774483200000),
        (141, 'admin:log:view', '查看日志列表', 2, 140, NULL, 1, 1, 'ADMIN', 1774483200000, 1774483200000),
@@ -95,7 +102,6 @@ VALUES
        (1, 142, 1774483200000, 1774483200000),
        (1, 143, 1774483200000, 1774483200000),
        (1, 144, 1774483200000, 1774483200000),
-
        (2, 1, 1774483200000, 1774483200000),
        (2, 110, 1774483200000, 1774483200000),
        (2, 111, 1774483200000, 1774483200000),
@@ -115,8 +121,12 @@ VALUES (1001, 1, 1, 1774483200000, 1774483200000),
        (1003, 1, 1, 1774483200000, 1774483200000),
        (1004, 1, 1, 1774483200000, 1774483200000);
 
+INSERT INTO sys_user_org_scope (user_id, org_node_id, is_primary, created_at, updated_at)
+VALUES (1002, 1, 1, 1774483200000, 1774483200000),
+       (1004, 1, 1, 1774483200000, 1774483200000);
+
 INSERT INTO sys_data_scope (target_type, target_id, scope_type, campus_ids, created_at, updated_at)
 VALUES (2, 1001, 1, NULL, 1774483200000, 1774483200000),
-       (2, 1002, 4, '1', 1774483200000, 1774483200000),
-       (2, 1003, 3, NULL, 1774483200000, 1774483200000),
-       (2, 1004, 4, '1', 1774483200000, 1774483200000);
+       (2, 1002, 2, NULL, 1774483200000, 1774483200000),
+       (2, 1003, 4, NULL, 1774483200000, 1774483200000),
+       (2, 1004, 2, NULL, 1774483200000, 1774483200000);

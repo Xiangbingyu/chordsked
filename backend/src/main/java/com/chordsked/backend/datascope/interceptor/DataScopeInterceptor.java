@@ -1,6 +1,5 @@
 package com.chordsked.backend.datascope.interceptor;
 
-import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.config.properties.DataScopeProperties;
 import com.chordsked.backend.datascope.annotation.DataScope;
 import com.chordsked.backend.datascope.context.DataScopeUserContext;
@@ -8,6 +7,7 @@ import com.chordsked.backend.datascope.strategy.DataScopeStrategy;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
+import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import jakarta.annotation.Resource;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -20,9 +20,9 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -56,8 +56,8 @@ public class DataScopeInterceptor implements Interceptor {
     }
 
     @Lazy
-    @Resource(name = "userCampusDao")
-    private UserCampusDao userCampusDao;
+    @Resource(name = "orgDataScopeResolveService")
+    private OrgDataScopeResolveService orgDataScopeResolveService;
 
     @Resource(name = "dataScopeProperties")
     private DataScopeProperties dataScopeProperties;
@@ -167,20 +167,30 @@ public class DataScopeInterceptor implements Interceptor {
             );
             throw new IllegalStateException("dataScopeType is missing");
         }
-        List<Long> campusIds;
-        if (!dataScopeType.isCampusScope()) {
-            campusIds = List.of();
+        OrgDataScopeResolveService.OrgDataScopeResult scopeResult;
+        if (!dataScopeType.isAssignedScope()) {
+            scopeResult = new OrgDataScopeResolveService.OrgDataScopeResult(
+                    userDetails.getPrimaryOrgNodeId(),
+                    List.of(),
+                    List.of()
+            );
         } else if (AccountUserType.ADMIN.equals(userDetails.getUserTypeEnum())) {
-            campusIds = userCampusDao.listCampusIdsByUserId(userDetails.getUserId());
+            scopeResult = orgDataScopeResolveService.resolveByUserId(userDetails.getUserId());
         } else {
             Long currentCampusId = userDetails.getCurrentCampusId();
-            campusIds = currentCampusId == null || currentCampusId <= 0 ? List.of() : List.of(currentCampusId);
+            scopeResult = new OrgDataScopeResolveService.OrgDataScopeResult(
+                    userDetails.getPrimaryOrgNodeId(),
+                    List.of(),
+                    currentCampusId == null || currentCampusId <= 0 ? List.of() : List.of(currentCampusId)
+            );
         }
         return new DataScopeUserContext(
                 userDetails.getUserId(),
                 userDetails.getUserTypeEnum(),
                 dataScopeType,
-                campusIds
+                scopeResult.primaryOrgNodeId(),
+                scopeResult.authorizedOrgNodeIds(),
+                scopeResult.authorizedCampusIds()
         );
     }
 

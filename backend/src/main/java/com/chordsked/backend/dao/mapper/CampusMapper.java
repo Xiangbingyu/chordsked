@@ -1,10 +1,6 @@
 package com.chordsked.backend.dao.mapper;
 
-import com.chordsked.backend.datascope.annotation.DataScope;
-import com.chordsked.backend.model.dto.campus.CampusQueryRequest;
 import com.chordsked.backend.model.entity.CampusEntity;
-import com.chordsked.backend.model.vo.campus.CampusDetailResultVO;
-import com.chordsked.backend.model.vo.campus.CampusQueryResultVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -17,14 +13,6 @@ public interface CampusMapper {
     CampusEntity getById(@Param("campusId") Long campusId);
 
     List<CampusEntity> listNotDeleted();
-
-    @DataScope(tableAlias = "c", scopeField = "id")
-    List<CampusQueryResultVO> listByQuery(@Param("request") CampusQueryRequest request);
-
-    @DataScope(tableAlias = "c", scopeField = "id")
-    int countByQuery(@Param("request") CampusQueryRequest request);
-
-    CampusDetailResultVO getDetailById(@Param("campusId") Long campusId);
 
     int insert(@Param("entity") CampusEntity campusEntity);
 

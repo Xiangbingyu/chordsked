@@ -1,12 +1,15 @@
 package com.chordsked.backend.service.internaluser.impl;
 
 import com.chordsked.backend.config.properties.RoleProperties;
-import com.chordsked.backend.dao.CampusDao;
+import com.chordsked.backend.dao.OrgNodeDao;
 import com.chordsked.backend.dao.RoleDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
+import com.chordsked.backend.model.entity.OrgNodeEntity;
 import com.chordsked.backend.model.entity.RoleEntity;
+import com.chordsked.backend.model.enums.OrgNodeStatus;
 import com.chordsked.backend.model.enums.RoleStatus;
+import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.internaluser.InternalUserWriteValidator;
 import com.chordsked.backend.utils.normalize.StringNormalizeUtils;
 import jakarta.annotation.Resource;
@@ -22,8 +25,8 @@ public class InternalUserWriteValidatorImpl implements InternalUserWriteValidato
     @Resource(name = "roleDao")
     private RoleDao roleDao;
 
-    @Resource(name = "campusDao")
-    private CampusDao campusDao;
+    @Resource(name = "orgNodeDao")
+    private OrgNodeDao orgNodeDao;
 
     @Resource(name = "roleProperties")
     private RoleProperties roleProperties;
@@ -61,35 +64,43 @@ public class InternalUserWriteValidatorImpl implements InternalUserWriteValidato
     }
 
     @Override
-    public List<Long> validateCampusIds(List<Long> campusIds, Long primaryCampusId) {
-        if (campusIds == null || campusIds.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "campusIds不能为空");
+    public List<Long> validateOrgScopeNodeIds(List<Long> orgScopeNodeIds, Long primaryOrgNodeId, Integer dataScopeType) {
+        if (primaryOrgNodeId == null || primaryOrgNodeId <= 0) {
+            throw new IllegalArgumentException("primaryOrgNodeId must be greater than 0");
         }
-        if (primaryCampusId == null || primaryCampusId <= 0) {
-            throw new IllegalArgumentException("primaryCampusId must be greater than 0");
+        OrgNodeEntity primaryNode = orgNodeDao.getById(primaryOrgNodeId);
+        if (primaryNode == null || primaryNode.getStatusEnum() != OrgNodeStatus.ENABLED) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "主归属组织节点不存在或未启用");
         }
-        if (!campusIds.contains(primaryCampusId)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "主校区必须在校区列表中");
+
+        UserDataScopeType scopeType = UserDataScopeType.fromCode(dataScopeType);
+        if (scopeType == null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "数据范围类型无效");
         }
-        List<Long> distinctCampusIds = campusIds.stream()
+        if (!scopeType.isAssignedScope()) {
+            return List.of();
+        }
+        if (orgScopeNodeIds == null || orgScopeNodeIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "orgScopeNodeIds不能为空");
+        }
+
+        List<Long> distinctNodeIds = orgScopeNodeIds.stream()
                 .filter(Objects::nonNull)
-                .filter(campusId -> campusId > 0)
+                .filter(nodeId -> nodeId > 0)
                 .collect(java.util.stream.Collectors.collectingAndThen(
                         java.util.stream.Collectors.toCollection(LinkedHashSet::new),
                         List::copyOf
                 ));
-        if (distinctCampusIds.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "campusIds不能为空");
+        if (distinctNodeIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "orgScopeNodeIds不能为空");
         }
-        if (!distinctCampusIds.contains(primaryCampusId)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "主校区必须在校区列表中");
-        }
-        for (Long campusId : distinctCampusIds) {
-            if (campusDao.getById(campusId) == null) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "校区不存在: " + campusId);
+        for (Long nodeId : distinctNodeIds) {
+            OrgNodeEntity node = orgNodeDao.getById(nodeId);
+            if (node == null || node.getStatusEnum() != OrgNodeStatus.ENABLED) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "组织节点不存在或未启用: " + nodeId);
             }
         }
-        return distinctCampusIds;
+        return distinctNodeIds;
     }
 
     private Set<String> resolveProtectedRoleCodes() {

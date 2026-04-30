@@ -1,13 +1,14 @@
 package com.chordsked.backend.datascope.interceptor;
 
-import com.chordsked.backend.dao.UserCampusDao;
+import com.chordsked.backend.config.properties.DataScopeProperties;
 import com.chordsked.backend.datascope.annotation.DataScope;
+import com.chordsked.backend.datascope.strategy.AssignedDataScopeStrategy;
 import com.chordsked.backend.datascope.strategy.AllDataScopeStrategy;
-import com.chordsked.backend.datascope.strategy.CampusDataScopeStrategy;
 import com.chordsked.backend.datascope.strategy.SelfDataScopeStrategy;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
+import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import org.apache.ibatis.builder.StaticSqlSource;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.executor.statement.StatementHandler;
@@ -37,18 +38,24 @@ import static org.mockito.Mockito.when;
 
 class DataScopeInterceptorTest {
     private DataScopeInterceptor interceptor;
-    private UserCampusDao userCampusDao;
+    private OrgDataScopeResolveService orgDataScopeResolveService;
+    private DataScopeProperties dataScopeProperties;
 
     @BeforeEach
     void setUp() {
         interceptor = new DataScopeInterceptor(List.of(
                 new AllDataScopeStrategy(),
-                new CampusDataScopeStrategy(),
+                new AssignedDataScopeStrategy(),
                 new SelfDataScopeStrategy()
         ));
-        userCampusDao = mock(UserCampusDao.class);
+        orgDataScopeResolveService = mock(OrgDataScopeResolveService.class);
+        dataScopeProperties = new DataScopeProperties();
+        dataScopeProperties.setEnabled(true);
+        dataScopeProperties.setStrictPlaceholder(true);
+        dataScopeProperties.setSqlPlaceholder("/*DATA_SCOPE*/");
 
-        ReflectionTestUtils.setField(interceptor, "userCampusDao", userCampusDao);
+        ReflectionTestUtils.setField(interceptor, "orgDataScopeResolveService", orgDataScopeResolveService);
+        ReflectionTestUtils.setField(interceptor, "dataScopeProperties", dataScopeProperties);
     }
 
     @AfterEach
@@ -79,7 +86,8 @@ class DataScopeInterceptorTest {
                 1001L,
                 AccountUserType.ADMIN,
                 2001L,
-                UserDataScopeType.SELF_ONLY,
+                null,
+                UserDataScopeType.SELF,
                 true,
                 List.of()
         ));
@@ -95,15 +103,17 @@ class DataScopeInterceptorTest {
     @Test
     void shouldReplacePlaceholderWithCampusCondition() throws Throwable {
         FakeStatementHandler statementHandler = createStatementHandler(
-                CampusScopedMapper.class.getName() + ".list",
+                AssignedScopedMapper.class.getName() + ".list",
                 "SELECT * FROM sys_user u WHERE u.status = 1 /*DATA_SCOPE*/ ORDER BY u.id DESC LIMIT 10"
         );
-        when(userCampusDao.listCampusIdsByUserId(1001L)).thenReturn(List.of(11L, 22L));
+        when(orgDataScopeResolveService.resolveByUserId(1001L))
+                .thenReturn(new OrgDataScopeResolveService.OrgDataScopeResult(11L, List.of(11L, 22L), List.of(1L, 2L)));
         authenticate(new ChordSkedUserDetails(
                 1001L,
                 AccountUserType.ADMIN,
                 2001L,
-                UserDataScopeType.SPECIFIED_CAMPUS,
+                11L,
+                UserDataScopeType.ASSIGNED,
                 true,
                 List.of()
         ));
@@ -111,7 +121,7 @@ class DataScopeInterceptorTest {
         interceptor.intercept(createInvocation(statementHandler));
 
         assertEquals(
-                "SELECT * FROM sys_user u WHERE u.status = 1 AND (EXISTS (SELECT 1 FROM sys_user_campus ds_uc WHERE ds_uc.user_id = u.id AND ds_uc.campus_id IN (11, 22))) ORDER BY u.id DESC LIMIT 10",
+                "SELECT * FROM sys_user u WHERE u.status = 1 AND (EXISTS (SELECT 1 FROM sys_user_org_scope ds_uos WHERE ds_uos.user_id = u.id AND ds_uos.org_node_id IN (11, 22))) ORDER BY u.id DESC LIMIT 10",
                 statementHandler.getBoundSql().getSql()
         );
     }
@@ -126,7 +136,8 @@ class DataScopeInterceptorTest {
                 1001L,
                 AccountUserType.ADMIN,
                 2001L,
-                UserDataScopeType.SELF_ONLY,
+                null,
+                UserDataScopeType.SELF,
                 true,
                 List.of()
         ));
@@ -149,7 +160,8 @@ class DataScopeInterceptorTest {
                 1001L,
                 AccountUserType.ADMIN,
                 2001L,
-                UserDataScopeType.SELF_ONLY,
+                null,
+                UserDataScopeType.SELF,
                 true,
                 List.of()
         ));
@@ -190,6 +202,7 @@ class DataScopeInterceptorTest {
                 1001L,
                 AccountUserType.ADMIN,
                 2001L,
+                null,
                 null,
                 true,
                 List.of()
@@ -265,7 +278,7 @@ class DataScopeInterceptorTest {
         void list();
     }
 
-    private interface CampusScopedMapper {
+    private interface AssignedScopedMapper {
         @DataScope(tableAlias = "u", scopeField = "id")
         void list();
     }

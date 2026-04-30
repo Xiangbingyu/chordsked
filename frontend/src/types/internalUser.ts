@@ -1,7 +1,7 @@
 import type { PageResult } from './common'
 
 export type InternalUserStatus = 0 | 1 | 2
-export type UserDataScopeType = 1 | 3 | 4
+export type UserDataScopeType = 1 | 2 | 3
 export type MustChangePasswordFlag = 0 | 1
 
 export type InternalUserQueryRequest = {
@@ -19,8 +19,8 @@ export type InternalUserCreateRequest = {
   name: string
   avatar?: string
   roleIds: number[]
-  campusIds: number[]
-  primaryCampusId: number
+  primaryOrgNodeId: number
+  orgScopeNodeIds: number[]
   dataScopeType: UserDataScopeType
 }
 
@@ -29,8 +29,8 @@ export type InternalUserUpdateRequest = {
   name: string
   avatar?: string
   roleIds: number[]
-  campusIds: number[]
-  primaryCampusId: number
+  primaryOrgNodeId: number
+  orgScopeNodeIds: number[]
   dataScopeType: UserDataScopeType
 }
 
@@ -49,8 +49,11 @@ export type InternalUserQueryResultVO = {
   name: string
   status: InternalUserStatus | null
   dataScopeType: UserDataScopeType | null
-  primaryCampusId: number | null
-  primaryCampusName: string | null
+  campusId: number | null
+  campusName: string | null
+  orgNodeId: number | null
+  orgNodeName: string | null
+  orgNodeType: number | null
   roleIds: number[]
   roleNames: string[]
   systemAccount: boolean
@@ -68,8 +71,12 @@ export type InternalUserDetailResultVO = {
   status: InternalUserStatus | null
   mustChangePassword: MustChangePasswordFlag | null
   dataScopeType: UserDataScopeType | null
-  primaryCampusId: number | null
-  campusIds: number[]
+  campusId: number | null
+  campusName: string | null
+  orgNodeId: number | null
+  orgNodeName: string | null
+  orgNodeType: number | null
+  orgScopeNodeIds: number[]
   roleIds: number[]
   roleNames: string[]
   permissionCodes: string[]

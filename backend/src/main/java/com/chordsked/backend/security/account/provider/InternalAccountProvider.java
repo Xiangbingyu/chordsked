@@ -2,11 +2,11 @@ package com.chordsked.backend.security.account.provider;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
-import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.InternalUserStatus;
 import com.chordsked.backend.model.enums.UserDataScopeType;
+import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,14 +29,14 @@ public class InternalAccountProvider implements AccountProvider {
     @Resource(name = "internalUserDao")
     private InternalUserDao internalUserDao;
 
-    @Resource(name = "userCampusDao")
-    private UserCampusDao userCampusDao;
-
     @Resource(name = "securityCacheService")
     private SecurityCacheService securityCacheService;
 
     @Resource(name = "authorityCodeService")
     private AuthorityCodeService authorityCodeService;
+
+    @Resource(name = "orgDataScopeResolveService")
+    private OrgDataScopeResolveService orgDataScopeResolveService;
 
     @Override
     public String getUserType() {
@@ -66,10 +66,12 @@ public class InternalAccountProvider implements AccountProvider {
                 securityCacheService.getUserSnapshot(USER_TYPE.getCode(), userId);
         boolean enabled;
         Long currentCampusId;
+        Long primaryOrgNodeId;
         UserDataScopeType dataScopeType;
         if (userSnapshot != null && userSnapshot.dataScopeType() != null) {
             enabled = userSnapshot.enabled();
             currentCampusId = userSnapshot.currentCampusId();
+            primaryOrgNodeId = userSnapshot.primaryOrgNodeId();
             dataScopeType = userSnapshot.dataScopeType();
         } else {
             InternalUserEntity internalUser = internalUserDao.getById(userId);
@@ -77,7 +79,8 @@ public class InternalAccountProvider implements AccountProvider {
                 throw new UsernameNotFoundException("Internal user not found: " + userId);
             }
             enabled = InternalUserStatus.ENABLED.equals(internalUser.getStatusEnum());
-            currentCampusId = userCampusDao.getPrimaryCampusIdByUserId(userId);
+            currentCampusId = internalUser.getCampusId();
+            primaryOrgNodeId = internalUser.getOrgNodeId();
             dataScopeType = internalUser.getDataScopeTypeEnum();
             securityCacheService.cacheUserSnapshot(
                     new SecurityCacheService.SecurityUserSnapshot(
@@ -85,15 +88,21 @@ public class InternalAccountProvider implements AccountProvider {
                             userId,
                             enabled,
                             currentCampusId,
+                            primaryOrgNodeId,
                             dataScopeType
                     )
             );
+        }
+
+        if (dataScopeType != null && dataScopeType.isAssignedScope()) {
+            orgDataScopeResolveService.resolveByUserId(userId);
         }
 
         return new ChordSkedUserDetails(
                 userId,
                 USER_TYPE,
                 currentCampusId,
+                primaryOrgNodeId,
                 dataScopeType,
                 enabled,
                 authorities

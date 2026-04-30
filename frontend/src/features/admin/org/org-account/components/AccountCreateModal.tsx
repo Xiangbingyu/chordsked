@@ -1,6 +1,6 @@
 import { Alert, Form, Input, Modal, Select, Spin, Typography } from 'antd'
-import type { InternalUserCampusOptionVO } from '../../../../../types/campus'
 import type { UserDataScopeType } from '../../../../../types/internalUser'
+import type { OrgNodeOptionVO } from '../../../../../types/org'
 import type { AccountCreateFormState } from '../utils/accountPageShared'
 
 type SelectOption<T extends string | number> = {
@@ -35,18 +35,18 @@ type AccountCreateModalProps = {
   createSubmitting: boolean
   createErrorMessage: string
   createForm: AccountCreateFormState | null
-  availablePrimaryCampuses: InternalUserCampusOptionVO[]
-  campusSelectOptions: Array<SelectOption<number>>
+  availablePrimaryOrgNodes: OrgNodeOptionVO[]
+  orgNodeSelectOptions: Array<SelectOption<number>>
   roleSelectOptions: Array<SelectOption<number>>
   dataScopeSelectOptions: Array<SelectOption<UserDataScopeType>>
   onCancel: () => void
   onSubmit: () => Promise<void>
   onUsernameChange: (value: string) => void
-  onCampusIdsChange: (values: number[]) => void
+  onOrgScopeNodeIdsChange: (values: number[]) => void
   onNameChange: (value: string) => void
   onPhoneChange: (value: string) => void
   onAvatarChange: (value: string) => void
-  onPrimaryCampusChange: (value: number | null) => void
+  onPrimaryOrgNodeChange: (value: number | null) => void
   onDataScopeTypeChange: (value: UserDataScopeType | null) => void
   onRoleIdsChange: (values: number[]) => void
 }
@@ -57,18 +57,18 @@ function AccountCreateModal({
   createSubmitting,
   createErrorMessage,
   createForm,
-  availablePrimaryCampuses,
-  campusSelectOptions,
+  availablePrimaryOrgNodes,
+  orgNodeSelectOptions,
   roleSelectOptions,
   dataScopeSelectOptions,
   onCancel,
   onSubmit,
   onUsernameChange,
-  onCampusIdsChange,
+  onOrgScopeNodeIdsChange,
   onNameChange,
   onPhoneChange,
   onAvatarChange,
-  onPrimaryCampusChange,
+  onPrimaryOrgNodeChange,
   onDataScopeTypeChange,
   onRoleIdsChange,
 }: AccountCreateModalProps) {
@@ -98,7 +98,7 @@ function AccountCreateModal({
           }}
         >
           <Typography.Text type="secondary">
-            维护新账号的基础信息、可分配校区、主校区、角色和数据范围
+            维护新账号的基础信息、主归属组织、角色和数据范围。仅“按分配组织”需要额外配置组织授权节点。
           </Typography.Text>
         </div>
 
@@ -152,8 +152,8 @@ function AccountCreateModal({
             </section>
 
             <section style={sectionCardStyle}>
-              <div style={sectionTitleStyle}>权限与校区配置</div>
-              <div style={sectionDescriptionStyle}>校区范围、主校区、数据范围和绑定角色会共同决定账号可操作的数据边界。</div>
+              <div style={sectionTitleStyle}>权限与组织配置</div>
+              <div style={sectionDescriptionStyle}>主归属组织用于维护账号所属位置；当数据范围选择“按分配组织”时，组织授权节点只决定账号可见范围，不会改变主归属组织。</div>
               <div
                 style={{
                   display: 'grid',
@@ -163,35 +163,35 @@ function AccountCreateModal({
                 }}
               >
                 <Form.Item
-                  label="可分配校区"
-                  extra="用于配置当前账号可分配的校区范围，主校区候选项会随之联动。"
+                  label="组织授权节点"
+                    extra="仅当数据范围选择“按分配组织”时必填。"
                   style={{ marginBottom: 0 }}
                 >
                   <Select
                     mode="multiple"
-                    value={createForm.campusIds}
-                    placeholder="请选择可分配校区"
-                    options={campusSelectOptions}
+                    value={createForm.orgScopeNodeIds}
+                    placeholder="请选择组织授权节点（按分配组织时必填）"
+                    options={orgNodeSelectOptions}
                     maxTagCount="responsive"
-                    onChange={onCampusIdsChange}
+                    onChange={onOrgScopeNodeIdsChange}
                   />
                 </Form.Item>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <Form.Item
-                    label="主校区"
-                    extra="主校区必须包含在当前已选的可分配校区中。"
+                    label="主归属组织"
+                    extra="账号始终需要一个主归属组织；该值仅能在账号页面中修改，不会随组织授权节点变化而自动调整。"
                     style={{ marginBottom: 0 }}
                   >
                     <Select
                       allowClear
-                      value={createForm.primaryCampusId ?? undefined}
-                      placeholder="请选择主校区"
-                      options={availablePrimaryCampuses.map((option) => ({
+                      value={createForm.primaryOrgNodeId ?? undefined}
+                      placeholder="请选择主归属组织"
+                      options={availablePrimaryOrgNodes.map((option) => ({
                         label: option.name,
                         value: option.id,
                       }))}
-                      onChange={(value) => onPrimaryCampusChange(value ?? null)}
+                      onChange={(value) => onPrimaryOrgNodeChange(value ?? null)}
                     />
                   </Form.Item>
                   <Form.Item

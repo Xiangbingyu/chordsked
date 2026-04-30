@@ -43,7 +43,7 @@ class InternalUsernamePasswordLoginSnapshotLoadProviderTest {
         cachedSnapshot.setUserType(AccountUserType.ADMIN);
         cachedSnapshot.setLoginMethod(AuthLoginMethod.USERNAME_PASSWORD);
         cachedSnapshot.setPrincipal("admin");
-        cachedSnapshot.setDataScopeType(UserDataScopeType.ALL_COMPANY);
+        cachedSnapshot.setDataScopeType(UserDataScopeType.ALL);
         when(snapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, "admin")).thenReturn(cachedSnapshot);
 
         UsernamePasswordLoginSnapshot snapshot = (UsernamePasswordLoginSnapshot) provider.load(
@@ -52,7 +52,7 @@ class InternalUsernamePasswordLoginSnapshotLoadProviderTest {
                 "admin"
         );
 
-        assertEquals(UserDataScopeType.ALL_COMPANY, snapshot.getDataScopeType());
+        assertEquals(UserDataScopeType.ALL, snapshot.getDataScopeType());
         verify(internalUserDao, never()).getByUsername(any());
     }
 
@@ -66,7 +66,7 @@ class InternalUsernamePasswordLoginSnapshotLoadProviderTest {
         internalUser.setMustChangePassword(0);
         internalUser.setPassword("encodedPassword");
         internalUser.setPhone("13800138000");
-        internalUser.setDataScopeType(UserDataScopeType.SPECIFIED_CAMPUS.getCode());
+        internalUser.setDataScopeType(UserDataScopeType.ASSIGNED.getCode());
         when(snapshotCacheProvider.getLoginSnapshot(AccountUserType.ADMIN, "admin")).thenReturn(null);
         when(internalUserDao.getByUsername("admin")).thenReturn(internalUser);
 
@@ -79,7 +79,7 @@ class InternalUsernamePasswordLoginSnapshotLoadProviderTest {
         assertNotNull(snapshot);
         assertEquals(1001L, snapshot.getUserId());
         assertEquals("admin", snapshot.getPrincipal());
-        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, snapshot.getDataScopeType());
+        assertEquals(UserDataScopeType.ASSIGNED, snapshot.getDataScopeType());
         verify(snapshotCacheProvider).cacheLoginSnapshot(eq(snapshot));
     }
 }

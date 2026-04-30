@@ -69,7 +69,8 @@ class InternalUserControllerIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        UserDataScopeType.ALL_COMPANY
+                        1L,
+                        UserDataScopeType.ALL
                 ));
     }
 
@@ -110,11 +111,10 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldReturnAllUsersWhenAllScopeAuthorized() throws Exception {
-        insertCampus(2L, "第二校区");
-        insertInternalUser(2002L, "campus_admin", "13800000011", "校区管理员", UserDataScopeType.SPECIFIED_CAMPUS);
-        insertInternalUser(2003L, "self_user", "13800000012", "本人账号", UserDataScopeType.SELF_ONLY);
-        bindUserCampus(2002L, 1L, true);
-        bindUserCampus(2003L, 2L, true);
+        insertCampus(12L, "第二校区");
+        insertInternalUser(2002L, "org_admin", "13800000011", "组织管理员", UserDataScopeType.ASSIGNED, 1L, 1L);
+        insertInternalUser(2003L, "self_user", "13800000012", "本人账号", UserDataScopeType.SELF, 12L, 12L);
+        bindUserOrgScope(2002L, 1L, true);
         bindUserRole(2002L, 2L);
         bindUserRole(2003L, 2L);
 
@@ -137,26 +137,28 @@ class InternalUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.items[0].systemAccount").value(true))
                 .andExpect(jsonPath("$.data.items[0].currentUser").value(true))
                 .andExpect(jsonPath("$.data.items[1].id").value(1002))
-                .andExpect(jsonPath("$.data.items[1].primaryCampusId").value(1))
+                .andExpect(jsonPath("$.data.items[1].campusId").value(1))
+                .andExpect(jsonPath("$.data.items[1].orgNodeId").value(1))
                 .andExpect(jsonPath("$.data.items[1].roleIds[0]").value(2))
                 .andExpect(jsonPath("$.data.items[1].systemAccount").value(false))
                 .andExpect(jsonPath("$.data.items[1].currentUser").value(false))
                 .andExpect(jsonPath("$.data.items[2].id").value(1003))
                 .andExpect(jsonPath("$.data.items[3].id").value(1004))
                 .andExpect(jsonPath("$.data.items[4].id").value(2002))
-                .andExpect(jsonPath("$.data.items[4].primaryCampusId").value(1))
+                .andExpect(jsonPath("$.data.items[4].campusId").value(1))
                 .andExpect(jsonPath("$.data.items[5].id").value(2003))
-                .andExpect(jsonPath("$.data.items[5].primaryCampusId").value(2));
+                .andExpect(jsonPath("$.data.items[5].campusId").value(12));
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldFilterUsersByCampusScopeWhenAuthorized() throws Exception {
-        insertCampus(2L, "第二校区");
-        insertInternalUser(2002L, "campus_admin", "13800000021", "校区管理员", UserDataScopeType.SPECIFIED_CAMPUS);
-        insertInternalUser(2003L, "other_campus", "13800000022", "跨校区账号", UserDataScopeType.SPECIFIED_CAMPUS);
-        bindUserCampus(2002L, 1L, true);
-        bindUserCampus(2003L, 2L, true);
+        insertCampus(12L, "第二校区");
+        insertInternalUser(2002L, "org_admin", "13800000021", "组织管理员", UserDataScopeType.ASSIGNED, 1L, 1L);
+        insertInternalUser(2003L, "other_campus", "13800000022", "跨校区账号", UserDataScopeType.ASSIGNED, 12L, 12L);
+        bindUserOrgScope(USER_ID, 1L, true);
+        bindUserOrgScope(2002L, 1L, true);
+        bindUserOrgScope(2003L, 12L, true);
         bindUserRole(2002L, 2L);
         bindUserRole(2003L, 2L);
 
@@ -166,7 +168,8 @@ class InternalUserControllerIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        UserDataScopeType.SPECIFIED_CAMPUS
+                        1L,
+                        UserDataScopeType.ASSIGNED
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
@@ -177,18 +180,18 @@ class InternalUserControllerIntegrationTest {
                         .cookie(accessTokenCookie(accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data.total").value(5))
-                .andExpect(jsonPath("$.data.items.length()").value(5))
+                .andExpect(jsonPath("$.data.total").value(4))
+                .andExpect(jsonPath("$.data.items.length()").value(4))
                 .andExpect(jsonPath("$.data.items[0].id").value(1001))
                 .andExpect(jsonPath("$.data.items[1].id").value(1002))
-                .andExpect(jsonPath("$.data.items[4].id").value(2002));
+                .andExpect(jsonPath("$.data.items[3].id").value(2002));
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldReturnSelfOnlyWhenAuthorized() throws Exception {
-        insertInternalUser(2002L, "campus_admin", "13800000031", "校区管理员", UserDataScopeType.SPECIFIED_CAMPUS);
-        bindUserCampus(2002L, 1L, true);
+        insertInternalUser(2002L, "org_admin", "13800000031", "组织管理员", UserDataScopeType.ASSIGNED, 1L, 1L);
+        bindUserOrgScope(2002L, 1L, true);
         bindUserRole(2002L, 2L);
 
         when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
@@ -197,7 +200,8 @@ class InternalUserControllerIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        UserDataScopeType.SELF_ONLY
+                        1L,
+                        UserDataScopeType.SELF
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
@@ -235,7 +239,8 @@ class InternalUserControllerIntegrationTest {
                         1002L,
                         true,
                         1L,
-                        UserDataScopeType.ALL_COMPANY
+                        1L,
+                        UserDataScopeType.ALL
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
@@ -261,7 +266,7 @@ class InternalUserControllerIntegrationTest {
                         .cookie(accessTokenCookie(accessToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validCreateRequestJson("new_admin_invalid_scope", "13800000013")
-                                .replace("\"dataScopeType\": 4", "\"dataScopeType\": 99")))
+                                .replace("\"dataScopeType\": 2", "\"dataScopeType\": 99")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("数据范围类型无效"));
@@ -292,8 +297,8 @@ class InternalUserControllerIntegrationTest {
                 Integer.class,
                 createdUserId
         );
-        Integer campusCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(1) FROM sys_user_campus WHERE user_id = ?",
+        Integer orgScopeCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_user_org_scope WHERE user_id = ?",
                 Integer.class,
                 createdUserId
         );
@@ -304,7 +309,7 @@ class InternalUserControllerIntegrationTest {
         );
 
         org.junit.jupiter.api.Assertions.assertEquals(1, roleCount);
-        org.junit.jupiter.api.Assertions.assertEquals(1, campusCount);
+        org.junit.jupiter.api.Assertions.assertEquals(1, orgScopeCount);
         org.junit.jupiter.api.Assertions.assertEquals(1, mustChangePassword);
 
         java.util.Map<String, Object> auditLog = jdbcTemplate.queryForMap(
@@ -326,29 +331,29 @@ class InternalUserControllerIntegrationTest {
     }
 
     @Test
-    void shouldListCampusOptionsWhenHasCreateAuthority() throws Exception {
+    void shouldListOrgNodeOptionsWhenHasCreateAuthority() throws Exception {
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
         when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
                 .thenReturn(List.of("admin:role", "admin:user:create"));
 
-        mockMvc.perform(get("/admin/api/v1/internal-users/campus-options")
+        mockMvc.perform(get("/admin/api/v1/org-nodes/options")
                         .cookie(accessTokenCookie(accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data.length()").value(5))
                 .andExpect(jsonPath("$.data[0].id").value(1))
                 .andExpect(jsonPath("$.data[0].name").value("默认校区"));
     }
 
     @Test
-    void shouldReturnForbiddenWhenCampusOptionsMissingCreateAndUpdateAuthority() throws Exception {
+    void shouldReturnForbiddenWhenOrgNodeOptionsMissingCreateAndUpdateAuthority() throws Exception {
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
         when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID))
                 .thenReturn(List.of("admin:role", "admin:user:view"));
 
-        mockMvc.perform(get("/admin/api/v1/internal-users/campus-options")
+        mockMvc.perform(get("/admin/api/v1/org-nodes/options")
                         .cookie(accessTokenCookie(accessToken)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
@@ -371,8 +376,8 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldUpdateInternalUserAndClearSecurityCache() throws Exception {
-        insertInternalUser(2002L, "update_user", "13800000041", "更新测试用户", UserDataScopeType.ALL_COMPANY);
-        bindUserCampus(2002L, 1L, true);
+        insertInternalUser(2002L, "update_user", "13800000041", "更新测试用户", UserDataScopeType.ALL, 1L, 1L);
+        bindUserOrgScope(2002L, 1L, true);
         bindUserRole(2002L, 2L);
 
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
@@ -399,7 +404,7 @@ class InternalUserControllerIntegrationTest {
         org.junit.jupiter.api.Assertions.assertEquals("13800000018", userRow.get("phone"));
         org.junit.jupiter.api.Assertions.assertEquals("更新后管理员", userRow.get("name"));
         org.junit.jupiter.api.Assertions.assertEquals("https://example.com/avatar-updated.png", userRow.get("avatar"));
-        org.junit.jupiter.api.Assertions.assertEquals(4, ((Number) userRow.get("data_scope_type")).intValue());
+        org.junit.jupiter.api.Assertions.assertEquals(2, ((Number) userRow.get("data_scope_type")).intValue());
 
         Integer roleCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(1) FROM sys_user_role WHERE user_id = ? AND role_id = 2",
@@ -431,8 +436,8 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldReturnBadRequestWhenUpdateDataScopeTypeInvalid() throws Exception {
-        insertInternalUser(2002L, "update_invalid_scope", "13800000042", "更新测试用户", UserDataScopeType.ALL_COMPANY);
-        bindUserCampus(2002L, 1L, true);
+        insertInternalUser(2002L, "update_invalid_scope", "13800000042", "更新测试用户", UserDataScopeType.ALL, 1L, 1L);
+        bindUserOrgScope(2002L, 1L, true);
         bindUserRole(2002L, 2L);
 
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
@@ -444,7 +449,7 @@ class InternalUserControllerIntegrationTest {
                         .cookie(accessTokenCookie(accessToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validUpdateRequestJson("13800000019")
-                                .replace("\"dataScopeType\": 4", "\"dataScopeType\": 99")))
+                                .replace("\"dataScopeType\": 2", "\"dataScopeType\": 99")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("数据范围类型无效"));
@@ -463,12 +468,12 @@ class InternalUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.id").value(1001))
                 .andExpect(jsonPath("$.data.username").value("admin"))
-                .andExpect(jsonPath("$.data.primaryCampusId").value(1))
+                .andExpect(jsonPath("$.data.campusId").value(1))
+                .andExpect(jsonPath("$.data.orgNodeId").value(1))
                 .andExpect(jsonPath("$.data.roleIds[0]").value(1))
                 .andExpect(jsonPath("$.data.roleIds[1]").value(3))
                 .andExpect(jsonPath("$.data.systemAccount").value(true))
-                .andExpect(jsonPath("$.data.currentUser").value(true))
-                .andExpect(jsonPath("$.data.campusIds[0]").value(1));
+                .andExpect(jsonPath("$.data.currentUser").value(true));
     }
 
     @Test
@@ -493,8 +498,8 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldUpdateInternalUserStatusWhenAuthorized() throws Exception {
-        insertInternalUser(2002L, "status_user", "13800000051", "状态测试用户", UserDataScopeType.ALL_COMPANY);
-        bindUserCampus(2002L, 1L, true);
+        insertInternalUser(2002L, "status_user", "13800000051", "状态测试用户", UserDataScopeType.ALL, 1L, 1L);
+        bindUserOrgScope(2002L, 1L, true);
         bindUserRole(2002L, 2L);
 
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
@@ -555,8 +560,7 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldRejectUpdatingSelfStatus() throws Exception {
-        insertInternalUser(2003L, "self_status_user", "13800000052", "本人状态账号", UserDataScopeType.SELF_ONLY);
-        bindUserCampus(2003L, 1L, true);
+        insertInternalUser(2003L, "self_status_user", "13800000052", "本人状态账号", UserDataScopeType.SELF, 1L, 1L);
         bindUserRole(2003L, 2L);
 
         when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
@@ -565,7 +569,8 @@ class InternalUserControllerIntegrationTest {
                         2003L,
                         true,
                         1L,
-                        UserDataScopeType.SELF_ONLY
+                        1L,
+                        UserDataScopeType.SELF
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(2003L, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
@@ -603,8 +608,8 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldResetInternalUserPasswordWhenAuthorized() throws Exception {
-        insertInternalUser(2002L, "reset_pwd_user", "13800000061", "重置密码测试用户", UserDataScopeType.ALL_COMPANY);
-        bindUserCampus(2002L, 1L, true);
+        insertInternalUser(2002L, "reset_pwd_user", "13800000061", "重置密码测试用户", UserDataScopeType.ALL, 1L, 1L);
+        bindUserOrgScope(2002L, 1L, true);
         bindUserRole(2002L, 2L);
 
         String oldPassword = jdbcTemplate.queryForObject(
@@ -654,8 +659,7 @@ class InternalUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldRejectResettingOwnPassword() throws Exception {
-        insertInternalUser(2004L, "self_reset_user", "13800000062", "本人重置账号", UserDataScopeType.SELF_ONLY);
-        bindUserCampus(2004L, 1L, true);
+        insertInternalUser(2004L, "self_reset_user", "13800000062", "本人重置账号", UserDataScopeType.SELF, 1L, 1L);
         bindUserRole(2004L, 2L);
 
         when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
@@ -664,7 +668,8 @@ class InternalUserControllerIntegrationTest {
                         2004L,
                         true,
                         1L,
-                        UserDataScopeType.SELF_ONLY
+                        1L,
+                        UserDataScopeType.SELF
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(2004L, "ADMIN");
         when(securityCacheService.isTokenActive(eq(accessToken))).thenReturn(true);
@@ -707,9 +712,9 @@ class InternalUserControllerIntegrationTest {
                   "name": "新教务",
                   "avatar": "https://example.com/avatar.png",
                   "roleIds": [1],
-                  "campusIds": [1],
-                  "primaryCampusId": 1,
-                  "dataScopeType": 4
+                  "primaryOrgNodeId": 1,
+                  "orgScopeNodeIds": [1],
+                  "dataScopeType": 2
                 }
                 """.formatted(username, phone);
     }
@@ -721,9 +726,9 @@ class InternalUserControllerIntegrationTest {
                   "name": "更新后管理员",
                   "avatar": "https://example.com/avatar-updated.png",
                   "roleIds": [2],
-                  "campusIds": [1],
-                  "primaryCampusId": 1,
-                  "dataScopeType": 4
+                  "primaryOrgNodeId": 1,
+                  "orgScopeNodeIds": [1],
+                  "dataScopeType": 2
                 }
                 """.formatted(phone);
     }
@@ -751,10 +756,17 @@ class InternalUserControllerIntegrationTest {
     private void insertCampus(Long campusId, String campusName) {
         jdbcTemplate.update(
                 """
-                INSERT INTO sys_campus (id, name, address, phone, leader_id, leader_name, sort, status, remark, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO sys_campus (id, code, name, address, phone, sort, status, remark, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                campusId, campusName, "杭州", "0571-00000001", null, null, 2, 1, "测试校区", NOW, NOW
+                campusId, "CAMPUS-TEST-" + campusId, campusName, "杭州", "0571-00000001", 2, 1, "测试校区", NOW, NOW
+        );
+        jdbcTemplate.update(
+                """
+                INSERT INTO sys_org_node (id, parent_id, node_type, code, name, campus_id, ancestors, level, sort, status, remark, created_at, updated_at)
+                VALUES (?, 0, 1, ?, ?, ?, '', 1, ?, 1, ?, ?, ?)
+                """,
+                campusId, "CAMPUS-TEST-" + campusId, campusName, campusId, campusId, "测试根节点", NOW, NOW
         );
     }
 
@@ -763,12 +775,14 @@ class InternalUserControllerIntegrationTest {
             String username,
             String phone,
             String name,
-            UserDataScopeType dataScopeType
+            UserDataScopeType dataScopeType,
+            Long campusId,
+            Long orgNodeId
     ) {
         jdbcTemplate.update(
                 """
-                INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, campus_id, org_node_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 userId,
                 username,
@@ -779,25 +793,27 @@ class InternalUserControllerIntegrationTest {
                 1,
                 0,
                 dataScopeType.getCode(),
+                campusId,
+                orgNodeId,
                 NOW,
                 NOW
         );
     }
 
     private void insertProtectedSystemAdminUser(Long userId, String username, String phone, String name) {
-        insertInternalUser(userId, username, phone, name, UserDataScopeType.ALL_COMPANY);
-        bindUserCampus(userId, 1L, true);
+        insertInternalUser(userId, username, phone, name, UserDataScopeType.ALL, 1L, 1L);
+        bindUserOrgScope(userId, 1L, true);
         bindUserRole(userId, 3L);
     }
 
-    private void bindUserCampus(Long userId, Long campusId, boolean primary) {
+    private void bindUserOrgScope(Long userId, Long orgNodeId, boolean primary) {
         jdbcTemplate.update(
                 """
-                INSERT INTO sys_user_campus (user_id, campus_id, is_primary, created_at, updated_at)
+                INSERT INTO sys_user_org_scope (user_id, org_node_id, is_primary, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 userId,
-                campusId,
+                orgNodeId,
                 primary ? 1 : 0,
                 NOW,
                 NOW

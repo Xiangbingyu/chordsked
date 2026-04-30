@@ -354,7 +354,7 @@ class AuthControllerIntegrationTest {
         internalUser.setPassword(encoder.encode(RAW_PASSWORD));
         internalUser.setStatus(1);
         internalUser.setMustChangePassword(0);
-        internalUser.setDataScopeType(UserDataScopeType.ALL_COMPANY.getCode());
+        internalUser.setDataScopeType(UserDataScopeType.ALL.getCode());
         internalUser.setName("系统管理员");
         return internalUser;
     }
@@ -376,7 +376,7 @@ class AuthControllerIntegrationTest {
         snapshot.setEnabled(true);
         snapshot.setMustChangePassword(false);
         snapshot.setName("系统管理员");
-        snapshot.setDataScopeType(UserDataScopeType.ALL_COMPANY);
+        snapshot.setDataScopeType(UserDataScopeType.ALL);
         return snapshot;
     }
 }

@@ -2,9 +2,9 @@ package com.chordsked.backend.security.account.provider;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
-import com.chordsked.backend.dao.UserCampusDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.UserDataScopeType;
+import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,22 +23,22 @@ import static org.mockito.Mockito.when;
 class InternalAccountProviderTest {
     private InternalAccountProvider internalAccountProvider;
     private InternalUserDao internalUserDao;
-    private UserCampusDao userCampusDao;
     private SecurityCacheService securityCacheService;
     private AuthorityCodeService authorityCodeService;
+    private OrgDataScopeResolveService orgDataScopeResolveService;
 
     @BeforeEach
     void setUp() {
         internalAccountProvider = new InternalAccountProvider();
         internalUserDao = mock(InternalUserDao.class);
-        userCampusDao = mock(UserCampusDao.class);
         securityCacheService = mock(SecurityCacheService.class);
         authorityCodeService = mock(AuthorityCodeService.class);
+        orgDataScopeResolveService = mock(OrgDataScopeResolveService.class);
 
         ReflectionTestUtils.setField(internalAccountProvider, "internalUserDao", internalUserDao);
-        ReflectionTestUtils.setField(internalAccountProvider, "userCampusDao", userCampusDao);
         ReflectionTestUtils.setField(internalAccountProvider, "securityCacheService", securityCacheService);
         ReflectionTestUtils.setField(internalAccountProvider, "authorityCodeService", authorityCodeService);
+        ReflectionTestUtils.setField(internalAccountProvider, "orgDataScopeResolveService", orgDataScopeResolveService);
     }
 
     @Test
@@ -50,17 +50,18 @@ class InternalAccountProviderTest {
                         1001L,
                         true,
                         2001L,
-                        UserDataScopeType.SPECIFIED_CAMPUS
+                        11L,
+                        UserDataScopeType.ASSIGNED
                 ));
 
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
         assertEquals(2001L, userDetails.getCurrentCampusId());
-        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userDetails.getDataScopeTypeEnum());
+        assertEquals(11L, userDetails.getPrimaryOrgNodeId());
+        assertEquals(UserDataScopeType.ASSIGNED, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
         verify(internalUserDao, never()).getById(1001L);
-        verify(userCampusDao, never()).getPrimaryCampusIdByUserId(1001L);
     }
 
     @Test
@@ -68,18 +69,19 @@ class InternalAccountProviderTest {
         InternalUserEntity internalUser = new InternalUserEntity();
         internalUser.setId(1001L);
         internalUser.setStatus(1);
-        internalUser.setDataScopeType(UserDataScopeType.SELF_ONLY.getCode());
+        internalUser.setDataScopeType(UserDataScopeType.SELF.getCode());
+        internalUser.setCampusId(2001L);
+        internalUser.setOrgNodeId(11L);
 
         when(securityCacheService.getAuthorityCodes("ADMIN", 1001L)).thenReturn(List.of("admin:role"));
         when(securityCacheService.getUserSnapshot("ADMIN", 1001L)).thenReturn(null);
         when(internalUserDao.getById(1001L)).thenReturn(internalUser);
-        when(userCampusDao.getPrimaryCampusIdByUserId(1001L)).thenReturn(2001L);
-
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
         assertEquals(2001L, userDetails.getCurrentCampusId());
-        assertEquals(UserDataScopeType.SELF_ONLY, userDetails.getDataScopeTypeEnum());
+        assertEquals(11L, userDetails.getPrimaryOrgNodeId());
+        assertEquals(UserDataScopeType.SELF, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
         verify(securityCacheService).cacheUserSnapshot(
                 new SecurityCacheService.SecurityUserSnapshot(
@@ -87,7 +89,8 @@ class InternalAccountProviderTest {
                         1001L,
                         true,
                         2001L,
-                        UserDataScopeType.SELF_ONLY
+                        11L,
+                        UserDataScopeType.SELF
                 )
         );
     }

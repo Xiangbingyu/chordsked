@@ -15,7 +15,9 @@ class DataScopeStrategyTest {
         DataScopeUserContext userContext = new DataScopeUserContext(
                 1001L,
                 AccountUserType.ADMIN,
-                UserDataScopeType.ALL_COMPANY,
+                UserDataScopeType.ALL,
+                null,
+                List.of(),
                 List.of()
         );
 
@@ -25,34 +27,41 @@ class DataScopeStrategyTest {
     }
 
     @Test
-    void shouldBuildCampusConditionForCampusScope() {
+    void shouldBuildAssignedCampusConditionForCampusIdField() {
         DataScopeUserContext userContext = new DataScopeUserContext(
                 1001L,
                 AccountUserType.ADMIN,
-                UserDataScopeType.SPECIFIED_CAMPUS,
+                UserDataScopeType.ASSIGNED,
+                11L,
+                List.of(11L, 22L),
                 List.of(1L, 2L)
         );
 
-        String condition = new CampusDataScopeStrategy().buildCondition(userContext, "u", "id");
+        String condition = new AssignedDataScopeStrategy().buildCondition(userContext, "u", "campus_id");
 
         assertEquals(
-                "EXISTS (SELECT 1 FROM sys_user_campus ds_uc WHERE ds_uc.user_id = u.id AND ds_uc.campus_id IN (1, 2))",
+                "u.campus_id IN (1, 2)",
                 condition
         );
     }
 
     @Test
-    void shouldBuildFalseConditionWhenCampusScopeHasNoCampusIds() {
+    void shouldBuildAssignedUserConditionForIdField() {
         DataScopeUserContext userContext = new DataScopeUserContext(
                 1001L,
                 AccountUserType.ADMIN,
-                UserDataScopeType.SPECIFIED_CAMPUS,
-                List.of()
+                UserDataScopeType.ASSIGNED,
+                11L,
+                List.of(11L, 22L),
+                List.of(1L, 2L)
         );
 
-        String condition = new CampusDataScopeStrategy().buildCondition(userContext, "u", "id");
+        String condition = new AssignedDataScopeStrategy().buildCondition(userContext, "u", "id");
 
-        assertEquals("1 = 0", condition);
+        assertEquals(
+                "EXISTS (SELECT 1 FROM sys_user_org_scope ds_uos WHERE ds_uos.user_id = u.id AND ds_uos.org_node_id IN (11, 22))",
+                condition
+        );
     }
 
     @Test
@@ -60,7 +69,9 @@ class DataScopeStrategyTest {
         DataScopeUserContext userContext = new DataScopeUserContext(
                 1001L,
                 AccountUserType.ADMIN,
-                UserDataScopeType.SELF_ONLY,
+                UserDataScopeType.SELF,
+                null,
+                List.of(),
                 List.of()
         );
 

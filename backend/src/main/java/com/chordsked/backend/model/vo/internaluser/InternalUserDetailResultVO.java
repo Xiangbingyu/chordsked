@@ -33,11 +33,23 @@ public class InternalUserDetailResultVO {
     @Schema(description = "数据权限类型", example = "1")
     private UserDataScopeType dataScopeType;
 
-    @Schema(description = "主校区ID", example = "1")
-    private Long primaryCampusId;
+    @Schema(description = "所属校区ID", example = "1")
+    private Long campusId;
 
-    @Schema(description = "绑定校区ID列表")
-    private List<Long> campusIds;
+    @Schema(description = "所属校区名称", example = "默认校区")
+    private String campusName;
+
+    @Schema(description = "主归属组织节点ID", example = "1")
+    private Long orgNodeId;
+
+    @Schema(description = "主归属组织节点名称", example = "默认校区")
+    private String orgNodeName;
+
+    @Schema(description = "主归属组织节点类型", example = "1")
+    private Integer orgNodeType;
+
+    @Schema(description = "组织授权节点ID列表")
+    private List<Long> orgScopeNodeIds;
 
     @Schema(description = "绑定角色ID列表")
     private List<Long> roleIds;
@@ -148,20 +160,52 @@ public class InternalUserDetailResultVO {
         this.dataScopeType = dataScopeType;
     }
 
-    public Long getPrimaryCampusId() {
-        return primaryCampusId;
+    public Long getCampusId() {
+        return campusId;
     }
 
-    public void setPrimaryCampusId(Long primaryCampusId) {
-        this.primaryCampusId = primaryCampusId;
+    public void setCampusId(Long campusId) {
+        this.campusId = campusId;
     }
 
-    public List<Long> getCampusIds() {
-        return campusIds;
+    public String getCampusName() {
+        return campusName;
     }
 
-    public void setCampusIds(List<Long> campusIds) {
-        this.campusIds = campusIds;
+    public void setCampusName(String campusName) {
+        this.campusName = campusName;
+    }
+
+    public Long getOrgNodeId() {
+        return orgNodeId;
+    }
+
+    public void setOrgNodeId(Long orgNodeId) {
+        this.orgNodeId = orgNodeId;
+    }
+
+    public String getOrgNodeName() {
+        return orgNodeName;
+    }
+
+    public void setOrgNodeName(String orgNodeName) {
+        this.orgNodeName = orgNodeName;
+    }
+
+    public Integer getOrgNodeType() {
+        return orgNodeType;
+    }
+
+    public void setOrgNodeType(Integer orgNodeType) {
+        this.orgNodeType = orgNodeType;
+    }
+
+    public List<Long> getOrgScopeNodeIds() {
+        return orgScopeNodeIds;
+    }
+
+    public void setOrgScopeNodeIds(List<Long> orgScopeNodeIds) {
+        this.orgScopeNodeIds = orgScopeNodeIds;
     }
 
     public List<Long> getRoleIds() {

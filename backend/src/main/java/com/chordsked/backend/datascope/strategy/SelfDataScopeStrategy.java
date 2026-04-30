@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class SelfDataScopeStrategy implements DataScopeStrategy {
     @Override
     public UserDataScopeType getDataScopeType() {
-        return UserDataScopeType.SELF_ONLY;
+        return UserDataScopeType.SELF;
     }
 
     @Override

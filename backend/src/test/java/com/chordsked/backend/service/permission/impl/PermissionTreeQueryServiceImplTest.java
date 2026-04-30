@@ -38,7 +38,7 @@ class InternalPermissionTreeQueryServiceImplTest {
                 "admin:auth:menu",
                 "admin:user:menu",
                 "admin:role:menu",
-                "admin:campus:menu",
+                "admin:org:menu",
                 "admin:log:menu"
         ), result.stream().map(InternalPermissionTreeQueryResultVO::getCode).toList());
 
@@ -61,12 +61,12 @@ class InternalPermissionTreeQueryServiceImplTest {
                 "admin:role:assign_permission"
         ), childCodes(rootNodeMap.get("admin:role:menu")));
         assertEquals(List.of(
-                "admin:campus:view",
-                "admin:campus:create",
-                "admin:campus:update",
-                "admin:campus:delete",
-                "admin:campus:assign_user"
-        ), childCodes(rootNodeMap.get("admin:campus:menu")));
+                "admin:org:view",
+                "admin:org:create",
+                "admin:org:update",
+                "admin:org:delete",
+                "admin:org:assign_user"
+        ), childCodes(rootNodeMap.get("admin:org:menu")));
         assertEquals(List.of(
                 "admin:log:view",
                 "admin:log:detail",

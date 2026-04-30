@@ -2,6 +2,7 @@ package com.chordsked.backend.controller;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ class PermissionControllerIntegrationTest {
         when(securityCacheService.isTokenRevoked(anyString())).thenReturn(false);
         when(securityCacheService.isTokenActive(anyString())).thenReturn(false);
         when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", USER_ID, true, 1L, null));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", USER_ID, true, 1L, 1L, null));
     }
 
     @Test
@@ -68,7 +69,7 @@ class PermissionControllerIntegrationTest {
         when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID)).thenReturn(List.of("admin:role"));
 
         mockMvc.perform(get("/admin/api/v1/permissions/tree")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
@@ -81,7 +82,7 @@ class PermissionControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/permissions/tree")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.length()").value(6))
@@ -95,7 +96,7 @@ class PermissionControllerIntegrationTest {
                 .andExpect(jsonPath("$.data[3].code").value("admin:role:menu"))
                 .andExpect(jsonPath("$.data[3].children.length()").value(5))
                 .andExpect(jsonPath("$.data[3].children[4].code").value("admin:role:assign_permission"))
-                .andExpect(jsonPath("$.data[4].code").value("admin:campus:menu"))
+                .andExpect(jsonPath("$.data[4].code").value("admin:org:menu"))
                 .andExpect(jsonPath("$.data[4].children.length()").value(5))
                 .andExpect(jsonPath("$.data[5].code").value("admin:log:menu"))
                 .andExpect(jsonPath("$.data[5].children.length()").value(4));

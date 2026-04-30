@@ -32,15 +32,17 @@ public class InternalUserUpdateAuditExtractor extends AbstractAuditLogPayloadExt
                 + updateRequest.getPhone()
                 + "\",\"roleIds\":"
                 + updateRequest.getRoleIds()
-                + ",\"campusIds\":"
-                + updateRequest.getCampusIds()
+                + ",\"primaryOrgNodeId\":"
+                + updateRequest.getPrimaryOrgNodeId()
+                + ",\"orgScopeNodeIds\":"
+                + updateRequest.getOrgScopeNodeIds()
                 + "}";
         String summary = "{\"dataScopeType\":"
                 + updateRequest.getDataScopeType()
                 + ",\"roleCount\":"
                 + safeSize(updateRequest.getRoleIds())
-                + ",\"campusCount\":"
-                + safeSize(updateRequest.getCampusIds())
+                + ",\"orgScopeCount\":"
+                + safeSize(updateRequest.getOrgScopeNodeIds())
                 + "}";
         fillStandardSuccess(request, "INTERNAL_USER_UPDATE", updateRequest.getUserId(), input, summary);
     }

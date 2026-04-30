@@ -70,14 +70,14 @@ class InternalAuthSnapshotCacheProviderTest {
         loginSnapshot.setMustChangePassword(false);
         loginSnapshot.setPassword("encodedPassword");
         loginSnapshot.setPhone("13800138000");
-        loginSnapshot.setDataScopeType(UserDataScopeType.SPECIFIED_CAMPUS);
+        loginSnapshot.setDataScopeType(UserDataScopeType.ASSIGNED);
         when(redisProperties.getUserSnapshotCacheTtlSeconds()).thenReturn(123L);
 
         usernamePasswordLoginSnapshotCacheProvider.cacheLoginSnapshot(loginSnapshot);
 
         verify(valueOperations).set(
                 "chordsked:auth:admin:username-password:admin",
-                "1001|管理员|true|false|encodedPassword|13800138000|4",
+                "1001|管理员|true|false|encodedPassword|13800138000|2",
                 Duration.ofSeconds(123L)
         );
     }
@@ -85,7 +85,7 @@ class InternalAuthSnapshotCacheProviderTest {
     @Test
     void shouldReturnSnapshotWhenCacheHit() {
         when(valueOperations.get("chordsked:auth:admin:username-password:admin"))
-                .thenReturn("1001|管理员|true|false|encodedPassword|13800138000|4");
+                .thenReturn("1001|管理员|true|false|encodedPassword|13800138000|2");
 
         UsernamePasswordLoginSnapshot snapshot = (UsernamePasswordLoginSnapshot) usernamePasswordLoginSnapshotCacheProvider
                 .getLoginSnapshot(AccountUserType.ADMIN, "admin");
@@ -100,7 +100,7 @@ class InternalAuthSnapshotCacheProviderTest {
         assertFalse(snapshot.getMustChangePassword());
         assertEquals("encodedPassword", snapshot.getPassword());
         assertEquals("13800138000", snapshot.getPhone());
-        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, snapshot.getDataScopeType());
+        assertEquals(UserDataScopeType.ASSIGNED, snapshot.getDataScopeType());
     }
 
     @Test

@@ -12,9 +12,9 @@ export const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/
 export const TABLE_LOADING_OVERLAY_DELAY_MS = 180
 export const SYSTEM_ADMIN_ROLE_CODE = 'SYSTEM_ADMIN'
 export const DATA_SCOPE_OPTIONS: Array<{ value: UserDataScopeType; label: string }> = [
-  { value: 1, label: '全部校区' },
+  { value: 1, label: '全部数据' },
+  { value: 2, label: '按分配组织' },
   { value: 3, label: '仅本人' },
-  { value: 4, label: '指定校区' },
 ]
 
 export type AccountEditFormState = {
@@ -23,8 +23,8 @@ export type AccountEditFormState = {
   name: string
   avatar: string
   phone: string
-  campusIds: number[]
-  primaryCampusId: number | null
+  orgScopeNodeIds: number[]
+  primaryOrgNodeId: number | null
   roleIds: number[]
   dataScopeType: UserDataScopeType | null
 }
@@ -34,8 +34,8 @@ export type AccountCreateFormState = {
   name: string
   avatar: string
   phone: string
-  campusIds: number[]
-  primaryCampusId: number | null
+  orgScopeNodeIds: number[]
+  primaryOrgNodeId: number | null
   roleIds: number[]
   dataScopeType: UserDataScopeType | null
 }
@@ -64,7 +64,7 @@ function getForbiddenErrorMessage(context: ApiErrorContext) {
     case 'editLoad':
       return '当前账号没有加载该账号编辑信息的权限'
     case 'createLoad':
-      return '当前账号没有加载创建账号所需数据的权限'
+      return '当前账号没有加载创建账号所需组织节点数据的权限'
     case 'create':
       return '当前账号没有创建教务账号的权限'
     case 'permissionTree':
@@ -108,11 +108,11 @@ export function getStatusMeta(status: InternalUserStatus | null) {
 export function getDataScopeLabel(dataScopeType: UserDataScopeType | null) {
   switch (dataScopeType) {
     case 1:
-      return '全部校区'
+      return '全部数据'
+    case 2:
+      return '按分配组织'
     case 3:
       return '仅本人'
-    case 4:
-      return '指定校区'
     default:
       return '未设置'
   }

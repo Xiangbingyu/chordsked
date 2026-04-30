@@ -31,13 +31,15 @@ public class InternalUserCreateAuditExtractor extends AbstractAuditLogPayloadExt
                 + createRequest.getUsername()
                 + "\",\"roleIds\":"
                 + createRequest.getRoleIds()
-                + ",\"campusIds\":"
-                + createRequest.getCampusIds()
+                + ",\"primaryOrgNodeId\":"
+                + createRequest.getPrimaryOrgNodeId()
+                + ",\"orgScopeNodeIds\":"
+                + createRequest.getOrgScopeNodeIds()
                 + "}";
         String summary = "{\"roleCount\":"
                 + safeSize(createRequest.getRoleIds())
-                + ",\"campusCount\":"
-                + safeSize(createRequest.getCampusIds())
+                + ",\"orgScopeCount\":"
+                + safeSize(createRequest.getOrgScopeNodeIds())
                 + "}";
         fillStandardSuccess(request, "INTERNAL_USER_CREATE", bizId, input, summary);
     }

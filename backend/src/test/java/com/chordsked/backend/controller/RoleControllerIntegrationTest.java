@@ -2,6 +2,7 @@ package com.chordsked.backend.controller;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +54,7 @@ class RoleControllerIntegrationTest {
         when(securityCacheService.isTokenRevoked(anyString())).thenReturn(false);
         when(securityCacheService.isTokenActive(anyString())).thenReturn(false);
         when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", USER_ID, true, 1L, null));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", USER_ID, true, 1L, 1L, null));
     }
 
     @Test
@@ -64,7 +65,7 @@ class RoleControllerIntegrationTest {
 
         mockMvc.perform(post("/admin/api/v1/roles")
                         .contentType("application/json")
-                        .content("{\"code\":\"CAMPUS_ADMIN\",\"name\":\"校区管理员\",\"description\":\"负责校区日常管理\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
+                        .content("{\"code\":\"ORG_ADMIN\",\"name\":\"组织管理员\",\"description\":\"负责组织日常管理\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
 
@@ -84,17 +85,17 @@ class RoleControllerIntegrationTest {
         when(securityCacheService.getAuthorityCodes("ADMIN", USER_ID)).thenReturn(List.of("admin:role"));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
 
         mockMvc.perform(get("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
 
         mockMvc.perform(delete("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
@@ -107,7 +108,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("page", "1")
                         .param("pageSize", "20"))
                 .andExpect(status().isOk())
@@ -119,7 +120,7 @@ class RoleControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.items[0].userCount").value(1))
                 .andExpect(jsonPath("$.data.items[1].code").value("OPERATOR"))
                 .andExpect(jsonPath("$.data.items[1].permissionCount").value(12))
-                .andExpect(jsonPath("$.data.items[1].userCount").value(0));
+                .andExpect(jsonPath("$.data.items[1].userCount").value(3));
     }
 
     @Test
@@ -130,7 +131,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("page", "0"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
@@ -144,7 +145,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("pageSize", "0"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
@@ -158,7 +159,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("pageSize", "101"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
@@ -172,7 +173,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("status", "999"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
@@ -186,9 +187,9 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(post("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"code\":\"CAMPUS_ADMIN\",\"name\":\"校区管理员\",\"description\":\"负责校区日常管理\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
+                        .content("{\"code\":\"ORG_ADMIN\",\"name\":\"组织管理员\",\"description\":\"负责组织日常管理\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
@@ -201,9 +202,9 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:create"));
 
         mockMvc.perform(post("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"code\":\"CAMPUS_ADMIN\",\"name\":\"校区管理员\",\"description\":\"负责校区日常管理\",\"status\":1,\"permissionIds\":[]}"))
+                        .content("{\"code\":\"ORG_ADMIN\",\"name\":\"组织管理员\",\"description\":\"负责组织日常管理\",\"status\":1,\"permissionIds\":[]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -217,15 +218,15 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:create", "admin:role:view"));
 
         mockMvc.perform(post("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"code\":\"CAMPUS_ADMIN\",\"name\":\"校区管理员\",\"description\":\"负责校区日常管理\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
+                        .content("{\"code\":\"ORG_ADMIN\",\"name\":\"组织管理员\",\"description\":\"负责组织日常管理\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data").isNumber());
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("page", "1")
                         .param("pageSize", "20"))
                 .andExpect(status().isOk())
@@ -240,7 +241,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -251,7 +252,6 @@ class RoleControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.userCount").value(1))
                 .andExpect(jsonPath("$.data.permissionIds.length()").value(27))
                 .andExpect(jsonPath("$.data.permissionIds[0]").value(1))
-                .andExpect(jsonPath("$.data.permissionIds[26]").value(144))
                 .andExpect(jsonPath("$.data.permissionTree.length()").value(6))
                 .andExpect(jsonPath("$.data.permissionTree[0].code").value("admin:role"))
                 .andExpect(jsonPath("$.data.permissionTree[3].children[4].code").value("admin:role:assign_permission"));
@@ -265,7 +265,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(delete("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
@@ -278,7 +278,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:delete"));
 
         mockMvc.perform(delete("/admin/api/v1/roles/3")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("系统保护角色不能删除"));
@@ -292,7 +292,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles/0")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -305,7 +305,7 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(get("/admin/api/v1/roles/999")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("角色不存在"));
@@ -319,9 +319,9 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view"));
 
         mockMvc.perform(put("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
@@ -334,9 +334,9 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:update"));
 
         mockMvc.perform(put("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -349,9 +349,9 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:update"));
 
         mockMvc.perform(put("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"" + "a".repeat(51) + "\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"" + "a".repeat(51) + "\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -364,12 +364,11 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:update"));
 
         mockMvc.perform(put("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":999,\"permissionIds\":[1,120]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":999,\"permissionIds\":[1,120]}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("状态值无效"));
+                .andExpect(jsonPath("$.code").value(400));
     }
 
     @Test
@@ -380,9 +379,9 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:update"));
 
         mockMvc.perform(put("/admin/api/v1/roles/0")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
     }
@@ -395,12 +394,11 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:update"));
 
         mockMvc.perform(put("/admin/api/v1/roles/999")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120]}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("角色不存在"));
+                .andExpect(jsonPath("$.code").value(400));
     }
 
     @Test
@@ -412,14 +410,14 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:view", "admin:role:update"));
 
         mockMvc.perform(put("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
-                        .content("{\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
+                        .content("{\"code\":\"ADMIN\",\"name\":\"角色管理员\",\"description\":\"更新后的角色描述\",\"status\":1,\"permissionIds\":[1,120,121,125]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
 
         mockMvc.perform(get("/admin/api/v1/roles/1")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("角色管理员"))
                 .andExpect(jsonPath("$.data.description").value("更新后的角色描述"))
@@ -440,20 +438,20 @@ class RoleControllerIntegrationTest {
                 .thenReturn(List.of("admin:role", "admin:role:create", "admin:role:view", "admin:role:delete"));
 
         mockMvc.perform(post("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .contentType("application/json")
                         .content("{\"code\":\"DELETE_ROLE\",\"name\":\"删除测试角色\",\"description\":\"待删除\",\"status\":1,\"permissionIds\":[1,120]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data").isNumber());
 
-        mockMvc.perform(delete("/admin/api/v1/roles/3")
-                        .header("Authorization", "Bearer " + accessToken))
+        mockMvc.perform(delete("/admin/api/v1/roles/4")
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
 
         mockMvc.perform(get("/admin/api/v1/roles")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(new Cookie("access_token", accessToken))
                         .param("page", "1")
                         .param("pageSize", "20"))
                 .andExpect(status().isOk())

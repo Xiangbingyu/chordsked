@@ -37,58 +37,6 @@
         ORDER BY sort ASC, id ASC
     </select>
 
-    <select id="listByQuery" resultType="com.chordsked.backend.model.vo.campus.CampusQueryResultVO">
-        SELECT c.id,
-               c.code,
-               c.name,
-               c.phone,
-               c.status,
-               c.updated_at
-        FROM sys_campus c
-        WHERE c.status != 2
-        <if test="request.keyword != null and request.keyword != ''">
-            AND (c.name LIKE CONCAT('%', #{request.keyword}, '%')
-                 OR c.code LIKE CONCAT('%', #{request.keyword}, '%'))
-        </if>
-        <if test="request.status != null">
-            AND c.status = #{request.status}
-        </if>
-        /*DATA_SCOPE*/
-        ORDER BY c.sort ASC, c.id ASC
-        LIMIT #{request.pageSize} OFFSET #{request.offset}
-    </select>
-
-    <select id="countByQuery" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM sys_campus c
-        WHERE c.status != 2
-        <if test="request.keyword != null and request.keyword != ''">
-            AND (c.name LIKE CONCAT('%', #{request.keyword}, '%')
-                 OR c.code LIKE CONCAT('%', #{request.keyword}, '%'))
-        </if>
-        <if test="request.status != null">
-            AND c.status = #{request.status}
-        </if>
-        /*DATA_SCOPE*/
-    </select>
-
-    <select id="getDetailById" resultType="com.chordsked.backend.model.vo.campus.CampusDetailResultVO">
-        SELECT c.id,
-               c.code,
-               c.name,
-               c.address,
-               c.phone,
-               c.sort,
-               c.status,
-               c.remark,
-               c.created_at,
-               c.updated_at
-        FROM sys_campus c
-        WHERE c.id = #{campusId}
-          AND c.status != 2
-        LIMIT 1
-    </select>
-
     <insert id="insert" useGeneratedKeys="true" keyProperty="entity.id">
         INSERT INTO sys_campus (
             code, name, address, phone,

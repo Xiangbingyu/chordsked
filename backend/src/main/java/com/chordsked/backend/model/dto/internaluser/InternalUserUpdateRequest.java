@@ -36,14 +36,13 @@ public class InternalUserUpdateRequest {
     @NotEmpty
     private List<@NotNull @Min(1) Long> roleIds;
 
-    @Schema(description = "校区ID列表")
-    @NotEmpty
-    private List<@NotNull @Min(1) Long> campusIds;
-
-    @Schema(description = "主校区ID", example = "1")
+    @Schema(description = "主归属组织节点ID", example = "1")
     @NotNull
     @Min(1)
-    private Long primaryCampusId;
+    private Long primaryOrgNodeId;
+
+    @Schema(description = "组织授权节点ID列表")
+    private List<@NotNull @Min(1) Long> orgScopeNodeIds;
 
     @Schema(description = "数据范围类型", example = "1")
     @NotNull
@@ -92,20 +91,20 @@ public class InternalUserUpdateRequest {
         this.roleIds = roleIds;
     }
 
-    public List<Long> getCampusIds() {
-        return campusIds;
+    public Long getPrimaryOrgNodeId() {
+        return primaryOrgNodeId;
     }
 
-    public void setCampusIds(List<Long> campusIds) {
-        this.campusIds = campusIds;
+    public void setPrimaryOrgNodeId(Long primaryOrgNodeId) {
+        this.primaryOrgNodeId = primaryOrgNodeId;
     }
 
-    public Long getPrimaryCampusId() {
-        return primaryCampusId;
+    public List<Long> getOrgScopeNodeIds() {
+        return orgScopeNodeIds;
     }
 
-    public void setPrimaryCampusId(Long primaryCampusId) {
-        this.primaryCampusId = primaryCampusId;
+    public void setOrgScopeNodeIds(List<Long> orgScopeNodeIds) {
+        this.orgScopeNodeIds = orgScopeNodeIds;
     }
 
     public Integer getDataScopeType() {

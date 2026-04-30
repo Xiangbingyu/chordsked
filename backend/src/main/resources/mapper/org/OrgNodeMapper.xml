@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chordsked.backend.dao.mapper.OrgNodeMapper">
+
+    <select id="getById" resultType="com.chordsked.backend.model.entity.OrgNodeEntity">
+        SELECT id,
+               parent_id,
+               node_type,
+               code,
+               name,
+               campus_id,
+               ancestors,
+               level,
+               sort,
+               status,
+               remark,
+               created_at,
+               updated_at
+        FROM sys_org_node
+        WHERE id = #{nodeId}
+          AND status != 2
+        LIMIT 1
+    </select>
+
+    <select id="listAllEnabled" resultType="com.chordsked.backend.model.entity.OrgNodeEntity">
+        SELECT id,
+               parent_id,
+               node_type,
+               code,
+               name,
+               campus_id,
+               ancestors,
+               level,
+               sort,
+               status,
+               remark,
+               created_at,
+               updated_at
+        FROM sys_org_node
+        WHERE status = 1
+        ORDER BY level ASC, sort ASC, id ASC
+    </select>
+
+    <select id="listChildrenByParentId" resultType="com.chordsked.backend.model.entity.OrgNodeEntity">
+        SELECT id,
+               parent_id,
+               node_type,
+               code,
+               name,
+               campus_id,
+               ancestors,
+               level,
+               sort,
+               status,
+               remark,
+               created_at,
+               updated_at
+        FROM sys_org_node
+        WHERE parent_id = #{parentId}
+          AND status != 2
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="listDescendantsByNodeId" resultType="com.chordsked.backend.model.entity.OrgNodeEntity">
+        SELECT id,
+               parent_id,
+               node_type,
+               code,
+               name,
+               campus_id,
+               ancestors,
+               level,
+               sort,
+               status,
+               remark,
+               created_at,
+               updated_at
+        FROM sys_org_node
+        WHERE status != 2
+          AND (
+                id = #{nodeId}
+                OR ancestors = CAST(#{nodeId} AS CHAR)
+                OR ancestors LIKE CONCAT(#{nodeId}, ',%')
+                OR ancestors LIKE CONCAT('%,', #{nodeId})
+                OR ancestors LIKE CONCAT('%,', #{nodeId}, ',%')
+              )
+        ORDER BY level ASC, sort ASC, id ASC
+    </select>
+
+    <select id="countChildrenByParentId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_org_node
+        WHERE parent_id = #{parentId}
+          AND status != 2
+    </select>
+
+    <select id="countUserBindingsByNodeId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_user_org_scope
+        WHERE org_node_id = #{nodeId}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="entity.id">
+        INSERT INTO sys_org_node (
+            parent_id, node_type, code, name,
+            campus_id, ancestors, level, sort,
+            status, remark, created_at, updated_at
+        ) VALUES (
+            #{entity.parentId}, #{entity.nodeType}, #{entity.code}, #{entity.name},
+            #{entity.campusId}, #{entity.ancestors}, #{entity.level}, #{entity.sort},
+            #{entity.status}, #{entity.remark}, #{entity.createdAt}, #{entity.updatedAt}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE sys_org_node
+        <set>
+            <if test="entity.code != null and entity.code != ''">code = #{entity.code},</if>
+            <if test="entity.name != null and entity.name != ''">name = #{entity.name},</if>
+            <if test="entity.sort != null">sort = #{entity.sort},</if>
+            <if test="entity.status != null">status = #{entity.status},</if>
+            <if test="entity.remark != null">remark = #{entity.remark},</if>
+            updated_at = #{entity.updatedAt}
+        </set>
+        WHERE id = #{entity.id}
+          AND status != 2
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_org_node
+        WHERE id = #{nodeId}
+          AND status != 2
+    </delete>
+
+    <select id="existsByParentIdAndCode" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_org_node
+        WHERE parent_id = #{parentId}
+          AND code = #{code}
+          AND status != 2
+        <if test="excludeId != null and excludeId > 0">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="existsByParentIdAndName" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM sys_org_node
+        WHERE parent_id = #{parentId}
+          AND name = #{name}
+          AND status != 2
+        <if test="excludeId != null and excludeId > 0">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+</mapper>

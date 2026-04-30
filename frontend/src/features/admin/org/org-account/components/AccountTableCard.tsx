@@ -108,7 +108,7 @@ function AccountTableCard({
                   <td style={{ padding: '12px 16px', color: '#3a352f' }}>{row.name}</td>
                   <td style={{ padding: '12px 16px', color: '#3a352f' }}>{row.phone}</td>
                   <td style={{ padding: '12px 16px', color: '#3a352f' }}>
-                    {row.primaryCampusName || '未分配'}
+                    {row.campusName || '未分配'}
                   </td>
                   <td style={{ padding: '12px 16px', color: '#3a352f' }}>
                     {roleNames.length > 0 ? roleNames.join(' / ') : '未绑定'}

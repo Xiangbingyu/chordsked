@@ -45,7 +45,7 @@ class SecurityCacheServiceImplTest {
 
     @Test
     void shouldReadUserSnapshotFromCache() {
-        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|4");
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|11|2");
 
         SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
 
@@ -53,7 +53,8 @@ class SecurityCacheServiceImplTest {
         assertEquals(1001L, userSnapshot.userId());
         assertEquals(true, userSnapshot.enabled());
         assertEquals(2001L, userSnapshot.currentCampusId());
-        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userSnapshot.dataScopeType());
+        assertEquals(11L, userSnapshot.primaryOrgNodeId());
+        assertEquals(UserDataScopeType.ASSIGNED, userSnapshot.dataScopeType());
     }
 
     @Test
@@ -71,7 +72,7 @@ class SecurityCacheServiceImplTest {
 
     @Test
     void shouldReadExtendedUserSnapshotByUsingFirstThreeFields() {
-        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|4|extra");
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|11|2");
 
         SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
 
@@ -79,7 +80,8 @@ class SecurityCacheServiceImplTest {
         assertEquals(1001L, userSnapshot.userId());
         assertEquals(true, userSnapshot.enabled());
         assertEquals(2001L, userSnapshot.currentCampusId());
-        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userSnapshot.dataScopeType());
+        assertEquals(11L, userSnapshot.primaryOrgNodeId());
+        assertEquals(UserDataScopeType.ASSIGNED, userSnapshot.dataScopeType());
     }
 
     @Test
@@ -90,13 +92,14 @@ class SecurityCacheServiceImplTest {
                         1001L,
                         true,
                         2001L,
-                        UserDataScopeType.SPECIFIED_CAMPUS
+                        11L,
+                        UserDataScopeType.ASSIGNED
                 )
         );
 
         verify(valueOperations).set(
                 eq("chordsked:security:user:ADMIN:1001"),
-                eq("1|2001|4"),
+                eq("1|2001|11|2"),
                 eq(Duration.ofSeconds(300))
         );
     }

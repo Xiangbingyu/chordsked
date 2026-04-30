@@ -3,12 +3,15 @@ package com.chordsked.backend.service.internaluser.impl;
 import com.chordsked.backend.audit.annotation.AuditLog;
 import com.chordsked.backend.config.properties.InternalUserProperties;
 import com.chordsked.backend.dao.InternalUserDao;
-import com.chordsked.backend.dao.UserCampusDao;
+import com.chordsked.backend.dao.OrgNodeDao;
+import com.chordsked.backend.dao.UserOrgScopeDao;
 import com.chordsked.backend.dao.UserRoleDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.internaluser.InternalUserCreateRequest;
 import com.chordsked.backend.model.entity.InternalUserEntity;
+import com.chordsked.backend.model.entity.OrgNodeEntity;
+import com.chordsked.backend.model.entity.UserOrgScopeEntity;
 import com.chordsked.backend.model.entity.UserRoleEntity;
 import com.chordsked.backend.model.enums.InternalUserStatus;
 import com.chordsked.backend.model.enums.MustChangePasswordFlag;
@@ -34,8 +37,11 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
     @Resource(name = "userRoleDao")
     private UserRoleDao userRoleDao;
 
-    @Resource(name = "userCampusDao")
-    private UserCampusDao userCampusDao;
+    @Resource(name = "orgNodeDao")
+    private OrgNodeDao orgNodeDao;
+
+    @Resource(name = "userOrgScopeDao")
+    private UserOrgScopeDao userOrgScopeDao;
 
     @Resource(name = "internalUserProperties")
     private InternalUserProperties internalUserProperties;
@@ -67,12 +73,13 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
                 throw new IllegalArgumentException("name must not be blank");
             }
             Integer dataScopeType = request.getDataScopeType();
-            if (UserDataScopeType.fromCode(dataScopeType) == null) {
+            UserDataScopeType scopeType = UserDataScopeType.fromCode(dataScopeType);
+            if (scopeType == null) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "数据范围类型无效");
             }
-            Long primaryCampusId = request.getPrimaryCampusId();
-            if (primaryCampusId == null || primaryCampusId <= 0) {
-                throw new IllegalArgumentException("primaryCampusId must be greater than 0");
+            Long primaryOrgNodeId = request.getPrimaryOrgNodeId();
+            if (primaryOrgNodeId == null || primaryOrgNodeId <= 0) {
+                throw new IllegalArgumentException("primaryOrgNodeId must be greater than 0");
             }
 
             if (internalUserDao.getByUsername(username.trim()) != null) {
@@ -83,10 +90,12 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
             }
 
             List<Long> distinctRoleIds = internalUserWriteValidator.validateRoleIds(request.getRoleIds());
-            List<Long> distinctCampusIds = internalUserWriteValidator.validateCampusIds(
-                    request.getCampusIds(),
-                    primaryCampusId
+            List<Long> distinctOrgNodeIds = internalUserWriteValidator.validateOrgScopeNodeIds(
+                    request.getOrgScopeNodeIds(),
+                    primaryOrgNodeId,
+                    dataScopeType
             );
+            OrgNodeEntity primaryOrgNode = orgNodeDao.getById(primaryOrgNodeId);
 
             long now = System.currentTimeMillis();
             String defaultPassword = internalUserProperties.getDefaultPassword();
@@ -101,6 +110,8 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
             user.setStatus(InternalUserStatus.ENABLED.getCode());
             user.setMustChangePassword(MustChangePasswordFlag.YES.getCode());
             user.setDataScopeType(dataScopeType);
+            user.setCampusId(primaryOrgNode == null ? null : primaryOrgNode.getCampusId());
+            user.setOrgNodeId(primaryOrgNodeId);
             user.setCreatedAt(now);
             user.setUpdatedAt(now);
             internalUserDao.save(user);
@@ -110,7 +121,11 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
                     .toList();
             userRoleDao.saveBatch(userRoles);
 
-            userCampusDao.saveBatch(distinctCampusIds, primaryCampusId, user.getId(), now);
+            if (scopeType.isAssignedScope() && !distinctOrgNodeIds.isEmpty()) {
+                userOrgScopeDao.saveBatch(distinctOrgNodeIds.stream()
+                        .map(nodeId -> buildUserOrgScope(user.getId(), nodeId, primaryOrgNodeId, now))
+                        .toList());
+            }
             return user.getId();
         } catch (RuntimeException exception) {
             logger.warn(
@@ -131,5 +146,15 @@ public class InternalUserCreateServiceImpl implements InternalUserCreateService 
         userRole.setCreatedAt(now);
         userRole.setUpdatedAt(now);
         return userRole;
+    }
+
+    private UserOrgScopeEntity buildUserOrgScope(Long userId, Long orgNodeId, Long primaryOrgNodeId, Long now) {
+        UserOrgScopeEntity userOrgScope = new UserOrgScopeEntity();
+        userOrgScope.setUserId(userId);
+        userOrgScope.setOrgNodeId(orgNodeId);
+        userOrgScope.setIsPrimary(orgNodeId.equals(primaryOrgNodeId) ? 1 : 0);
+        userOrgScope.setCreatedAt(now);
+        userOrgScope.setUpdatedAt(now);
+        return userOrgScope;
     }
 }

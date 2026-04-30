@@ -38,7 +38,7 @@ export const adminNavigation = {
       key: 'org',
       label: '组织与权限',
       children: [
-        { key: 'org-campus', label: '校区管理', path: 'org-campus', href: '/admin/org-campus' },
+        { key: 'org-campus', label: '组织管理', path: 'org-campus', href: '/admin/org-campus' },
         { key: 'org-tree', label: '组织树管理', path: 'org-tree', href: '/admin/org-tree' },
         { key: 'org-account', label: '账号管理', path: 'org-account', href: '/admin/org-account' },
         {
@@ -59,7 +59,7 @@ export const adminNavigation = {
           key: 'org-manage',
           label: '组织管理',
           children: [
-            { key: 'org-campus', label: '校区管理', path: 'org-campus', href: '/admin/org-campus' },
+              { key: 'org-campus', label: '组织管理', path: 'org-campus', href: '/admin/org-campus' },
             { key: 'org-tree', label: '组织树管理', path: 'org-tree', href: '/admin/org-tree' },
           ],
         },

@@ -253,7 +253,10 @@ function AccountVisibilityPreview({
               数据范围：{selectedUserDataScopeLabel}
             </div>
             <div style={{ borderRadius: 10, backgroundColor: '#faf8f4', padding: 10 }}>
-              所属校区：{selectedUser.primaryCampusName || '未分配'}
+              所属校区：{selectedUser.campusName || '未分配'}
+            </div>
+            <div style={{ borderRadius: 10, backgroundColor: '#faf8f4', padding: 10 }}>
+              主归属组织：{selectedUser.orgNodeName || '未分配'}
             </div>
           </div>
           <div

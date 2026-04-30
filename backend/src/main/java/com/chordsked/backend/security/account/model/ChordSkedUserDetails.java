@@ -11,6 +11,7 @@ public class ChordSkedUserDetails implements UserDetails {
     private final Long userId;
     private final AccountUserType userType;
     private final Long currentCampusId;
+    private final Long primaryOrgNodeId;
     private final UserDataScopeType dataScopeType;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -19,6 +20,7 @@ public class ChordSkedUserDetails implements UserDetails {
             Long userId,
             AccountUserType userType,
             Long currentCampusId,
+            Long primaryOrgNodeId,
             UserDataScopeType dataScopeType,
             boolean enabled,
             Collection<? extends GrantedAuthority> authorities
@@ -26,6 +28,7 @@ public class ChordSkedUserDetails implements UserDetails {
         this.userId = userId;
         this.userType = userType;
         this.currentCampusId = currentCampusId;
+        this.primaryOrgNodeId = primaryOrgNodeId;
         this.dataScopeType = dataScopeType;
         this.enabled = enabled;
         this.authorities = authorities;
@@ -45,6 +48,10 @@ public class ChordSkedUserDetails implements UserDetails {
 
     public Long getCurrentCampusId() {
         return currentCampusId;
+    }
+
+    public Long getPrimaryOrgNodeId() {
+        return primaryOrgNodeId;
     }
 
     public UserDataScopeType getDataScopeTypeEnum() {

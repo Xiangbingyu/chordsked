@@ -2,8 +2,10 @@ package com.chordsked.backend.controller;
 
 import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.model.enums.UserDataScopeType;
+import com.chordsked.backend.utils.cookie.CookieUtils;
 import com.chordsked.backend.utils.jwt.JwtTokenUtils;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,98 +81,101 @@ class InternalUserControllerInfrastructureIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldLoadAuthorityAndSnapshotFromH2AndCacheIntoRedis() throws Exception {
-        insertCampus(2L, "第二校区");
-        insertInternalUser(1002L, "campus_admin", "13800000001", "校区管理员", UserDataScopeType.SPECIFIED_CAMPUS);
-        insertInternalUser(1003L, "self_user", "13800000002", "本人账号", UserDataScopeType.SELF_ONLY);
-        bindUserCampus(1002L, 1L, true);
-        bindUserCampus(1003L, 2L, true);
-        bindUserRole(1002L, 2L);
-        bindUserRole(1003L, 2L);
+        insertCampus(12L, "第二校区");
+        insertInternalUser(2102L, "org_admin_a", "13800001001", "组织管理员", UserDataScopeType.ASSIGNED, 1L, 1L);
+        insertInternalUser(2103L, "self_user_a", "13800001002", "本人账号", UserDataScopeType.SELF, 12L, 12L);
+        bindUserOrgScope(2102L, 1L, true);
+        bindUserRole(2102L, 2L);
+        bindUserRole(2103L, 2L);
 
         String accessToken = activateAccessToken();
 
         mockMvc.perform(get("/admin/api/v1/internal-users")
-                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie(accessTokenCookie(accessToken))
                         .param("page", "1")
                         .param("pageSize", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data.total").value(3))
-                .andExpect(jsonPath("$.data.items.length()").value(3))
+                .andExpect(jsonPath("$.data.total").value(6))
+                .andExpect(jsonPath("$.data.items.length()").value(6))
                 .andExpect(jsonPath("$.data.items[0].id").value(1001))
                 .andExpect(jsonPath("$.data.items[1].id").value(1002))
                 .andExpect(jsonPath("$.data.items[2].id").value(1003));
 
         SecurityCacheService.SecurityUserSnapshot snapshot = securityCacheService.getUserSnapshot(USER_TYPE, USER_ID);
         assertNotNull(snapshot);
-        assertEquals(UserDataScopeType.ALL_COMPANY, snapshot.dataScopeType());
+        assertEquals(UserDataScopeType.ALL, snapshot.dataScopeType());
         assertEquals(1L, snapshot.currentCampusId());
+        assertEquals(1L, snapshot.primaryOrgNodeId());
         assertTrue(securityCacheService.getAuthorityCodes(USER_TYPE, USER_ID).contains("admin:user:view"));
-        assertEquals("1|1|1", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
+        assertEquals("1|1|1|1", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
         assertTrue(stringRedisTemplate.opsForValue().get(AUTHORITY_KEY).contains("admin:user:view"));
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldUseRedisSnapshotForCampusScopeAndTriggerDataScopeFilter() throws Exception {
-        insertCampus(2L, "第二校区");
-        insertInternalUser(1002L, "campus_admin", "13800000001", "校区管理员", UserDataScopeType.SPECIFIED_CAMPUS);
-        insertInternalUser(1003L, "other_campus", "13800000002", "跨校区账号", UserDataScopeType.SPECIFIED_CAMPUS);
-        bindUserCampus(1002L, 1L, true);
-        bindUserCampus(1003L, 2L, true);
-        bindUserRole(1002L, 2L);
-        bindUserRole(1003L, 2L);
+        insertCampus(12L, "第二校区");
+        insertInternalUser(2102L, "org_admin_b", "13800001011", "组织管理员", UserDataScopeType.ASSIGNED, 1L, 1L);
+        insertInternalUser(2103L, "other_campus_b", "13800001012", "跨校区账号", UserDataScopeType.ASSIGNED, 12L, 12L);
+        bindUserOrgScope(USER_ID, 1L, true);
+        bindUserOrgScope(2102L, 1L, true);
+        bindUserOrgScope(2103L, 12L, true);
+        bindUserRole(2102L, 2L);
+        bindUserRole(2103L, 2L);
         securityCacheService.cacheUserSnapshot(
                 new SecurityCacheService.SecurityUserSnapshot(
                         USER_TYPE,
                         USER_ID,
                         true,
                         1L,
-                        UserDataScopeType.SPECIFIED_CAMPUS
+                        1L,
+                        UserDataScopeType.ASSIGNED
                 )
         );
         securityCacheService.cacheAuthorityCodes(USER_TYPE, USER_ID, List.of("admin:role", "admin:user:view"));
         String accessToken = activateAccessToken();
 
         mockMvc.perform(get("/admin/api/v1/internal-users")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(accessTokenCookie(accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data.total").value(2))
-                .andExpect(jsonPath("$.data.items.length()").value(2))
+                .andExpect(jsonPath("$.data.total").value(4))
+                .andExpect(jsonPath("$.data.items.length()").value(4))
                 .andExpect(jsonPath("$.data.items[0].id").value(1001))
                 .andExpect(jsonPath("$.data.items[1].id").value(1002));
 
-        assertEquals("1|1|4", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
+        assertEquals("1|1|1|2", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldUseRedisSnapshotForSelfScopeAndTriggerDataScopeFilter() throws Exception {
-        insertInternalUser(1002L, "campus_admin", "13800000001", "校区管理员", UserDataScopeType.SPECIFIED_CAMPUS);
-        bindUserCampus(1002L, 1L, true);
-        bindUserRole(1002L, 2L);
+        insertInternalUser(2102L, "org_admin_c", "13800001021", "组织管理员", UserDataScopeType.ASSIGNED, 1L, 1L);
+        bindUserOrgScope(2102L, 1L, true);
+        bindUserRole(2102L, 2L);
         securityCacheService.cacheUserSnapshot(
                 new SecurityCacheService.SecurityUserSnapshot(
                         USER_TYPE,
                         USER_ID,
                         true,
                         1L,
-                        UserDataScopeType.SELF_ONLY
+                        1L,
+                        UserDataScopeType.SELF
                 )
         );
         securityCacheService.cacheAuthorityCodes(USER_TYPE, USER_ID, List.of("admin:role", "admin:user:view"));
         String accessToken = activateAccessToken();
 
         mockMvc.perform(get("/admin/api/v1/internal-users")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .cookie(accessTokenCookie(accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.total").value(1))
                 .andExpect(jsonPath("$.data.items.length()").value(1))
                 .andExpect(jsonPath("$.data.items[0].id").value(1001));
 
-        assertEquals("1|1|3", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
+        assertEquals("1|1|1|3", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
     }
 
     private String activateAccessToken() {
@@ -178,6 +183,10 @@ class InternalUserControllerInfrastructureIntegrationTest {
         Claims claims = jwtTokenUtils.parseClaims(accessToken);
         securityCacheService.markTokenActive(accessToken, claims.getExpiration());
         return accessToken;
+    }
+
+    private Cookie accessTokenCookie(String accessToken) {
+        return new Cookie(CookieUtils.ACCESS_TOKEN_COOKIE_NAME, accessToken);
     }
 
     private void clearRedis() {
@@ -192,10 +201,17 @@ class InternalUserControllerInfrastructureIntegrationTest {
     private void insertCampus(Long campusId, String campusName) {
         jdbcTemplate.update(
                 """
-                INSERT INTO sys_campus (id, name, address, phone, leader_id, leader_name, sort, status, remark, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO sys_campus (id, code, name, address, phone, sort, status, remark, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                campusId, campusName, "杭州", "0571-00000001", null, null, 2, 1, "测试校区", NOW, NOW
+                campusId, "CAMPUS-TEST-" + campusId, campusName, "杭州", "0571-00000001", 2, 1, "测试校区", NOW, NOW
+        );
+        jdbcTemplate.update(
+                """
+                INSERT INTO sys_org_node (id, parent_id, node_type, code, name, campus_id, ancestors, level, sort, status, remark, created_at, updated_at)
+                VALUES (?, 0, 1, ?, ?, ?, '', 1, ?, 1, ?, ?, ?)
+                """,
+                campusId, "CAMPUS-TEST-" + campusId, campusName, campusId, campusId, "测试根节点", NOW, NOW
         );
     }
 
@@ -204,12 +220,14 @@ class InternalUserControllerInfrastructureIntegrationTest {
             String username,
             String phone,
             String name,
-            UserDataScopeType dataScopeType
+            UserDataScopeType dataScopeType,
+            Long campusId,
+            Long orgNodeId
     ) {
         jdbcTemplate.update(
                 """
-                INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO sys_internal_user (id, username, password, phone, name, avatar, status, must_change_password, data_scope_type, campus_id, org_node_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 userId,
                 username,
@@ -220,19 +238,21 @@ class InternalUserControllerInfrastructureIntegrationTest {
                 1,
                 0,
                 dataScopeType.getCode(),
+                campusId,
+                orgNodeId,
                 NOW,
                 NOW
         );
     }
 
-    private void bindUserCampus(Long userId, Long campusId, boolean primary) {
+    private void bindUserOrgScope(Long userId, Long orgNodeId, boolean primary) {
         jdbcTemplate.update(
                 """
-                INSERT INTO sys_user_campus (user_id, campus_id, is_primary, created_at, updated_at)
+                INSERT INTO sys_user_org_scope (user_id, org_node_id, is_primary, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 userId,
-                campusId,
+                orgNodeId,
                 primary ? 1 : 0,
                 NOW,
                 NOW

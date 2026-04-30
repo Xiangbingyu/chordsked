@@ -40,13 +40,13 @@ class StudentAccountProviderTest {
     void shouldLoadStudentDetailsFromSecuritySnapshotCache() {
         when(securityCacheService.getAuthorityCodes("STUDENT", 3001L)).thenReturn(List.of("student:role"));
         when(securityCacheService.getUserSnapshot("STUDENT", 3001L))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("STUDENT", 3001L, true, 4001L, null));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("STUDENT", 3001L, true, 4001L, null, null));
 
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) studentAccountProvider.loadUserDetails(3001L);
 
         assertEquals(3001L, userDetails.getUserId());
         assertEquals(4001L, userDetails.getCurrentCampusId());
-        assertEquals(UserDataScopeType.SPECIFIED_CAMPUS, userDetails.getDataScopeTypeEnum());
+        assertEquals(UserDataScopeType.ASSIGNED, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
         verify(studentUserDao, never()).getById(3001L);
     }

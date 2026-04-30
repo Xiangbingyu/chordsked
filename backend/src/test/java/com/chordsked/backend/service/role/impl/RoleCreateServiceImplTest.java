@@ -45,7 +45,7 @@ class RoleCreateServiceImplTest {
     void shouldCreateRoleWithPermissions() {
         RoleCreateRequest request = new RoleCreateRequest();
         request.setCode("CAMPUS_ADMIN");
-        request.setName("校区管理员");
+        request.setName("组织管理员");
         request.setDescription("负责校区日常管理");
         request.setStatus(1);
         request.setPermissionIds(List.of(1L, 120L, 121L, 125L));
@@ -56,7 +56,7 @@ class RoleCreateServiceImplTest {
         detailRequest.setRoleId(roleId);
         RoleDetailQueryResultVO result = roleDetailQueryService.getDetail(detailRequest);
         assertEquals("CAMPUS_ADMIN", result.getCode());
-        assertEquals("校区管理员", result.getName());
+        assertEquals("组织管理员", result.getName());
         assertEquals(4, result.getPermissionCount());
         assertEquals(List.of(1L, 120L, 121L, 125L), result.getPermissionIds());
 
@@ -136,7 +136,7 @@ class RoleCreateServiceImplTest {
     private RoleCreateRequest buildValidRequest() {
         RoleCreateRequest request = new RoleCreateRequest();
         request.setCode("CAMPUS_ADMIN");
-        request.setName("校区管理员");
+        request.setName("组织管理员");
         request.setDescription("负责校区日常管理");
         request.setStatus(1);
         request.setPermissionIds(List.of(1L, 120L, 121L, 125L));

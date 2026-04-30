@@ -37,7 +37,7 @@ class InternalUserCreateServiceImplTest {
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
-    void shouldCreateInternalUserWithRolesAndCampuses() {
+    void shouldCreateInternalUserWithRolesAndOrgScopes() {
         InternalUserCreateRequest request = buildValidRequest();
         request.setUsername("campus_manager");
         request.setPhone("13800000021");
@@ -56,27 +56,27 @@ class InternalUserCreateServiceImplTest {
         assertEquals("校区教务", userRow.get("name"));
         assertEquals(1, ((Number) userRow.get("status")).intValue());
         assertEquals(1, ((Number) userRow.get("must_change_password")).intValue());
-        assertEquals(4, ((Number) userRow.get("data_scope_type")).intValue());
+        assertEquals(2, ((Number) userRow.get("data_scope_type")).intValue());
 
         Integer roleCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(1) FROM sys_user_role WHERE user_id = ?",
                 Integer.class,
                 userId
         );
-        Integer campusCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(1) FROM sys_user_campus WHERE user_id = ?",
+        Integer orgScopeCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_user_org_scope WHERE user_id = ?",
                 Integer.class,
                 userId
         );
-        Integer primaryCampusCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(1) FROM sys_user_campus WHERE user_id = ? AND campus_id = ? AND is_primary = 1",
+        Integer primaryOrgScopeCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_user_org_scope WHERE user_id = ? AND org_node_id = ? AND is_primary = 1",
                 Integer.class,
                 userId,
                 1L
         );
         assertEquals(1, roleCount);
-        assertEquals(1, campusCount);
-        assertEquals(1, primaryCampusCount);
+        assertEquals(1, orgScopeCount);
+        assertEquals(1, primaryOrgScopeCount);
 
         Map<String, Object> auditLog = waitForAuditLog(
                 """
@@ -133,26 +133,30 @@ class InternalUserCreateServiceImplTest {
     }
 
     @Test
-    void shouldThrowWhenPrimaryCampusMissingFromCampusIds() {
+    void shouldAllowPrimaryOrgNodeOutsideOrgScopeNodeIds() {
         InternalUserCreateRequest request = buildValidRequest();
-        request.setCampusIds(List.of(2L));
+        request.setOrgScopeNodeIds(List.of(2L));
 
-        BusinessException exception = assertThrows(BusinessException.class, () -> internalUserCreateService.create(request));
+        Long userId = internalUserCreateService.create(request);
 
-        assertEquals(400, exception.getCode());
-        assertEquals("主校区必须在校区列表中", exception.getMessage());
+        Integer scopeCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM sys_user_org_scope WHERE user_id = ?",
+                Integer.class,
+                userId
+        );
+        assertEquals(1, scopeCount);
     }
 
     @Test
-    void shouldThrowWhenCampusNotExists() {
+    void shouldThrowWhenOrgNodeNotExists() {
         InternalUserCreateRequest request = buildValidRequest();
-        request.setCampusIds(List.of(999L));
-        request.setPrimaryCampusId(999L);
+        request.setPrimaryOrgNodeId(999L);
+        request.setOrgScopeNodeIds(List.of(999L));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> internalUserCreateService.create(request));
 
         assertEquals(400, exception.getCode());
-        assertEquals("校区不存在: 999", exception.getMessage());
+        assertEquals("主归属组织节点不存在或未启用", exception.getMessage());
     }
 
     @Test
@@ -173,9 +177,9 @@ class InternalUserCreateServiceImplTest {
         request.setName("新教务");
         request.setAvatar("https://example.com/avatar.png");
         request.setRoleIds(List.of(1L));
-        request.setCampusIds(List.of(1L));
-        request.setPrimaryCampusId(1L);
-        request.setDataScopeType(4);
+        request.setPrimaryOrgNodeId(1L);
+        request.setOrgScopeNodeIds(List.of(1L));
+        request.setDataScopeType(2);
         return request;
     }
 

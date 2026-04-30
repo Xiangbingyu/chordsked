@@ -5,8 +5,8 @@ function CampusPage() {
   return (
     <OrgPageShell
       pageKey="org-campus"
-      title="校区管理"
-      description="校区管理属于组织管理部分。这里可直接查看校区列表、创建校区并维护校区基础信息与状态。"
+      title="组织管理"
+      description="统一维护校区、部门、小组等组织节点。校区作为根节点维护，部门和小组通过父子关系构建完整组织结构。"
     >
       <CampusPageContent />
     </OrgPageShell>

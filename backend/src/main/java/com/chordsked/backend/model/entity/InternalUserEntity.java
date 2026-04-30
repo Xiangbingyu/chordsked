@@ -14,6 +14,8 @@ public class InternalUserEntity {
     private InternalUserStatus status;
     private MustChangePasswordFlag mustChangePassword;
     private UserDataScopeType dataScopeType;
+    private Long campusId;
+    private Long orgNodeId;
     private Long createdAt;
     private Long updatedAt;
 
@@ -111,6 +113,22 @@ public class InternalUserEntity {
 
     public void setDataScopeTypeEnum(UserDataScopeType dataScopeType) {
         this.dataScopeType = dataScopeType;
+    }
+
+    public Long getCampusId() {
+        return campusId;
+    }
+
+    public void setCampusId(Long campusId) {
+        this.campusId = campusId;
+    }
+
+    public Long getOrgNodeId() {
+        return orgNodeId;
+    }
+
+    public void setOrgNodeId(Long orgNodeId) {
+        this.orgNodeId = orgNodeId;
     }
 
     public Long getCreatedAt() {

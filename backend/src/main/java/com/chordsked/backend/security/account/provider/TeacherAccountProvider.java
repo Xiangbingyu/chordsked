@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @Component("teacherAccountProvider")
 public class TeacherAccountProvider implements AccountProvider {
     private static final AccountUserType USER_TYPE = AccountUserType.TEACHER;
-    private static final UserDataScopeType DEFAULT_DATA_SCOPE_TYPE = UserDataScopeType.SPECIFIED_CAMPUS;
+    private static final UserDataScopeType DEFAULT_DATA_SCOPE_TYPE = UserDataScopeType.ASSIGNED;
 
     @Resource(name = "teacherUserDao")
     private TeacherUserDao teacherUserDao;
@@ -78,6 +78,7 @@ public class TeacherAccountProvider implements AccountProvider {
                             userId,
                             enabled,
                             currentCampusId,
+                            null,
                             DEFAULT_DATA_SCOPE_TYPE
                     )
             );
@@ -86,6 +87,7 @@ public class TeacherAccountProvider implements AccountProvider {
                 userId,
                 USER_TYPE,
                 currentCampusId,
+                null,
                 userSnapshot == null || userSnapshot.dataScopeType() == null
                         ? DEFAULT_DATA_SCOPE_TYPE
                         : userSnapshot.dataScopeType(),

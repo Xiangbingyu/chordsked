@@ -31,6 +31,7 @@ public interface SecurityCacheService {
             Long userId,
             boolean enabled,
             Long currentCampusId,
+            Long primaryOrgNodeId,
             UserDataScopeType dataScopeType
     ) {
     }
