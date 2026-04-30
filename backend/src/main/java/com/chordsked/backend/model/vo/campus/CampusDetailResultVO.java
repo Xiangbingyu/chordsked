@@ -20,12 +20,6 @@ public class CampusDetailResultVO {
     @Schema(description = "联系电话", example = "0571-00000001")
     private String phone;
 
-    @Schema(description = "负责人ID", example = "1001")
-    private Long leaderId;
-
-    @Schema(description = "负责人姓名", example = "张三")
-    private String leaderName;
-
     @Schema(description = "排序号", example = "2")
     private Integer sort;
 
@@ -79,22 +73,6 @@ public class CampusDetailResultVO {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public Long getLeaderId() {
-        return leaderId;
-    }
-
-    public void setLeaderId(Long leaderId) {
-        this.leaderId = leaderId;
-    }
-
-    public String getLeaderName() {
-        return leaderName;
-    }
-
-    public void setLeaderName(String leaderName) {
-        this.leaderName = leaderName;
     }
 
     public Integer getSort() {

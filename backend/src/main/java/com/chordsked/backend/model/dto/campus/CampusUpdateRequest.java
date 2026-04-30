@@ -22,9 +22,6 @@ public class CampusUpdateRequest {
     @Schema(description = "联系电话", example = "010-12345678")
     private String phone;
 
-    @Schema(description = "负责人ID", example = "1001")
-    private Long leaderId;
-
     @Schema(description = "排序号", example = "1")
     private Integer sort;
 
@@ -74,14 +71,6 @@ public class CampusUpdateRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public Long getLeaderId() {
-        return leaderId;
-    }
-
-    public void setLeaderId(Long leaderId) {
-        this.leaderId = leaderId;
     }
 
     public Integer getSort() {

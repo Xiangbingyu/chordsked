@@ -10,8 +10,6 @@
                name,
                address,
                phone,
-               leader_id,
-               leader_name,
                sort,
                status,
                remark,
@@ -29,8 +27,6 @@
                name,
                address,
                phone,
-               leader_id,
-               leader_name,
                sort,
                status,
                remark,
@@ -45,10 +41,9 @@
         SELECT c.id,
                c.code,
                c.name,
-               c.leader_name,
                c.phone,
                c.status,
-               c.created_at
+               c.updated_at
         FROM sys_campus c
         WHERE c.status != 2
         <if test="request.keyword != null and request.keyword != ''">
@@ -83,8 +78,6 @@
                c.name,
                c.address,
                c.phone,
-               c.leader_id,
-               c.leader_name,
                c.sort,
                c.status,
                c.remark,
@@ -98,11 +91,11 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="entity.id">
         INSERT INTO sys_campus (
-            code, name, address, phone, leader_id, leader_name,
+            code, name, address, phone,
             sort, status, remark, created_at, updated_at
         ) VALUES (
             #{entity.code}, #{entity.name}, #{entity.address}, #{entity.phone},
-            #{entity.leaderId}, #{entity.leaderName}, #{entity.sort},
+            #{entity.sort},
             #{entity.status}, #{entity.remark}, #{entity.createdAt}, #{entity.updatedAt}
         )
     </insert>
@@ -114,8 +107,6 @@
             <if test="entity.name != null and entity.name != ''">name = #{entity.name},</if>
             <if test="entity.address != null">address = #{entity.address},</if>
             <if test="entity.phone != null">phone = #{entity.phone},</if>
-            <if test="entity.leaderId != null">leader_id = #{entity.leaderId},</if>
-            <if test="entity.leaderName != null">leader_name = #{entity.leaderName},</if>
             <if test="entity.sort != null">sort = #{entity.sort},</if>
             <if test="entity.status != null">status = #{entity.status},</if>
             <if test="entity.remark != null">remark = #{entity.remark},</if>

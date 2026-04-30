@@ -23,8 +23,6 @@ CREATE TABLE IF NOT EXISTS sys_campus (
     name VARCHAR(100) NOT NULL COMMENT '校区名称',
     address VARCHAR(200) NULL COMMENT '校区地址',
     phone VARCHAR(20) NULL COMMENT '联系电话',
-    leader_id BIGINT NULL COMMENT '负责人ID',
-    leader_name VARCHAR(50) NULL COMMENT '负责人姓名',
     sort INT NOT NULL DEFAULT 0 COMMENT '排序号',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态(0:停用 1:启用 2:已删除)',
     remark VARCHAR(200) NULL COMMENT '备注',
@@ -33,8 +31,7 @@ CREATE TABLE IF NOT EXISTS sys_campus (
     PRIMARY KEY (id),
     UNIQUE INDEX uk_sys_campus_code (code),
     UNIQUE INDEX uk_sys_campus_name (name),
-    INDEX idx_sys_campus_status (status),
-    CONSTRAINT fk_sys_campus_leader_id FOREIGN KEY (leader_id) REFERENCES sys_internal_user (id)
+    INDEX idx_sys_campus_status (status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '校区表';
 
 CREATE TABLE IF NOT EXISTS sys_teacher_user (

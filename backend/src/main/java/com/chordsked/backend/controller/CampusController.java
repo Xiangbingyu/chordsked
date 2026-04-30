@@ -114,7 +114,7 @@ public class CampusController {
 
     @PutMapping("/campuses/{campusId}")
     @PreAuthorize("hasAuthority('admin:campus:update')")
-    @Operation(summary = "编辑校区", description = "更新校区名称、地址、联系方式、负责人、状态和备注")
+    @Operation(summary = "编辑校区", description = "更新校区名称、地址、联系方式、状态、排序和备注")
     public ApiResponse<Void> updateCampus(
             @Parameter(description = "校区ID")
             @PathVariable("campusId") @Min(1) Long campusId,
@@ -152,7 +152,6 @@ public class CampusController {
         request.setName(source.getName());
         request.setAddress(source.getAddress());
         request.setPhone(source.getPhone());
-        request.setLeaderId(source.getLeaderId());
         request.setSort(source.getSort());
         request.setStatus(source.getStatus());
         request.setRemark(source.getRemark());
@@ -167,7 +166,6 @@ public class CampusController {
         request.setName(source.getName());
         request.setAddress(source.getAddress());
         request.setPhone(source.getPhone());
-        request.setLeaderId(source.getLeaderId());
         request.setSort(source.getSort());
         request.setStatus(source.getStatus());
         request.setRemark(source.getRemark());

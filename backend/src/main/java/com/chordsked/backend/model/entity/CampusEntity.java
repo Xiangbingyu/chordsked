@@ -8,8 +8,6 @@ public class CampusEntity {
     private String name;
     private String address;
     private String phone;
-    private Long leaderId;
-    private String leaderName;
     private Integer sort;
     private CampusStatus status;
     private String remark;
@@ -54,22 +52,6 @@ public class CampusEntity {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public Long getLeaderId() {
-        return leaderId;
-    }
-
-    public void setLeaderId(Long leaderId) {
-        this.leaderId = leaderId;
-    }
-
-    public String getLeaderName() {
-        return leaderName;
-    }
-
-    public void setLeaderName(String leaderName) {
-        this.leaderName = leaderName;
     }
 
     public Integer getSort() {

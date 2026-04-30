@@ -36,7 +36,6 @@ public class CampusDeleteServiceImpl implements CampusDeleteService {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "请求参数不能为空");
         }
         Long campusId = request.getCampusId();
-        CampusDetailResultVO campus = campusOperationGuardService.validateOperationTarget(campusId, "删除");
 
         int internalUserCount = userCampusDao.countByCampusId(campusId);
         if (internalUserCount > 0) {

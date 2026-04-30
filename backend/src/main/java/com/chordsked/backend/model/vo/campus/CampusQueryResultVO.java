@@ -14,17 +14,14 @@ public class CampusQueryResultVO {
     @Schema(description = "校区名称", example = "西湖校区")
     private String name;
 
-    @Schema(description = "负责人姓名", example = "张三")
-    private String leaderName;
-
     @Schema(description = "联系电话", example = "0571-00000001")
     private String phone;
 
     @Schema(description = "校区状态", example = "1")
     private CampusStatus status;
 
-    @Schema(description = "创建时间", example = "1774483200000")
-    private Long createdAt;
+    @Schema(description = "更新时间", example = "1774483200000")
+    private Long updatedAt;
 
     public Long getId() {
         return id;
@@ -48,14 +45,6 @@ public class CampusQueryResultVO {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getLeaderName() {
-        return leaderName;
-    }
-
-    public void setLeaderName(String leaderName) {
-        this.leaderName = leaderName;
     }
 
     public String getPhone() {
@@ -82,11 +71,11 @@ public class CampusQueryResultVO {
         this.status = status;
     }
 
-    public Long getCreatedAt() {
-        return createdAt;
+    public Long getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setCreatedAt(Long createdAt) {
-        this.createdAt = createdAt;
+    public void setUpdatedAt(Long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

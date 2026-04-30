@@ -2,12 +2,10 @@ package com.chordsked.backend.service.campus.impl;
 
 import com.chordsked.backend.audit.annotation.AuditLog;
 import com.chordsked.backend.dao.CampusDao;
-import com.chordsked.backend.dao.InternalUserDao;
 import com.chordsked.backend.exception.BusinessException;
 import com.chordsked.backend.exception.ErrorCode;
 import com.chordsked.backend.model.dto.campus.CampusUpdateRequest;
 import com.chordsked.backend.model.entity.CampusEntity;
-import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.vo.campus.CampusDetailResultVO;
 import com.chordsked.backend.service.campus.CampusOperationGuardService;
 import com.chordsked.backend.service.campus.CampusUpdateService;
@@ -20,9 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CampusUpdateServiceImpl implements CampusUpdateService {
     @Resource(name = "campusDao")
     private CampusDao campusDao;
-
-    @Resource(name = "internalUserDao")
-    private InternalUserDao internalUserDao;
 
     @Resource(name = "campusOperationGuardService")
     private CampusOperationGuardService campusOperationGuardService;
@@ -46,17 +41,6 @@ public class CampusUpdateServiceImpl implements CampusUpdateService {
         campusWriteValidator.validateCodeForUpdate(code, campusId);
         campusWriteValidator.validateNameForUpdate(name, campusId);
 
-        String leaderName = existingCampus.getLeaderName();
-        if (request.getLeaderId() != null) {
-            InternalUserEntity leader = internalUserDao.getById(request.getLeaderId());
-            if (leader == null) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "负责人不存在");
-            }
-            leaderName = leader.getName();
-        } else if (request.getLeaderId() == null && existingCampus.getLeaderId() != null) {
-            leaderName = null;
-        }
-
         long now = System.currentTimeMillis();
         CampusEntity campus = new CampusEntity();
         campus.setId(campusId);
@@ -64,9 +48,7 @@ public class CampusUpdateServiceImpl implements CampusUpdateService {
         campus.setName(name);
         campus.setAddress(request.getAddress());
         campus.setPhone(request.getPhone());
-        campus.setLeaderId(request.getLeaderId());
-        campus.setLeaderName(leaderName);
-        campus.setSort(request.getSort());
+        campus.setSort(request.getSort() == null ? 0 : request.getSort());
         campus.setStatus(status);
         campus.setRemark(request.getRemark());
         campus.setUpdatedAt(now);
