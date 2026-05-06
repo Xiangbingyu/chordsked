@@ -61,24 +61,23 @@ public class StudentAccountProvider implements AccountProvider {
         SecurityCacheService.SecurityUserSnapshot userSnapshot =
                 securityCacheService.getUserSnapshot(USER_TYPE.getCode(), userId);
         boolean enabled;
-        Long currentCampusId;
+        Long primaryOrgNodeId;
         if (userSnapshot != null) {
             enabled = userSnapshot.enabled();
-            currentCampusId = userSnapshot.currentCampusId();
+            primaryOrgNodeId = userSnapshot.primaryOrgNodeId();
         } else {
             StudentUserEntity studentUser = studentUserDao.getById(userId);
             if (studentUser == null) {
                 throw new UsernameNotFoundException("Student user not found: " + userId);
             }
             enabled = StudentUserStatus.ENABLED.equals(studentUser.getStatusEnum());
-            currentCampusId = studentUser.getCampusId();
+            primaryOrgNodeId = null;
             securityCacheService.cacheUserSnapshot(
                     new SecurityCacheService.SecurityUserSnapshot(
                             USER_TYPE.getCode(),
                             userId,
                             enabled,
-                            currentCampusId,
-                            null,
+                            primaryOrgNodeId,
                             DEFAULT_DATA_SCOPE_TYPE
                     )
             );
@@ -86,8 +85,7 @@ public class StudentAccountProvider implements AccountProvider {
         return new ChordSkedUserDetails(
                 userId,
                 USER_TYPE,
-                currentCampusId,
-                null,
+                primaryOrgNodeId,
                 userSnapshot == null || userSnapshot.dataScopeType() == null
                         ? DEFAULT_DATA_SCOPE_TYPE
                         : userSnapshot.dataScopeType(),

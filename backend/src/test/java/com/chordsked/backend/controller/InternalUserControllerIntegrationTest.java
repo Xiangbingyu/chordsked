@@ -69,7 +69,6 @@ class InternalUserControllerIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        1L,
                         UserDataScopeType.ALL
                 ));
     }
@@ -168,7 +167,6 @@ class InternalUserControllerIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        1L,
                         UserDataScopeType.ASSIGNED
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(USER_ID, "ADMIN");
@@ -199,7 +197,6 @@ class InternalUserControllerIntegrationTest {
                         "ADMIN",
                         USER_ID,
                         true,
-                        1L,
                         1L,
                         UserDataScopeType.SELF
                 ));
@@ -238,7 +235,6 @@ class InternalUserControllerIntegrationTest {
                         "ADMIN",
                         1002L,
                         true,
-                        1L,
                         1L,
                         UserDataScopeType.ALL
                 ));
@@ -569,7 +565,6 @@ class InternalUserControllerIntegrationTest {
                         2003L,
                         true,
                         1L,
-                        1L,
                         UserDataScopeType.SELF
                 ));
         String accessToken = jwtTokenUtils.generateAccessToken(2003L, "ADMIN");
@@ -667,7 +662,6 @@ class InternalUserControllerIntegrationTest {
                         "ADMIN",
                         2004L,
                         true,
-                        1L,
                         1L,
                         UserDataScopeType.SELF
                 ));

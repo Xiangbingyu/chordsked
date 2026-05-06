@@ -2,13 +2,13 @@ package com.chordsked.backend.datascope.interceptor;
 
 import com.chordsked.backend.config.properties.DataScopeProperties;
 import com.chordsked.backend.datascope.annotation.DataScope;
+import com.chordsked.backend.datascope.resolver.OrgNodeDataScopeResolver;
 import com.chordsked.backend.datascope.strategy.AssignedDataScopeStrategy;
 import com.chordsked.backend.datascope.strategy.AllDataScopeStrategy;
 import com.chordsked.backend.datascope.strategy.SelfDataScopeStrategy;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
-import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import org.apache.ibatis.builder.StaticSqlSource;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.executor.statement.StatementHandler;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 
 class DataScopeInterceptorTest {
     private DataScopeInterceptor interceptor;
-    private OrgDataScopeResolveService orgDataScopeResolveService;
+    private OrgNodeDataScopeResolver orgNodeDataScopeResolver;
     private DataScopeProperties dataScopeProperties;
 
     @BeforeEach
@@ -48,13 +48,13 @@ class DataScopeInterceptorTest {
                 new AssignedDataScopeStrategy(),
                 new SelfDataScopeStrategy()
         ));
-        orgDataScopeResolveService = mock(OrgDataScopeResolveService.class);
+        orgNodeDataScopeResolver = mock(OrgNodeDataScopeResolver.class);
         dataScopeProperties = new DataScopeProperties();
         dataScopeProperties.setEnabled(true);
         dataScopeProperties.setStrictPlaceholder(true);
         dataScopeProperties.setSqlPlaceholder("/*DATA_SCOPE*/");
 
-        ReflectionTestUtils.setField(interceptor, "orgDataScopeResolveService", orgDataScopeResolveService);
+        ReflectionTestUtils.setField(interceptor, "orgNodeDataScopeResolver", orgNodeDataScopeResolver);
         ReflectionTestUtils.setField(interceptor, "dataScopeProperties", dataScopeProperties);
     }
 
@@ -85,7 +85,6 @@ class DataScopeInterceptorTest {
         authenticate(new ChordSkedUserDetails(
                 1001L,
                 AccountUserType.ADMIN,
-                2001L,
                 null,
                 UserDataScopeType.SELF,
                 true,
@@ -101,17 +100,16 @@ class DataScopeInterceptorTest {
     }
 
     @Test
-    void shouldReplacePlaceholderWithCampusCondition() throws Throwable {
+    void shouldReplacePlaceholderWithAssignedOrgNodeCondition() throws Throwable {
         FakeStatementHandler statementHandler = createStatementHandler(
                 AssignedScopedMapper.class.getName() + ".list",
                 "SELECT * FROM sys_user u WHERE u.status = 1 /*DATA_SCOPE*/ ORDER BY u.id DESC LIMIT 10"
         );
-        when(orgDataScopeResolveService.resolveByUserId(1001L))
-                .thenReturn(new OrgDataScopeResolveService.OrgDataScopeResult(11L, List.of(11L, 22L), List.of(1L, 2L)));
+        when(orgNodeDataScopeResolver.resolveByUserId(1001L))
+                .thenReturn(new OrgNodeDataScopeResolver.OrgNodeDataScopeResult(11L, List.of(11L, 22L)));
         authenticate(new ChordSkedUserDetails(
                 1001L,
                 AccountUserType.ADMIN,
-                2001L,
                 11L,
                 UserDataScopeType.ASSIGNED,
                 true,
@@ -127,6 +125,29 @@ class DataScopeInterceptorTest {
     }
 
     @Test
+    void shouldDenyAllWhenNonAdminAssignedHasNoOrgNodeRange() throws Throwable {
+        FakeStatementHandler statementHandler = createStatementHandler(
+                AssignedScopedMapper.class.getName() + ".list",
+                "SELECT * FROM sys_user u WHERE u.status = 1 /*DATA_SCOPE*/"
+        );
+        authenticate(new ChordSkedUserDetails(
+                2001L,
+                AccountUserType.TEACHER,
+                null,
+                UserDataScopeType.ASSIGNED,
+                true,
+                List.of()
+        ));
+
+        interceptor.intercept(createInvocation(statementHandler));
+
+        assertEquals(
+                "SELECT * FROM sys_user u WHERE u.status = 1 AND (1 = 0)",
+                statementHandler.getBoundSql().getSql()
+        );
+    }
+
+    @Test
     void shouldReplacePlaceholderForOuterQueryWithSubQuery() throws Throwable {
         FakeStatementHandler statementHandler = createStatementHandler(
                 SelfScopedMapper.class.getName() + ".list",
@@ -135,7 +156,6 @@ class DataScopeInterceptorTest {
         authenticate(new ChordSkedUserDetails(
                 1001L,
                 AccountUserType.ADMIN,
-                2001L,
                 null,
                 UserDataScopeType.SELF,
                 true,
@@ -159,7 +179,6 @@ class DataScopeInterceptorTest {
         authenticate(new ChordSkedUserDetails(
                 1001L,
                 AccountUserType.ADMIN,
-                2001L,
                 null,
                 UserDataScopeType.SELF,
                 true,
@@ -201,7 +220,6 @@ class DataScopeInterceptorTest {
         authenticate(new ChordSkedUserDetails(
                 1001L,
                 AccountUserType.ADMIN,
-                2001L,
                 null,
                 null,
                 true,

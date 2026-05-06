@@ -45,33 +45,32 @@ class SecurityCacheServiceImplTest {
 
     @Test
     void shouldReadUserSnapshotFromCache() {
-        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|11|2");
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|11|2");
 
         SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
 
         assertEquals("ADMIN", userSnapshot.userType());
         assertEquals(1001L, userSnapshot.userId());
         assertEquals(true, userSnapshot.enabled());
-        assertEquals(2001L, userSnapshot.currentCampusId());
         assertEquals(11L, userSnapshot.primaryOrgNodeId());
         assertEquals(UserDataScopeType.ASSIGNED, userSnapshot.dataScopeType());
     }
 
     @Test
     void shouldReadLegacyUserSnapshotWithoutDataScopeType() {
-        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001");
+        when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|11");
 
         SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
 
         assertEquals("ADMIN", userSnapshot.userType());
         assertEquals(1001L, userSnapshot.userId());
         assertEquals(true, userSnapshot.enabled());
-        assertEquals(2001L, userSnapshot.currentCampusId());
+        assertEquals(11L, userSnapshot.primaryOrgNodeId());
         assertEquals(null, userSnapshot.dataScopeType());
     }
 
     @Test
-    void shouldReadExtendedUserSnapshotByUsingFirstThreeFields() {
+    void shouldReadLegacyExtendedUserSnapshotBySkippingCampusField() {
         when(valueOperations.get("chordsked:security:user:ADMIN:1001")).thenReturn("1|2001|11|2");
 
         SecurityCacheService.SecurityUserSnapshot userSnapshot = securityCacheService.getUserSnapshot("ADMIN", 1001L);
@@ -79,7 +78,6 @@ class SecurityCacheServiceImplTest {
         assertEquals("ADMIN", userSnapshot.userType());
         assertEquals(1001L, userSnapshot.userId());
         assertEquals(true, userSnapshot.enabled());
-        assertEquals(2001L, userSnapshot.currentCampusId());
         assertEquals(11L, userSnapshot.primaryOrgNodeId());
         assertEquals(UserDataScopeType.ASSIGNED, userSnapshot.dataScopeType());
     }
@@ -91,7 +89,6 @@ class SecurityCacheServiceImplTest {
                         "ADMIN",
                         1001L,
                         true,
-                        2001L,
                         11L,
                         UserDataScopeType.ASSIGNED
                 )
@@ -99,7 +96,7 @@ class SecurityCacheServiceImplTest {
 
         verify(valueOperations).set(
                 eq("chordsked:security:user:ADMIN:1001"),
-                eq("1|2001|11|2"),
+                eq("1|11|2"),
                 eq(Duration.ofSeconds(300))
         );
     }

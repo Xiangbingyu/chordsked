@@ -13,7 +13,7 @@ import com.chordsked.backend.service.org.OrgNodeDeleteService;
 import com.chordsked.backend.service.org.OrgNodeOptionQueryService;
 import com.chordsked.backend.service.org.OrgNodeBoundUserQueryService;
 import com.chordsked.backend.service.org.OrgNodeUpdateService;
-import com.chordsked.backend.service.org.OrgNodeUserBindUpdateService;
+import com.chordsked.backend.service.org.OrgNodeBoundUserUpdateService;
 import com.chordsked.backend.service.org.OrgAccountOptionQueryService;
 import com.chordsked.backend.service.org.OrgTreeQueryService;
 import com.chordsked.backend.utils.audit.AuditLogRequestUtils;
@@ -59,8 +59,8 @@ public class OrgController {
     @Resource(name = "orgNodeBoundUserQueryService")
     private OrgNodeBoundUserQueryService orgNodeBoundUserQueryService;
 
-    @Resource(name = "orgNodeUserBindUpdateService")
-    private OrgNodeUserBindUpdateService orgNodeUserBindUpdateService;
+    @Resource(name = "orgNodeBoundUserUpdateService")
+    private OrgNodeBoundUserUpdateService orgNodeBoundUserUpdateService;
 
     @Resource(name = "orgAccountOptionQueryService")
     private OrgAccountOptionQueryService orgAccountOptionQueryService;
@@ -128,7 +128,7 @@ public class OrgController {
             HttpServletRequest httpServletRequest
     ) {
         request.setAuditLogRequest(AuditLogRequestUtils.buildAuditLogRequest(httpServletRequest));
-        orgNodeUserBindUpdateService.updateBindings(nodeId, request);
+        orgNodeBoundUserUpdateService.updateBindings(nodeId, request);
         return ApiResponse.success(null);
     }
 

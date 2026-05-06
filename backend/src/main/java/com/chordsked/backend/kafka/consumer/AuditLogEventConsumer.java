@@ -1,7 +1,6 @@
 package com.chordsked.backend.kafka.consumer;
 
 import com.chordsked.backend.kafka.model.AuditLogEvent;
-import com.chordsked.backend.model.entity.AuditLogEntity;
 import com.chordsked.backend.service.audit.AuditLogPersistService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -29,7 +28,7 @@ public class AuditLogEventConsumer {
             acknowledgment.acknowledge();
             return;
         }
-        auditLogPersistService.persistSync(buildAuditLogEntity(event));
+        auditLogPersistService.persistEvent(event);
         acknowledgment.acknowledge();
     }
 
@@ -52,23 +51,4 @@ public class AuditLogEventConsumer {
         return event.getStatus() != null && event.getCreatedAt() != null && event.getCreatedAt() > 0;
     }
 
-    private AuditLogEntity buildAuditLogEntity(AuditLogEvent event) {
-        AuditLogEntity auditLog = new AuditLogEntity();
-        auditLog.setUserId(event.getUserId());
-        auditLog.setUserName(event.getUserName());
-        auditLog.setUserType(event.getUserType());
-        auditLog.setModuleName(event.getModuleName());
-        auditLog.setActionType(event.getActionType());
-        auditLog.setBizId(event.getBizId());
-        auditLog.setRequestUri(event.getRequestUri());
-        auditLog.setRequestMethod(event.getRequestMethod());
-        auditLog.setRequestIp(event.getRequestIp());
-        auditLog.setUserAgent(event.getUserAgent());
-        auditLog.setRequestParams(event.getRequestParams());
-        auditLog.setResponseResult(event.getResponseResult());
-        auditLog.setStatus(event.getStatus());
-        auditLog.setErrorMsg(event.getErrorMsg());
-        auditLog.setCreatedAt(event.getCreatedAt());
-        return auditLog;
-    }
 }

@@ -4,7 +4,6 @@ import com.chordsked.backend.cache.security.SecurityCacheService;
 import com.chordsked.backend.dao.InternalUserDao;
 import com.chordsked.backend.model.entity.InternalUserEntity;
 import com.chordsked.backend.model.enums.UserDataScopeType;
-import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import com.chordsked.backend.service.security.AuthorityCodeService;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,6 @@ class InternalAccountProviderTest {
     private InternalUserDao internalUserDao;
     private SecurityCacheService securityCacheService;
     private AuthorityCodeService authorityCodeService;
-    private OrgDataScopeResolveService orgDataScopeResolveService;
 
     @BeforeEach
     void setUp() {
@@ -33,12 +31,10 @@ class InternalAccountProviderTest {
         internalUserDao = mock(InternalUserDao.class);
         securityCacheService = mock(SecurityCacheService.class);
         authorityCodeService = mock(AuthorityCodeService.class);
-        orgDataScopeResolveService = mock(OrgDataScopeResolveService.class);
 
         ReflectionTestUtils.setField(internalAccountProvider, "internalUserDao", internalUserDao);
         ReflectionTestUtils.setField(internalAccountProvider, "securityCacheService", securityCacheService);
         ReflectionTestUtils.setField(internalAccountProvider, "authorityCodeService", authorityCodeService);
-        ReflectionTestUtils.setField(internalAccountProvider, "orgDataScopeResolveService", orgDataScopeResolveService);
     }
 
     @Test
@@ -49,7 +45,6 @@ class InternalAccountProviderTest {
                         "ADMIN",
                         1001L,
                         true,
-                        2001L,
                         11L,
                         UserDataScopeType.ASSIGNED
                 ));
@@ -57,7 +52,6 @@ class InternalAccountProviderTest {
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
-        assertEquals(2001L, userDetails.getCurrentCampusId());
         assertEquals(11L, userDetails.getPrimaryOrgNodeId());
         assertEquals(UserDataScopeType.ASSIGNED, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
@@ -79,7 +73,6 @@ class InternalAccountProviderTest {
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) internalAccountProvider.loadUserDetails(1001L);
 
         assertEquals(1001L, userDetails.getUserId());
-        assertEquals(2001L, userDetails.getCurrentCampusId());
         assertEquals(11L, userDetails.getPrimaryOrgNodeId());
         assertEquals(UserDataScopeType.SELF, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
@@ -88,7 +81,6 @@ class InternalAccountProviderTest {
                         "ADMIN",
                         1001L,
                         true,
-                        2001L,
                         11L,
                         UserDataScopeType.SELF
                 )

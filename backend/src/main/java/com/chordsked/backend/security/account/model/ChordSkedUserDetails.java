@@ -10,7 +10,6 @@ import java.util.Collection;
 public class ChordSkedUserDetails implements UserDetails {
     private final Long userId;
     private final AccountUserType userType;
-    private final Long currentCampusId;
     private final Long primaryOrgNodeId;
     private final UserDataScopeType dataScopeType;
     private final boolean enabled;
@@ -19,7 +18,6 @@ public class ChordSkedUserDetails implements UserDetails {
     public ChordSkedUserDetails(
             Long userId,
             AccountUserType userType,
-            Long currentCampusId,
             Long primaryOrgNodeId,
             UserDataScopeType dataScopeType,
             boolean enabled,
@@ -27,7 +25,6 @@ public class ChordSkedUserDetails implements UserDetails {
     ) {
         this.userId = userId;
         this.userType = userType;
-        this.currentCampusId = currentCampusId;
         this.primaryOrgNodeId = primaryOrgNodeId;
         this.dataScopeType = dataScopeType;
         this.enabled = enabled;
@@ -44,10 +41,6 @@ public class ChordSkedUserDetails implements UserDetails {
 
     public AccountUserType getUserTypeEnum() {
         return userType;
-    }
-
-    public Long getCurrentCampusId() {
-        return currentCampusId;
     }
 
     public Long getPrimaryOrgNodeId() {

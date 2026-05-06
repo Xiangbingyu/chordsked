@@ -30,7 +30,6 @@ public interface SecurityCacheService {
             String userType,
             Long userId,
             boolean enabled,
-            Long currentCampusId,
             Long primaryOrgNodeId,
             UserDataScopeType dataScopeType
     ) {

@@ -11,22 +11,19 @@ public class DataScopeUserContext {
     private final UserDataScopeType dataScopeType;
     private final Long primaryOrgNodeId;
     private final List<Long> authorizedOrgNodeIds;
-    private final List<Long> authorizedCampusIds;
 
     public DataScopeUserContext(
             Long userId,
             AccountUserType userType,
             UserDataScopeType dataScopeType,
             Long primaryOrgNodeId,
-            List<Long> authorizedOrgNodeIds,
-            List<Long> authorizedCampusIds
+            List<Long> authorizedOrgNodeIds
     ) {
         this.userId = userId;
         this.userType = userType;
         this.dataScopeType = dataScopeType;
         this.primaryOrgNodeId = primaryOrgNodeId;
         this.authorizedOrgNodeIds = authorizedOrgNodeIds == null ? List.of() : List.copyOf(authorizedOrgNodeIds);
-        this.authorizedCampusIds = authorizedCampusIds == null ? List.of() : List.copyOf(authorizedCampusIds);
     }
 
     public Long getUserId() {
@@ -47,9 +44,5 @@ public class DataScopeUserContext {
 
     public List<Long> getAuthorizedOrgNodeIds() {
         return authorizedOrgNodeIds;
-    }
-
-    public List<Long> getAuthorizedCampusIds() {
-        return authorizedCampusIds;
     }
 }

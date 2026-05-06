@@ -12,7 +12,7 @@ import com.chordsked.backend.model.entity.OrgNodeEntity;
 import com.chordsked.backend.model.entity.UserOrgScopeEntity;
 import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.service.internaluser.InternalUserCacheCleanupService;
-import com.chordsked.backend.service.org.OrgNodeUserBindUpdateService;
+import com.chordsked.backend.service.org.OrgNodeBoundUserUpdateService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +21,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-@Service("orgNodeUserBindUpdateService")
-public class OrgNodeUserBindUpdateServiceImpl implements OrgNodeUserBindUpdateService {
+@Service("orgNodeBoundUserUpdateService")
+public class OrgNodeBoundUserUpdateServiceImpl implements OrgNodeBoundUserUpdateService {
     @Resource(name = "orgNodeDao")
     private OrgNodeDao orgNodeDao;
 

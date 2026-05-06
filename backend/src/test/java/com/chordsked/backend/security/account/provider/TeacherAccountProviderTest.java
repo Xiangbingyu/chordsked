@@ -40,12 +40,12 @@ class TeacherAccountProviderTest {
     void shouldLoadTeacherDetailsFromSecuritySnapshotCache() {
         when(securityCacheService.getAuthorityCodes("TEACHER", 2001L)).thenReturn(List.of("teacher:role"));
         when(securityCacheService.getUserSnapshot("TEACHER", 2001L))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("TEACHER", 2001L, true, 3001L, null, null));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("TEACHER", 2001L, true, null, null));
 
         ChordSkedUserDetails userDetails = (ChordSkedUserDetails) teacherAccountProvider.loadUserDetails(2001L);
 
         assertEquals(2001L, userDetails.getUserId());
-        assertEquals(3001L, userDetails.getCurrentCampusId());
+        assertEquals(null, userDetails.getPrimaryOrgNodeId());
         assertEquals(UserDataScopeType.ASSIGNED, userDetails.getDataScopeTypeEnum());
         assertTrue(userDetails.isEnabled());
         verify(teacherUserDao, never()).getById(2001L);

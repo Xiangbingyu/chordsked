@@ -103,7 +103,6 @@ class InternalUserUpdateServiceImplTest {
                 userId,
                 AccountUserType.ADMIN,
                 1L,
-                1L,
                 UserDataScopeType.ALL,
                 true,
                 List.of()

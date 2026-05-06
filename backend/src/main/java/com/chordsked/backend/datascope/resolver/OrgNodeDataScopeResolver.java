@@ -1,33 +1,31 @@
-package com.chordsked.backend.service.org.impl;
+package com.chordsked.backend.datascope.resolver;
 
 import com.chordsked.backend.dao.OrgNodeDao;
 import com.chordsked.backend.dao.UserOrgScopeDao;
 import com.chordsked.backend.model.entity.OrgNodeEntity;
 import com.chordsked.backend.model.entity.UserOrgScopeEntity;
-import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
-@Service("orgDataScopeResolveService")
-public class OrgDataScopeResolveServiceImpl implements OrgDataScopeResolveService {
+@Component("orgNodeDataScopeResolver")
+public class OrgNodeDataScopeResolver {
     @Resource(name = "userOrgScopeDao")
     private UserOrgScopeDao userOrgScopeDao;
 
     @Resource(name = "orgNodeDao")
     private OrgNodeDao orgNodeDao;
 
-    @Override
-    public OrgDataScopeResult resolveByUserId(Long userId) {
+    public OrgNodeDataScopeResult resolveByUserId(Long userId) {
         if (userId == null || userId <= 0) {
-            return new OrgDataScopeResult(null, List.of(), List.of());
+            return new OrgNodeDataScopeResult(null, List.of());
         }
         List<UserOrgScopeEntity> scopes = userOrgScopeDao.listByUserId(userId);
         if (scopes.isEmpty()) {
-            return new OrgDataScopeResult(null, List.of(), List.of());
+            return new OrgNodeDataScopeResult(null, List.of());
         }
 
         Long primaryOrgNodeId = scopes.stream()
@@ -38,7 +36,6 @@ public class OrgDataScopeResolveServiceImpl implements OrgDataScopeResolveServic
                 .orElse(null);
 
         LinkedHashSet<Long> authorizedOrgNodeIds = new LinkedHashSet<>();
-        LinkedHashSet<Long> authorizedCampusIds = new LinkedHashSet<>();
         for (UserOrgScopeEntity scope : scopes) {
             Long orgNodeId = scope.getOrgNodeId();
             if (orgNodeId == null || orgNodeId <= 0) {
@@ -49,15 +46,17 @@ public class OrgDataScopeResolveServiceImpl implements OrgDataScopeResolveServic
                 if (node.getId() != null && node.getId() > 0) {
                     authorizedOrgNodeIds.add(node.getId());
                 }
-                if (node.getCampusId() != null && node.getCampusId() > 0) {
-                    authorizedCampusIds.add(node.getCampusId());
-                }
             }
         }
-        return new OrgDataScopeResult(
+        return new OrgNodeDataScopeResult(
                 primaryOrgNodeId,
-                List.copyOf(authorizedOrgNodeIds),
-                List.copyOf(authorizedCampusIds)
+                List.copyOf(authorizedOrgNodeIds)
         );
+    }
+
+    public record OrgNodeDataScopeResult(
+            Long primaryOrgNodeId,
+            List<Long> authorizedOrgNodeIds
+    ) {
     }
 }

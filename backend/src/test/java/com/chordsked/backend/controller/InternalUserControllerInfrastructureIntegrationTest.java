@@ -105,10 +105,9 @@ class InternalUserControllerInfrastructureIntegrationTest {
         SecurityCacheService.SecurityUserSnapshot snapshot = securityCacheService.getUserSnapshot(USER_TYPE, USER_ID);
         assertNotNull(snapshot);
         assertEquals(UserDataScopeType.ALL, snapshot.dataScopeType());
-        assertEquals(1L, snapshot.currentCampusId());
         assertEquals(1L, snapshot.primaryOrgNodeId());
         assertTrue(securityCacheService.getAuthorityCodes(USER_TYPE, USER_ID).contains("admin:user:view"));
-        assertEquals("1|1|1|1", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
+        assertEquals("1|1|1", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
         assertTrue(stringRedisTemplate.opsForValue().get(AUTHORITY_KEY).contains("admin:user:view"));
     }
 
@@ -129,7 +128,6 @@ class InternalUserControllerInfrastructureIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        1L,
                         UserDataScopeType.ASSIGNED
                 )
         );
@@ -145,7 +143,7 @@ class InternalUserControllerInfrastructureIntegrationTest {
                 .andExpect(jsonPath("$.data.items[0].id").value(1001))
                 .andExpect(jsonPath("$.data.items[1].id").value(1002));
 
-        assertEquals("1|1|1|2", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
+        assertEquals("1|1|2", stringRedisTemplate.opsForValue().get(USER_SNAPSHOT_KEY));
     }
 
     @Test
@@ -159,7 +157,6 @@ class InternalUserControllerInfrastructureIntegrationTest {
                         USER_TYPE,
                         USER_ID,
                         true,
-                        1L,
                         1L,
                         UserDataScopeType.SELF
                 )

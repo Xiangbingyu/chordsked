@@ -17,7 +17,6 @@ class DataScopeStrategyTest {
                 AccountUserType.ADMIN,
                 UserDataScopeType.ALL,
                 null,
-                List.of(),
                 List.of()
         );
 
@@ -27,22 +26,18 @@ class DataScopeStrategyTest {
     }
 
     @Test
-    void shouldBuildAssignedCampusConditionForCampusIdField() {
+    void shouldReturnDenyAllConditionForUnsupportedField() {
         DataScopeUserContext userContext = new DataScopeUserContext(
                 1001L,
                 AccountUserType.ADMIN,
                 UserDataScopeType.ASSIGNED,
                 11L,
-                List.of(11L, 22L),
-                List.of(1L, 2L)
+                List.of(11L, 22L)
         );
 
         String condition = new AssignedDataScopeStrategy().buildCondition(userContext, "u", "campus_id");
 
-        assertEquals(
-                "u.campus_id IN (1, 2)",
-                condition
-        );
+        assertEquals("1 = 0", condition);
     }
 
     @Test
@@ -52,8 +47,7 @@ class DataScopeStrategyTest {
                 AccountUserType.ADMIN,
                 UserDataScopeType.ASSIGNED,
                 11L,
-                List.of(11L, 22L),
-                List.of(1L, 2L)
+                List.of(11L, 22L)
         );
 
         String condition = new AssignedDataScopeStrategy().buildCondition(userContext, "u", "id");
@@ -71,7 +65,6 @@ class DataScopeStrategyTest {
                 AccountUserType.ADMIN,
                 UserDataScopeType.SELF,
                 null,
-                List.of(),
                 List.of()
         );
 

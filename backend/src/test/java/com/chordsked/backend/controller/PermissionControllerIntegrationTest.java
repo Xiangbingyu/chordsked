@@ -52,7 +52,7 @@ class PermissionControllerIntegrationTest {
         when(securityCacheService.isTokenRevoked(anyString())).thenReturn(false);
         when(securityCacheService.isTokenActive(anyString())).thenReturn(false);
         when(securityCacheService.getUserSnapshot(eq("ADMIN"), anyLong()))
-                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", USER_ID, true, 1L, 1L, null));
+                .thenReturn(new SecurityCacheService.SecurityUserSnapshot("ADMIN", USER_ID, true, 1L, null));
     }
 
     @Test

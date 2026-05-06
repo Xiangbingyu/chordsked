@@ -3,11 +3,11 @@ package com.chordsked.backend.datascope.interceptor;
 import com.chordsked.backend.config.properties.DataScopeProperties;
 import com.chordsked.backend.datascope.annotation.DataScope;
 import com.chordsked.backend.datascope.context.DataScopeUserContext;
+import com.chordsked.backend.datascope.resolver.OrgNodeDataScopeResolver;
 import com.chordsked.backend.datascope.strategy.DataScopeStrategy;
 import com.chordsked.backend.model.enums.AccountUserType;
 import com.chordsked.backend.model.enums.UserDataScopeType;
 import com.chordsked.backend.security.account.model.ChordSkedUserDetails;
-import com.chordsked.backend.service.org.OrgDataScopeResolveService;
 import jakarta.annotation.Resource;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -56,8 +56,8 @@ public class DataScopeInterceptor implements Interceptor {
     }
 
     @Lazy
-    @Resource(name = "orgDataScopeResolveService")
-    private OrgDataScopeResolveService orgDataScopeResolveService;
+    @Resource(name = "orgNodeDataScopeResolver")
+    private OrgNodeDataScopeResolver orgNodeDataScopeResolver;
 
     @Resource(name = "dataScopeProperties")
     private DataScopeProperties dataScopeProperties;
@@ -167,21 +167,18 @@ public class DataScopeInterceptor implements Interceptor {
             );
             throw new IllegalStateException("dataScopeType is missing");
         }
-        OrgDataScopeResolveService.OrgDataScopeResult scopeResult;
+        OrgNodeDataScopeResolver.OrgNodeDataScopeResult scopeResult;
         if (!dataScopeType.isAssignedScope()) {
-            scopeResult = new OrgDataScopeResolveService.OrgDataScopeResult(
+            scopeResult = new OrgNodeDataScopeResolver.OrgNodeDataScopeResult(
                     userDetails.getPrimaryOrgNodeId(),
-                    List.of(),
                     List.of()
             );
         } else if (AccountUserType.ADMIN.equals(userDetails.getUserTypeEnum())) {
-            scopeResult = orgDataScopeResolveService.resolveByUserId(userDetails.getUserId());
+            scopeResult = orgNodeDataScopeResolver.resolveByUserId(userDetails.getUserId());
         } else {
-            Long currentCampusId = userDetails.getCurrentCampusId();
-            scopeResult = new OrgDataScopeResolveService.OrgDataScopeResult(
+            scopeResult = new OrgNodeDataScopeResolver.OrgNodeDataScopeResult(
                     userDetails.getPrimaryOrgNodeId(),
-                    List.of(),
-                    currentCampusId == null || currentCampusId <= 0 ? List.of() : List.of(currentCampusId)
+                    List.of()
             );
         }
         return new DataScopeUserContext(
@@ -189,8 +186,7 @@ public class DataScopeInterceptor implements Interceptor {
                 userDetails.getUserTypeEnum(),
                 dataScopeType,
                 scopeResult.primaryOrgNodeId(),
-                scopeResult.authorizedOrgNodeIds(),
-                scopeResult.authorizedCampusIds()
+                scopeResult.authorizedOrgNodeIds()
         );
     }
 

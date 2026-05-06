@@ -61,24 +61,23 @@ public class TeacherAccountProvider implements AccountProvider {
         SecurityCacheService.SecurityUserSnapshot userSnapshot =
                 securityCacheService.getUserSnapshot(USER_TYPE.getCode(), userId);
         boolean enabled;
-        Long currentCampusId;
+        Long primaryOrgNodeId;
         if (userSnapshot != null) {
             enabled = userSnapshot.enabled();
-            currentCampusId = userSnapshot.currentCampusId();
+            primaryOrgNodeId = userSnapshot.primaryOrgNodeId();
         } else {
             TeacherUserEntity teacherUser = teacherUserDao.getById(userId);
             if (teacherUser == null) {
                 throw new UsernameNotFoundException("Teacher user not found: " + userId);
             }
             enabled = TeacherUserStatus.ON_DUTY.equals(teacherUser.getStatusEnum());
-            currentCampusId = teacherUser.getCampusId();
+            primaryOrgNodeId = null;
             securityCacheService.cacheUserSnapshot(
                     new SecurityCacheService.SecurityUserSnapshot(
                             USER_TYPE.getCode(),
                             userId,
                             enabled,
-                            currentCampusId,
-                            null,
+                            primaryOrgNodeId,
                             DEFAULT_DATA_SCOPE_TYPE
                     )
             );
@@ -86,8 +85,7 @@ public class TeacherAccountProvider implements AccountProvider {
         return new ChordSkedUserDetails(
                 userId,
                 USER_TYPE,
-                currentCampusId,
-                null,
+                primaryOrgNodeId,
                 userSnapshot == null || userSnapshot.dataScopeType() == null
                         ? DEFAULT_DATA_SCOPE_TYPE
                         : userSnapshot.dataScopeType(),

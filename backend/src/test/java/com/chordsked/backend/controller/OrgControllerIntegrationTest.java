@@ -64,7 +64,6 @@ class OrgControllerIntegrationTest {
                         USER_ID,
                         true,
                         1L,
-                        1L,
                         UserDataScopeType.ALL
                 ));
     }
