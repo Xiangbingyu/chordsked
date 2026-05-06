@@ -2,6 +2,16 @@ server:
   port: 8081
 
 spring:
+  kafka:
+    bootstrap-servers: ${CHORDSKED_KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    producer:
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: latest
   sql:
     init:
       mode: ${CHORDSKED_TEST_SQL_INIT_MODE:never}

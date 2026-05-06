@@ -17,13 +17,21 @@ public class AuditLogPersistServiceImpl implements AuditLogPersistService {
     private AuditLogDao auditLogDao;
 
     @Override
-    @Async("auditLogExecutor")
-    public void persist(AuditLogEntity auditLog) {
+    public void persistSync(AuditLogEntity auditLog) {
         if (auditLog == null) {
             return;
         }
+        int affectedRows = auditLogDao.save(auditLog);
+        if (affectedRows <= 0) {
+            throw new IllegalStateException("Persist audit log failed");
+        }
+    }
+
+    @Override
+    @Async("auditLogExecutor")
+    public void persist(AuditLogEntity auditLog) {
         try {
-            auditLogDao.save(auditLog);
+            persistSync(auditLog);
         } catch (RuntimeException exception) {
             logger.error(
                     "Audit log save failed, moduleName={}, actionType={}, bizId={}",

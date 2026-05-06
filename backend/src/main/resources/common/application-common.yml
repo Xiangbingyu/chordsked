@@ -17,6 +17,15 @@ mybatis:
     map-underscore-to-camel-case: true
 
 chordsked:
+  kafka:
+    audit:
+      enabled: ${CHORDSKED_KAFKA_AUDIT_ENABLED:false}
+      topic: ${CHORDSKED_KAFKA_AUDIT_TOPIC:chordsked.audit.log.v1}
+      group-id: ${CHORDSKED_KAFKA_AUDIT_GROUP_ID:chordsked-audit-log-group}
+      concurrency: ${CHORDSKED_KAFKA_AUDIT_CONCURRENCY:1}
+      max-retries: ${CHORDSKED_KAFKA_AUDIT_MAX_RETRIES:3}
+      backoff-millis: ${CHORDSKED_KAFKA_AUDIT_BACKOFF_MILLIS:2000}
+      dlt-suffix: ${CHORDSKED_KAFKA_AUDIT_DLT_SUFFIX:.DLT}
   role:
     protected-role-codes:
       - SYSTEM_ADMIN
